@@ -92,6 +92,7 @@ bool LocalizationApp::LoadParameters() {
     node_->declare_parameter<std::string>("prior_file", "");
     node_->declare_parameter<std::string>("debug_file", "");
     node_->declare_parameter<int>("frame_stride", frame_stride_);
+    node_->declare_parameter<int>("start_frame", start_frame_);
     node_->declare_parameter<double>("max_correction_xy", max_correction_xy_);
     node_->declare_parameter<double>("max_correction_yaw_deg", max_correction_yaw_deg_);
     node_->declare_parameter<double>("max_input_range", max_input_range_);
@@ -126,6 +127,7 @@ bool LocalizationApp::LoadParameters() {
     prior_file_ = node_->get_parameter("prior_file").as_string();
     debug_file_ = node_->get_parameter("debug_file").as_string();
     frame_stride_ = node_->get_parameter("frame_stride").as_int();
+    start_frame_ = node_->get_parameter("start_frame").as_int();
     max_correction_xy_ = node_->get_parameter("max_correction_xy").as_double();
     max_correction_yaw_deg_ = node_->get_parameter("max_correction_yaw_deg").as_double();
     max_input_range_ = node_->get_parameter("max_input_range").as_double();
@@ -589,6 +591,7 @@ bool LocalizationApp::RunLocalization() {
     for (std::size_t index = 0; index < ply_frames_.size(); ++index) {
         const auto& frame = ply_frames_[index];
         if (!rclcpp::ok()) break;
+        if (index < static_cast<std::size_t>(std::max(start_frame_, 0))) continue;
         if (max_frames_ > 0 && processed >= static_cast<std::size_t>(max_frames_)) break;
         if (!LoadDB3Frame(frame.timestamp_ns, db3_frame)) return false;
 

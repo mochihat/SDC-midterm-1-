@@ -128,6 +128,7 @@ private:
 
     // Prior-guided matching: NDT starts from the prior and is rejected if it moves too far from it.
     int frame_stride_ = 1;
+    int start_frame_ = 0;  // skip frames before this index (for running a track in parallel chunks)
     double max_correction_xy_ = 3.0;
     double max_correction_yaw_deg_ = 5.0;
     double max_input_range_ = 0.0;
