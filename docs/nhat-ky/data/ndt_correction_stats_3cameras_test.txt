@@ -1,0 +1,26 @@
+=== 3cameras_ply Track1 test, scale 0.8, stride 100 (stopped early)
+frames matched 17, converged 17
+  |dxy| m    median  +0.600  mean  +0.759  std  0.627  p10  +0.154  p90  +1.501
+  along m    median  +0.037  mean  +0.082  std  0.458  p10  -0.364  p90  +0.694
+  lateral m  median  +0.159  mean  -0.081  std  0.864  p10  -1.018  p90  +0.851
+  dyaw deg   median  +0.148  mean  +0.495  std  1.514  p10  -0.551  p90  +2.358
+  share |dxy| <= 0.5 m: 41.18%
+  share |dxy| <= 1 m: 64.71%
+  share |dxy| <= 2 m: 94.12%
+  share |dxy| <= 3 m: 100.00%
+  share |dxy| <= 5 m: 100.00%
+  score median 1.6776
+
+=== 3cameras_ply Track1 test, scale 1.0, stride 100 (stopped early)
+frames matched 16, converged 16
+  |dxy| m    median  +0.184  mean  +0.570  std  0.758  p10  +0.013  p90  +1.575
+  along m    median  +0.008  mean  -0.014  std  0.390  p10  -0.187  p90  +0.194
+  lateral m  median  +0.019  mean  -0.079  std  0.861  p10  -0.997  p90  +0.706
+  dyaw deg   median  +0.028  mean  +0.460  std  1.561  p10  -0.395  p90  +1.707
+  share |dxy| <= 0.5 m: 68.75%
+  share |dxy| <= 1 m: 75.00%
+  share |dxy| <= 2 m: 93.75%
+  share |dxy| <= 3 m: 100.00%
+  share |dxy| <= 5 m: 100.00%
+  score median 1.7573
+

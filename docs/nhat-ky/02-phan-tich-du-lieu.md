@@ -90,13 +90,44 @@ tỉ lệ × độ lệch yaw (−30…+30°) × dịch chuyển (±4 m), tính 
 
 Nhận xét:
 - Gyro z có **bias ≈ −0.25…−0.30 °/s**, giống nhau ở 2 track → tích phân trực tiếp sẽ sai nhiều.
-- Gyro khớp với GNSS nhất khi **lệch ~1.5 s** ở cả 2 track. Nếu GNSS trễ 1.5 s thì vị trí sai ~15 m – trái với điểm Kaggle (~0.4–1.3) –
-  nên nhiều khả năng là **đồng hồ của IMU lệch**. Chưa kiểm chứng thêm; IMU **chưa được dùng** trong bất kỳ file nộp nào.
+- Gyro khớp với **tốc độ quay của yaw GNSS** nhất khi lệch ~1.5 s ở cả 2 track. Lúc đầu nghĩ là đồng hồ IMU lệch –
+  **cách hiểu này sai**, xem mục 6: thật ra **yaw GNSS bị trễ**, còn IMU và vị trí GNSS đúng giờ.
 - Orientation của IMU lệch ~−2.9° so với GNSS và bị trôi (tổng góc quay thiếu 4–7°).
 
-## 6. Kết luận phần phân tích
+## 6. Yaw GNSS bị trễ so với vị trí GNSS (`tools/analyze_yaw_lag.py`, `data/gnss_yaw_lag.txt`)
+
+So yaw của topic GNSS với **hướng chuyển động của chính các vị trí GNSS** (đã làm mượt), thử các độ trễ −3…+3 s:
+
+| | Lệch yaw GNSS – hướng chạy, không trễ | Trễ tốt nhất | Lệch còn lại |
+|---|---|---|---|
+| Track01 | 2.32° | **+1.20 s** | 0.92° |
+| Track02 | 1.33° | **+1.40 s** | 0.38° |
+
+Gyro z khớp với **hướng chạy của vị trí** gần như **không trễ** (Track02: tương quan 0.93 ở 0 s), còn khớp với **yaw GNSS** khi trễ +1.45 s.
+⇒ **Vị trí GNSS và IMU đúng giờ; riêng yaw GNSS chậm ~1.1–1.4 s** (có thể do bộ định vị lọc yaw mạnh). Khi vào cua, yaw GNSS đi sau thực tế.
+
+Bộ lọc Kalman có mô hình yaw trễ (`tools/rts_imu_smoother.py`, maximum likelihood, `data/rts_imu_smoother_output.txt`):
+
+| | Độ trễ yaw ML | log-likelihood: không mô hình trễ → có | Lệch yaw cố định b | IMU |
+|---|---|---|---|---|
+| Track01 | 1.11 s | −2840 → 1580 | −0.10° (trước đây −0.42°) | làm likelihood **giảm** (1266) → không dùng |
+| Track02 | 1.40–1.41 s | 2383 → 3028 | +0.07° (trước đây +0.65°) | giúp chút ít (3115); đồng hồ IMU lệch ~0.1 s; bias gyro −0.25 °/s |
+
+→ "Độ lệch yaw cố định" tìm được trước đó (−0.42° / +0.65°) **phần lớn là hệ quả của độ trễ** (quãng đường Track01 rẽ trái tổng +28°,
+Track02 rẽ phải −40° nên yaw trễ trông như lệch một góc có dấu ngược nhau).
+
+**Nhưng trên Kaggle, yaw đã bù trễ lại cho điểm xấu hơn** (xem [04](04-cac-lan-nop-kaggle.md) đợt 7): yaw của đáp án không phải hướng chạy đúng giờ.
+
+## 7. `3cameras_ply` (MapAnything) – tỉ lệ (`data/ground_scale_3cameras.txt`)
+
+Mặt đường nằm ở **h = 2.06 m** dưới camera (1.80–2.19 m, dao động 5.5 %), tầm nhìn tới 20–70 m, ~330 nghìn điểm/frame, có cả điểm phía sau/hai bên
+(3 camera) → point cloud **gần đúng đơn vị mét**. So với độ cao camera ~1.62 m (suy ra từ tỉ lệ ×9 của `raw_ply`) thì tỉ lệ ≈ 0.8;
+nếu tin MapAnything thì tỉ lệ 1.0. Thử NDT ngắn cho thấy tỉ lệ **1.0** hiệu chỉnh nhỏ và nhất quán hơn (mục 03).
+
+## 8. Kết luận phần phân tích
 
 1. GNSS là nguồn thông tin mạnh nhất: cùng hệ toạ độ bản đồ, mượt, 4 Hz.
-2. Point cloud từ ảnh cần **tỉ lệ ≈ 9** (không phải 3) và hệ trục FLU là đúng.
+2. Point cloud từ ảnh (`raw_ply`) cần **tỉ lệ ≈ 9** (không phải 3) và hệ trục FLU là đúng; `3cameras_ply` gần đúng mét (tỉ lệ ~1).
 3. `init_guess` có nhiễu lớn (Track02 lệch 15° yaw).
-4. IMU cần hiệu chỉnh bias và thời gian trước khi dùng được.
+4. IMU đúng giờ, gyro z có bias ≈ −0.25…−0.30 °/s.
+5. **Yaw GNSS trễ 1.1–1.4 s** so với vị trí GNSS (mục 6).

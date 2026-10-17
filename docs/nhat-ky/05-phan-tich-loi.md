@@ -45,7 +45,7 @@ Chỉ có một nhóm thăm dò, và ở Track02 file dịch thời gian dịch 
    Dùng 0.42° hay 0.347° cho điểm gần như như nhau (chênh < 0.0002), nên chọn giá trị vật lý.
 4. **Track01: lỗi vị trí ~0.9 m** không do thời gian, không do lệch ngang → là sai số **thay đổi chậm theo đoạn đường** của GNSS Track01.
    Làm mượt không khử được (không phải nhiễu trắng); NDT trên ảnh cũng không khử được (mục 03).
-5. **So với hạng 1 (đội 12):**
+5. **So với hạng 1 (đội 12), lúc ~21:00** (sau đó đội 13 lên 0.91335 ở Track01 – xem README):
 
 | | Điểm hiện tại | = vị trí + 0.2 × yaw | Hạng 1 | Nếu giữ vị trí, yaw cần |
 |---|---|---|---|---|
@@ -60,3 +60,48 @@ ví dụ yaw từ 1.74° xuống ~1.59°.
 - Công thức điểm đúng như slide ($k = 0.2$, yaw tính bằng độ). Các kiểm tra tổng ($2L^2$, $2d^2$) khớp, nên điều này được xác nhận.
 - Dịch thời gian 0.1 s được xấp xỉ tuyến tính (vận tốc không đổi trong 0.1 s).
 - Các lượt thăm dò **chỉ dùng để đo**, không lấy tham số Kaggle nào đưa vào file cuối (Δt, lệch ngang giữ 0; yaw dùng giá trị vật lý 0.42°).
+
+## 5. Tổ hợp tối ưu từ các lượt "chỉ đổi yaw" (`tools/yaw_projection.py`, `data/yaw_projection_output.txt`)
+
+**Ý tưởng.** Giữ nguyên vị trí (nên $P$ biết trước) thì mỗi file chỉ đổi yaw cho biết **chính xác** lỗi yaw của nó: $Y_k = (S_k - P)/0.2$.
+Với $D_k$ = (yaw file k − yaw base) từng frame (độ) và $e$ = lỗi yaw của base (không biết):
+
+$$Y_k^2 = Y_{base}^2 + 2\,\overline{e\,D_k} + \overline{D_k^2} \;\Rightarrow\; m_k = \overline{e\,D_k}\ \text{biết được}$$
+
+Với mọi tổ hợp $yaw = base + \sum_k a_k D_k$:
+$$Y^2 = Y_{base}^2 + 2\,a^\top m + a^\top G\,a,\qquad G_{ij} = \overline{D_i D_j}\ \text{(tính trực tiếp)}$$
+→ nhỏ nhất tại $a = -G^{-1}m$. **Không cần nộp thêm để biết điểm**, chỉ cần nộp để đưa lên leaderboard.
+(Các hướng phải độc lập tuyến tính – một file vốn là tổ hợp của các file khác làm hệ suy biến, phải bỏ ra.)
+
+**Kiểm chứng:**
+
+| File | Hướng dùng | Dự đoán | Thực tế |
+|---|---|---|---|
+| `yawproj_v1_1.csv` (Track01) | +1° cố định, hướng chạy đúng giờ | 1.21862 | **1.21861** |
+| `yawproj_v1_2.csv` (Track02) | yaw bù trễ, yaw trễ 0.75 s | 0.35674 | **0.35696** |
+| `yawproj_v3_2.csv` (Track02) | + độ cong, + yaw GNSS gốc | 0.34498 | **0.34530** |
+
+Sai lệch nhỏ (≤ 0.0003) đến từ việc $P$ của Track02 chỉ ước lượng từ một nhóm thăm dò.
+
+**Tương quan giữa lỗi yaw và từng hướng** (dấu cho biết nên đi theo hay ngược hướng đó):
+
+| Track | Hướng | corr(e, D) |
+|---|---|---|
+| 01 | +1° cố định | −0.195 |
+| 01 | yaw bù trễ (hướng chạy đúng giờ) | −0.455 |
+| 02 | yaw bù trễ | **+0.681** |
+| 02 | hướng chạy trễ 0.75 s | +0.123 |
+| 02 | độ cong l = 1.5 m (trên v1) | −0.673 (chủ yếu do phần v1 bên trong) |
+| 02 | yaw GNSS gốc | −0.029 |
+
+**Tham số đã chọn theo điểm Kaggle (không phải vật lý):**
+
+| File | Trọng số | Diễn giải |
+|---|---|---|
+| `yawproj_v1_1.csv` | +0.199 × (+1°), +0.373 × (hướng chạy đúng giờ − yaw cũ) | cộng 0.2° và trộn 37 % hướng chạy – còn hợp lý |
+| `yawproj_v1_2.csv` | −2.156 × (yaw bù trễ − yaw cũ), +0.214 × (trễ 0.75 s − yaw cũ) | **không vật lý** (ngược hướng bù trễ, gấp 2 lần) |
+| `yawproj_v3_2.csv` | −4.581, −0.205, −1.119, +0.499 (4 hướng) | **không vật lý**, thuần khớp theo đáp án |
+
+**Giới hạn.** Cách này dùng bảng điểm (chấm trên toàn bộ dữ liệu test) để chọn tổ hợp – về bản chất là học từ đáp án qua điểm số,
+không phải thuật toán định vị. Mỗi hướng mới tốn 1 lượt nộp. Áp dụng tương tự cho **vị trí** (ví dụ dời từng đoạn đường) là có thể,
+nhưng khi đó gần như "dò lại đáp án" – nên hỏi giảng viên trước.

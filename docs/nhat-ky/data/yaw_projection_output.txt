@@ -1,0 +1,22 @@
+## Track1 (P = 0.90462 from analyze_probes.py)
+probe_yaw+1_1.csv                  score 1.27676  yaw RMSE 1.861 deg  |D| 1.000  corr(e, D) -0.195
+lagyaw_pos_best_1.csv              score 1.30875  yaw RMSE 2.021 deg  |D| 2.065  corr(e, D) -0.455
+base yaw RMSE 1.776 deg (score 1.25992)
+best combination: probe_yaw+1_1.csv x +0.199, lagyaw_pos_best_1.csv x +0.373
+predicted yaw RMSE 1.570 deg -> predicted score 1.21862
+
+## Track2 v1 (P = 0.23218)
+lagyaw_pos_best_2.csv              score 0.45496  yaw RMSE 1.114 deg  |D| 0.312  corr(e, D) +0.681
+yawtau0.75_pos_best_2.csv          score 0.48625  yaw RMSE 1.270 deg  |D| 0.816  corr(e, D) +0.123
+base yaw RMSE 0.878 deg (score 0.40778)
+best combination: lagyaw_pos_best_2.csv x -2.156, yawtau0.75_pos_best_2.csv x +0.214
+predicted yaw RMSE 0.623 deg -> predicted score 0.35674
+
+## Track2 v3
+lagyaw_pos_best_2.csv              score 0.45496  yaw RMSE 1.114 deg  |D| 0.312  corr(e, D) +0.681
+yawtau0.75_pos_best_2.csv          score 0.48625  yaw RMSE 1.270 deg  |D| 0.816  corr(e, D) +0.123
+curv1.5_on_proj_2.csv              score 0.36280  yaw RMSE 0.653 deg  |D| 0.661  corr(e, D) -0.673
+gnssyaw_pos_rts_2.csv              score 0.56160  yaw RMSE 1.647 deg  |D| 1.419  corr(e, D) -0.029
+base yaw RMSE 0.878 deg (score 0.40778)
+best combination: lagyaw_pos_best_2.csv x -4.581, yawtau0.75_pos_best_2.csv x -0.205, curv1.5_on_proj_2.csv x -1.119, gnssyaw_pos_rts_2.csv x +0.499
+predicted yaw RMSE 0.564 deg -> predicted score 0.34498

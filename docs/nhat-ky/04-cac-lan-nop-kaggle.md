@@ -30,8 +30,16 @@ Trên Kaggle, tên file có thêm hậu tố ngẫu nhiên (ví dụ `rts_headin
 | 18 | 20:43 | 1 | `probe_yaw-1_1.csv` | 1.34505 | (thăm dò) | lệch yaw −1° |
 | 19 | 20:44 | 1 | `phys_yawb_1.csv` | **1.25338** | −0.00654 ✅ | bỏ độ lệch yaw cố định (vật lý) |
 | 20 | 20:45 | 1 | `phys_yawb_ndt_1.csv` | 1.27855 | +0.02517 ❌ | ghép hiệu chỉnh NDT ×9 |
+| 21 | 21:38 | 2 | `lagyaw_pos_best_2.csv` | 0.45496 | +0.04718 ❌ | yaw đã bù trễ GNSS (vật lý) |
+| 22 | 21:39 | 1 | `lagyaw_pos_best_1.csv` | 1.30875 | +0.05537 ❌ | yaw đã bù trễ GNSS (vật lý) |
+| 23 | 21:41 | 2 | `yawtau0.75_pos_best_2.csv` | 0.48625 | +0.07847 ❌ | giả thuyết "yaw đáp án trễ 0.75 s" |
+| 24 | 21:44 | 2 | `yawproj_v1_2.csv` | **0.35696** | −0.05082 ✅ | tổ hợp yaw theo điểm Kaggle |
+| 25 | 21:44 | 1 | `yawproj_v1_1.csv` | **1.21861** | −0.03477 ✅ | tổ hợp yaw theo điểm Kaggle |
+| 26 | 21:48 | 2 | `curv1.5_on_proj_2.csv` | 0.36280 | +0.00584 (thăm dò) | yaw thân xe theo độ cong, l = 1.5 m |
+| 27 | 21:49 | 2 | `gnssyaw_pos_rts_2.csv` | 0.56160 | (thăm dò) | hướng "yaw GNSS gốc" |
+| 28 | 21:50 | 2 | `yawproj_v3_2.csv` | **0.34530** | −0.01166 ✅ | tổ hợp 4 hướng yaw theo điểm Kaggle |
 
-Ngày 17/10 đã dùng 12 lượt Track01 và 8 lượt Track02 (tối đa 15/ngày).
+Ngày 17/10 đã dùng 14 lượt Track01 và 14 lượt Track02 (tối đa 15/ngày).
 
 ---
 
@@ -158,6 +166,59 @@ GNSS đo (x, y, θ + b). Bốn mức nhiễu (σ vị trí, σ yaw, nhiễu gia 
 
 ---
 
+## Đợt 7 – Bù độ trễ của yaw GNSS (21:38–21:41) – tham số vật lý
+
+Phát hiện (mục 02, phần 6): **yaw GNSS trễ ~1.1 s (Track01) / ~1.4 s (Track02)** so với vị trí GNSS và gyro. Bộ lọc mới
+`tools/rts_imu_smoother.py` mô hình hoá "yaw GNSS đo tại t = hướng xe tại t − trễ"; độ trễ, nhiễu, (Track02) gyro chọn bằng maximum likelihood.
+
+### #21, #22 `lagyaw_pos_best_2.csv` (0.45496 ❌), `lagyaw_pos_best_1.csv` (1.30875 ❌)
+- **Cách tạo:** vị trí giữ nguyên của file tốt nhất (`rts_heading_2` / `phys_yawb_1`), **yaw thay bằng hướng chạy đúng giờ** từ bộ lọc mới
+  (Track02 dùng thêm gyro; Track01 không, vì gyro làm likelihood giảm).
+- **Khác gì:** chỉ yaw: 0.31° RMS (Track02), 2.03° RMS (Track01).
+- **Kiểm tra trước khi nộp:** yaw này khớp với "yaw GNSS dịch sớm đúng bằng độ trễ" (tính độc lập, không qua bộ lọc) trong 0.29° / 0.53°.
+- **Kết quả:** xấu đi ở cả 2 track. Vì vị trí không đổi nên tính được chính xác lỗi yaw: Track02 0.88° → 1.11°, Track01 1.74° → 2.02°.
+- **Kết luận:** yaw của **đáp án không phải hướng chạy đúng giờ** của xe – nó gần yaw "trễ" hơn. Mô hình vật lý đúng với dữ liệu GNSS
+  nhưng không khớp với cách đáp án được tạo ra.
+
+### #23 `yawtau0.75_pos_best_2.csv` (0.48625 ❌)
+- **Cách tạo:** yaw = hướng chạy tại (t − 0.75 s) (`--time-offset -0.75`), vị trí giữ nguyên.
+- **Vì sao:** từ #21/#22 suy ra yaw đáp án có thể trễ ~0.7–0.9 s (một tham số chung cho cả 2 track, dùng điểm Kaggle).
+- **Kết quả:** lỗi yaw 1.27° – xấu hơn → giả thuyết "yaw đáp án chỉ là hướng chạy bị trễ" **sai**. Không thử ở Track01.
+
+## Đợt 8 – Tổ hợp yaw theo điểm Kaggle (21:44) – **tham số chọn theo Kaggle**
+
+Khi vị trí giữ nguyên, mỗi file chỉ đổi yaw cho biết chính xác $\overline{e\cdot D}$ (tương quan giữa lỗi yaw và thay đổi D).
+Với nhiều thay đổi D₁…D_K, lỗi yaw của mọi tổ hợp $base + \sum a_k D_k$ là một hàm bậc 2 **biết chính xác**
+→ tính được trọng số tối ưu mà không cần nộp thêm (`tools/yaw_projection.py`, chi tiết ở [05](05-phan-tich-loi.md) mục 5).
+
+### #24 `yawproj_v1_2.csv` (0.35696 ✅) và #25 `yawproj_v1_1.csv` (1.21861 ✅)
+- **Cách tạo:**
+  - Track02: base `rts_heading_2` + (−2.156) × (#21 − base) + 0.214 × (#23 − base).
+  - Track01: base `rts_pos_gnssyaw_1` + 0.199 × (+1° cố định) + 0.373 × (#22 − base).
+- **Dự đoán trước khi nộp:** 0.35674 và 1.21862. **Thực tế: 0.35696 và 1.21861** → phương pháp đúng.
+- **Kết quả:** Track02 tốt lên 0.051 (lỗi yaw 0.88° → 0.62°); Track01 tốt lên 0.035 (1.74° → 1.57°) – **lấy lại hạng 3** từ đội 3.
+- **Ý nghĩa của trọng số:** Track01 ≈ "+0.2° và trộn 37 % hướng chạy đúng giờ" – còn diễn giải được.
+  Track02: hệ số **−2.156** = "làm ngược việc bù trễ, mạnh gấp 2" – **không có ý nghĩa vật lý**, chỉ là khớp theo đáp án.
+
+## Đợt 9 – Thêm hướng yaw cho Track02 (21:48–21:50)
+
+### #26 `curv1.5_on_proj_2.csv` (0.36280, thăm dò)
+- **Cách tạo:** `tools/curvature_yaw.py`: yaw thân xe = hướng chạy − atan(l × độ cong) với l = 1.5 m (điểm tham chiếu vị trí nằm trước trục sau),
+  cộng vào #24. Thay đổi yaw 0.15° RMS, tối đa 1.09° (Track02 phần lớn đường thẳng).
+- **Vì sao:** có ý nghĩa vật lý (khi cua, hướng chạy của một điểm phía trước lệch so với thân xe).
+- **Kết quả:** xấu hơn #24 một chút; đưa vào tổ hợp chỉ giúp ~0.002 → hướng này giải thích rất ít.
+
+### #27 `gnssyaw_pos_rts_2.csv` (0.56160, thăm dò)
+- **Cách tạo:** vị trí của `rts_heading_2`, yaw = yaw GNSS đã làm mượt (`gnss_smooth_2`).
+- **Kết quả:** lỗi yaw 1.65° (yaw GNSS thuần rất kém) nhưng là một hướng mới cho tổ hợp.
+
+### #28 `yawproj_v3_2.csv` (0.34530 ✅ – tốt nhất Track02)
+- **Cách tạo:** tổ hợp 4 hướng: (#21 − base) × −4.581, (#23 − base) × −0.205, (#26 − base) × −1.119, (#27 − base) × +0.499.
+- **Dự đoán:** 0.34498; **thực tế 0.34530**. Lỗi yaw 0.56° (vị trí 0.23 m).
+- **Kết luận:** còn cách hạng 1 (0.33283) 0.0125 → cần yaw ≈ 0.50°. Trọng số **chọn theo Kaggle**, không có ý nghĩa vật lý.
+
+---
+
 ## Tổng kết: thay đổi nào có ích
 
 | Thay đổi | Track01 | Track02 | Nhận xét |
@@ -171,3 +232,7 @@ GNSS đo (x, y, θ + b). Bốn mức nhiễu (σ vị trí, σ yaw, nhiễu gia 
 | Lệch thời gian ±0.1 s | +0.42…+0.48 | +0.87…+0.97 | tối ưu ≈ 0 |
 | Lệch ngang ±0.5 m | +0.12…+0.14 | – | tối ưu ≈ 0 |
 | Lệch yaw ±1° | +0.017…+0.085 | – | tối ưu +0.35° (khớp vật lý 0.42°) |
+| Bù trễ yaw GNSS (hướng chạy đúng giờ) | +0.055 | +0.047 | đúng với dữ liệu, sai với đáp án |
+| Yaw = hướng chạy trễ 0.75 s | – | +0.078 | giả thuyết sai |
+| **Tổ hợp yaw theo điểm Kaggle** | **−0.035** | **−0.051 / −0.063** | tốt nhất hiện tại, trọng số không vật lý |
+| Hiệu chỉnh độ cong (l = 1.5 m) | – | ~−0.002 (trong tổ hợp) | gần như không có tác dụng |

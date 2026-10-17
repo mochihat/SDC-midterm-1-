@@ -1,0 +1,18 @@
+== Track1 3cameras_ply
+frame     0: ground h 2.0885  x95 29.413  x95/h   14.1  map ground z 108.55
+frame   300: ground h 2.0055  x95 21.134  x95/h   10.5  map ground z 108.30
+frame   600: ground h 2.0865  x95 26.195  x95/h   12.6  map ground z 108.08
+frame   900: ground h 2.1717  x95 20.031  x95/h    9.2  map ground z 108.45
+frame  1200: ground h 1.8741  x95 40.248  x95/h   21.5  map ground z 108.08
+frame  1500: ground h 2.0785  x95 21.485  x95/h   10.3  map ground z 108.12
+frame  1800: ground h 2.1880  x95 39.471  x95/h   18.0  map ground z 107.97
+frame  2100: ground h 2.0579  x95 21.608  x95/h   10.5  map ground z 108.68
+frame  2400: ground h 2.0499  x95 61.607  x95/h   30.1  map ground z 108.34
+frame  2700: ground h 1.7960  x95 69.304  x95/h   38.6  map ground z 107.96
+frame  3000: ground h 1.9865  x95 51.128  x95/h   25.7  map ground z 107.95
+
+h: median 2.0579  min 1.7960  max 2.1880  rel.std 5.47%
+  if camera height 1.5 m -> scale median 0.73
+  if camera height 1.8 m -> scale median 0.87
+  if camera height 2.0 m -> scale median 0.97
+  if camera height 2.2 m -> scale median 1.07

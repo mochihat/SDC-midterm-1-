@@ -1,0 +1,26 @@
+== Track1 image-only NDT test (first 150 frames) vs best GNSS-based trajectory
+150 common frames
+  frames     0-   24: position error mean    1.46 m, max    1.92 m; yaw error mean   +2.60 deg
+  frames    25-   49: position error mean    2.83 m, max    3.75 m; yaw error mean   +1.61 deg
+  frames    50-   74: position error mean    5.12 m, max    6.37 m; yaw error mean   -1.30 deg
+  frames    75-   99: position error mean    7.22 m, max    7.81 m; yaw error mean   -5.41 deg
+  frames   100-  124: position error mean    8.16 m, max    8.42 m; yaw error mean   -0.67 deg
+  frames   125-  149: position error mean    9.09 m, max    9.64 m; yaw error mean   +1.19 deg
+  first frame with position error >  1 m: 2
+  first frame with position error >  5 m: 62
+  first frame with position error > 20 m: None
+  position RMSE 6.314 m, yaw RMSE 2.85 deg -> score vs reference 6.8836
+
+== Track2 image-only NDT test (first 150 frames) vs best GNSS-based trajectory
+150 common frames
+  frames     0-   24: position error mean    3.64 m, max    4.94 m; yaw error mean  +30.02 deg
+  frames    25-   49: position error mean    5.98 m, max    7.14 m; yaw error mean  +36.18 deg
+  frames    50-   74: position error mean    8.35 m, max    9.54 m; yaw error mean  +40.50 deg
+  frames    75-   99: position error mean    9.58 m, max    9.79 m; yaw error mean  +36.44 deg
+  frames   100-  124: position error mean    9.31 m, max    9.53 m; yaw error mean  +30.32 deg
+  frames   125-  149: position error mean    8.86 m, max    9.06 m; yaw error mean  +28.99 deg
+  first frame with position error >  1 m: 0
+  first frame with position error >  5 m: 25
+  first frame with position error > 20 m: None
+  position RMSE 7.929 m, yaw RMSE 34.07 deg -> score vs reference 14.7437
+

@@ -1,0 +1,6 @@
+Track1: GNSS yaw vs path heading of the GNSS positions: lag 0 -> RMS 2.32 deg; best lag +1.20 s -> RMS 0.92 deg  (positive = GNSS yaw is late)
+   gyro z vs path-heading rate : corr 0.263 at lag 0, best 0.289 at lag +0.45 s
+   gyro z vs GNSS-yaw rate     : corr 0.195 at lag 0, best 0.394 at lag +1.75 s
+Track2: GNSS yaw vs path heading of the GNSS positions: lag 0 -> RMS 1.33 deg; best lag +1.40 s -> RMS 0.38 deg  (positive = GNSS yaw is late)
+   gyro z vs path-heading rate : corr 0.928 at lag 0, best 0.932 at lag +0.15 s
+   gyro z vs GNSS-yaw rate     : corr 0.685 at lag 0, best 0.903 at lag +1.45 s

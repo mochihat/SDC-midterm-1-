@@ -80,3 +80,36 @@ lọc trung vị (5 frame), làm mượt Gauss σ = 2 s, nội suy cho mọi fra
 nên ghép vào làm điểm xấu đi ở cả 2 track. Nguyên nhân có thể: độ sâu ước lượng từ một camera bị méo, tỉ lệ thay đổi ~5–7 % giữa các frame,
 bản đồ giảm mẫu 1 m, và đáp án nhiều khả năng sinh ra từ chính hệ định vị đã tạo topic GNSS.
 (File `fusion_s9r4_ndtyaw_2.csv` – cùng hiệu chỉnh vị trí, thêm hiệu chỉnh yaw của NDT – đã tạo nhưng **không nộp** vì chắc chắn cũng xấu hơn.)
+
+## 6. NDT chỉ dùng ảnh (không GNSS) – thử 150 frame đầu
+
+Mục đích: có một kết quả **scan matching thuần** (đúng yêu cầu đề) để so với baseline TA trong báo cáo.
+Script `run_image_only.sh`: như baseline (bắt đầu từ `init_guess`, mỗi frame bắt đầu từ pose frame trước) nhưng `ply_scale = 9`,
+NDT 4 m, voxel đầu vào 1 m, bỏ điểm xa hơn 40 m, tối đa 30 vòng lặp. Tốc độ: ~1.3 s/frame (Track01), ~0.8 s/frame (Track02).
+So với quỹ đạo GNSS tốt nhất (`tools/track_error.py`, `data/image_only_test.txt`):
+
+| | Lỗi vị trí trung bình theo từng 25 frame | Lỗi yaw |
+|---|---|---|
+| Track01 | 1.5 → 2.8 → 5.1 → 7.2 → 8.2 → **9.1 m** (tăng đều) | ±1–5° |
+| Track02 | 3.6 → 6.0 → 8.4 → 9.6 → 9.3 → 8.9 m | **+29…+40°** |
+
+Chẩn đoán (chưa sửa):
+1. **Không có mô hình chuyển động** – mỗi frame bắt đầu từ vị trí cũ trong khi xe đã đi tiếp ~0.36 m; NDT chỉ kéo về một phần → kết quả trễ dần.
+   Cách sửa: dự đoán bằng vận tốc frame trước (constant velocity).
+2. **Hướng ban đầu sai**: `init_guess` Track02 lệch yaw ~15°, NDT không tự sửa được. Cách sửa: thử nhiều góc ở frame đầu, chọn góc khớp nhất.
+
+## 7. NDT với `3cameras_ply` (3 camera, MapAnything) – Track01
+
+Mục đích: tìm nguồn thông tin vị trí mới cho Track01 (lỗi vị trí GNSS ~0.9 m mà NDT trên `raw_ply` không sửa được).
+Prior = file tốt nhất Track01 (`yawproj_v1_1.csv`), NDT 4 m, voxel đầu vào 0.5 m, bỏ điểm xa hơn 40 m, tối đa 50 vòng lặp, vùng bản đồ ±60 m.
+~7–9 nghìn điểm/frame sau lọc, ~14 s/frame NDT.
+
+Thử nhanh tỉ lệ (cứ 100 frame một lần, dừng sớm; `data/ndt_correction_stats_3cameras_test.txt`):
+
+| Tỉ lệ | Số frame | Hiệu chỉnh vị trí (trung vị) | ≤ 0.5 m | Along (trung vị) | Yaw: trung vị / độ lệch chuẩn |
+|---|---|---|---|---|---|
+| 0.8 | 15 | 0.58 m | 47 % | +0.04 m | +0.15° / 1.25° |
+| **1.0** | 14 | **0.18 m** | **71 %** | 0.00 m | −0.02° / 1.64° |
+
+Đang chạy qua đêm (17→18/10): tỉ lệ 1.0 cứ 2 frame (`c3s10`), tỉ lệ 0.8 cứ 4 frame (`c3s08`).
+Kết quả sẽ được đánh giá bằng một lượt nộp "chỉ đổi vị trí" rồi tính hệ số tối ưu (như mục 05).

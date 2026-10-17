@@ -56,6 +56,34 @@ cd "$P"
 python3 fuse_to_csv.py "$OUT/phys_yawb_1.csv" "$DBG/e2s9r4_Track1_debug.csv" "$OUT/phys_yawb_ndt_1.csv" \
   --yaw-weight 0 --sigma-s 2 --max-xy 2 --max-yaw-deg 3 > /dev/null
 
+# [8] Lag-aware smoother (tools/rts_imu_smoother.py): GNSS yaw = heading(t - lag) + b with lag found by
+#     maximum likelihood (~1.1 s Track1, ~1.4 s Track2); output = on-time motion heading. Track2 also uses the gyro.
+#     Yaw only is swapped into the best positions.
+cd "$T"
+python3 rts_imu_smoother.py /root/data/Track1 Track1 "$OUT/lag_noimu_heading_1.csv" --yaw heading --no-imu > /dev/null
+python3 rts_imu_smoother.py /root/data/Track2 Track2 "$OUT/lag_imu_heading_2.csv" --yaw heading > /dev/null
+python3 csv_ops.py merge "$OUT/lagyaw_pos_best_1.csv" --pos "$OUT/phys_yawb_1.csv" --yaw "$OUT/lag_noimu_heading_1.csv"
+python3 csv_ops.py merge "$OUT/lagyaw_pos_best_2.csv" --pos "$OUT/rts_heading_2.csv" --yaw "$OUT/lag_imu_heading_2.csv"
+
+# [9] Track2: heading taken 0.75 s earlier (hypothesis: the reference yaw is delayed by 0.75 s).
+python3 rts_imu_smoother.py /root/data/Track2 Track2 "$OUT/lagtau0.75_imu_2.csv" --yaw heading --time-offset -0.75 > /dev/null
+python3 csv_ops.py merge "$OUT/yawtau0.75_pos_best_2.csv" --pos "$OUT/rts_heading_2.csv" --yaw "$OUT/lagtau0.75_imu_2.csv"
+
+# [10] Best combination of yaw changes from yaw-only submissions (tools/yaw_projection.py).
+#      The weights come from LEADERBOARD SCORES (the numbers after ':' are the Kaggle scores), not from physics.
+python3 yaw_projection.py 0.90462 "$OUT/rts_pos_gnssyaw_1.csv" 1.25992 "$OUT/yawproj_v1_1.csv" \
+  "$OUT/probe_yaw+1_1.csv:1.27676" "$OUT/lagyaw_pos_best_1.csv:1.30875" > /dev/null
+python3 yaw_projection.py 0.23218 "$OUT/rts_heading_2.csv" 0.40778 "$OUT/yawproj_v1_2.csv" \
+  "$OUT/lagyaw_pos_best_2.csv:0.45496" "$OUT/yawtau0.75_pos_best_2.csv:0.48625" > /dev/null
+
+# [11] Track2: two more yaw directions, then the combination of all four.
+python3 curvature_yaw.py "$OUT/yawproj_v1_2.csv" "$OUT/lag_imu_heading_2.csv" /root/data/Track2/raw_ply 1.5 \
+  "$OUT/curv1.5_on_proj_2.csv" > /dev/null
+python3 csv_ops.py merge "$OUT/gnssyaw_pos_rts_2.csv" --pos "$OUT/rts_heading_2.csv" --yaw "$OUT/gnss_smooth_2.csv"
+python3 yaw_projection.py 0.23218 "$OUT/rts_heading_2.csv" 0.40778 "$OUT/yawproj_v3_2.csv" \
+  "$OUT/lagyaw_pos_best_2.csv:0.45496" "$OUT/yawtau0.75_pos_best_2.csv:0.48625" \
+  "$OUT/curv1.5_on_proj_2.csv:0.36280" "$OUT/gnssyaw_pos_rts_2.csv:0.56160" > /dev/null
+
 # Compare with what was submitted.
 status=0
 for f in "$DOC"/submissions/track*/*.csv; do

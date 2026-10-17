@@ -1,0 +1,26 @@
+## Track1 --no-imu
+loglik, start parameters, no yaw lag, no IMU: -2840.5
+GNSS yaw lag: +1.01 s (loglik without IMU -1725.6)
+ML parameters: sigma_p=0.1, sigma_yaw=1.00deg, q_a=2.0, q_w=0.3, sigma_g=0.003, q_bg=0.0001, shift=0.0, yaw_lag=1.1099999999999999, use_imu=False (loglik 1580.5)
+GNSS yaw offset b -0.104 deg, gyro bias +0.000 deg/s, speed median 10.18 m/s
+
+## Track1 with IMU
+loglik, start parameters, no yaw lag, no IMU: -2840.5
+GNSS yaw lag: +1.01 s (loglik without IMU -1725.6)
+IMU clock shift: +0.30 s (loglik -21343.8)
+ML parameters: sigma_p=0.1, sigma_yaw=1.00deg, q_a=2.0, q_w=1.0, sigma_g=0.03, q_bg=1e-05, shift=0.30000000000000004, yaw_lag=1.1099999999999999, use_imu=True (loglik 1265.8)
+GNSS yaw offset b -0.107 deg, gyro bias -0.299 deg/s, speed median 10.18 m/s
+
+## Track2 --no-imu
+loglik, start parameters, no yaw lag, no IMU: 2383.0
+GNSS yaw lag: +1.41 s (loglik without IMU 2723.8)
+ML parameters: sigma_p=0.02, sigma_yaw=0.50deg, q_a=2.0, q_w=0.1, sigma_g=0.003, q_bg=0.0001, shift=0.0, yaw_lag=1.4099999999999995, use_imu=False (loglik 3027.7)
+GNSS yaw offset b +0.072 deg, gyro bias +0.000 deg/s, speed median 11.78 m/s
+
+## Track2 with IMU
+loglik, start parameters, no yaw lag, no IMU: 2383.0
+GNSS yaw lag: +1.41 s (loglik without IMU 2723.8)
+IMU clock shift: +0.01 s (loglik 2286.9)
+ML parameters: sigma_p=0.02, sigma_yaw=0.50deg, q_a=2.0, q_w=0.3, sigma_g=0.03, q_bg=0.0001, shift=0.10999999999999961, yaw_lag=1.3999999999999995, use_imu=True (loglik 3115.0)
+GNSS yaw offset b +0.080 deg, gyro bias -0.252 deg/s, speed median 11.78 m/s
+

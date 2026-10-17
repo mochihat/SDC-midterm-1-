@@ -13,6 +13,8 @@ track,time_utc,time_utc+8,kaggle_file_name,file,public_score,status,note
 1,2026-10-17 12:43:22,2026-10-17 20:43,probe_yaw-1_1_86d0f5.csv,probe_yaw-1_1.csv,1.34505,complete,
 1,2026-10-17 12:44:49,2026-10-17 20:44,phys_yawb_1_86014b.csv,phys_yawb_1.csv,1.25338,complete,
 1,2026-10-17 12:45:09,2026-10-17 20:45,phys_yawb_ndt_1_3fb19c.csv,phys_yawb_ndt_1.csv,1.27855,complete,
+1,2026-10-17 13:39:08,2026-10-17 21:39,lagyaw_pos_best_1_efaed4.csv,lagyaw_pos_best_1.csv,1.30875,complete,
+1,2026-10-17 13:44:24,2026-10-17 21:44,yawproj_v1_1_6c708a.csv,yawproj_v1_1.csv,1.21861,complete,
 2,2026-10-17 10:52:41,2026-10-17 18:52,gnss_2.csv,gnss_2.csv,0.57111,complete,
 2,2026-10-17 10:59:07,2026-10-17 18:59,gnss_smooth_2.csv,gnss_smooth_2.csv,0.57811,complete,
 2,2026-10-17 10:59:43,2026-10-17 18:59,gnss_heading_1.csv,gnss_heading_1.csv,,error,Submission has 3011 rows but 3299 were expected.
@@ -21,3 +23,9 @@ track,time_utc,time_utc+8,kaggle_file_name,file,public_score,status,note
 2,2026-10-17 12:28:29,2026-10-17 20:28,rts_heading_2_6b9926.csv,rts_heading_2.csv,0.40778,complete,
 2,2026-10-17 12:30:27,2026-10-17 20:30,rts_heading_dt-0.1_2_da5bc6.csv,rts_heading_dt-0.1_2.csv,1.27503,complete,
 2,2026-10-17 12:31:09,2026-10-17 20:31,rts_heading_dt0.1_2_66c1c2.csv,rts_heading_dt0.1_2.csv,1.37861,complete,
+2,2026-10-17 13:38:47,2026-10-17 21:38,lagyaw_pos_best_2_78e645.csv,lagyaw_pos_best_2.csv,0.45496,complete,
+2,2026-10-17 13:41:55,2026-10-17 21:41,yawtau0.75_pos_best_2_e434c3.csv,yawtau0.75_pos_best_2.csv,0.48625,complete,
+2,2026-10-17 13:44:04,2026-10-17 21:44,yawproj_v1_2_df6844.csv,yawproj_v1_2.csv,0.35696,complete,
+2,2026-10-17 13:48:41,2026-10-17 21:48,curv1.5_on_proj_2_ed02d7.csv,curv1.5_on_proj_2.csv,0.36280,complete,
+2,2026-10-17 13:49:52,2026-10-17 21:49,gnssyaw_pos_rts_2_9f13af.csv,gnssyaw_pos_rts_2.csv,0.56160,complete,
+2,2026-10-17 13:50:58,2026-10-17 21:50,yawproj_v3_2_b739ee.csv,yawproj_v3_2.csv,0.34530,complete,
