@@ -32,6 +32,13 @@ struct PlyFrameInfo {
     std::string path;
 };
 
+// Per-frame planar prior (e.g. smoothed GNSS interpolated to the PLY timestamp).
+struct PriorPose {
+    double x = 0.0;
+    double y = 0.0;
+    double yaw = 0.0;
+};
+
 // Latest sensor messages at or before a PLY timestamp; retained across frames.
 struct DB3Frame {
     geometry_msgs::msg::PoseStamped gnss_pose;
@@ -57,7 +64,11 @@ private:
     bool LoadPlyFrame(const PlyFrameInfo& frame, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
                       pcl::PointCloud<pcl::PointXYZRGB>::Ptr& color_cloud) const;
     bool LoadInitialPose(Eigen::Matrix4f& pose) const;
-    
+    bool LoadPriorFile();
+    Eigen::Matrix4f PriorGuess(const PriorPose& prior, const Eigen::Matrix4f& reference) const;
+    void WriteDebug(std::size_t index, const PriorPose* prior, const Eigen::Matrix4f& guess, const Eigen::Matrix4f& ndt_pose,
+                    bool converged, bool accepted, double score, std::size_t input_points);
+
 
     // ** input data/map processing **
     pcl::PointCloud<pcl::PointXYZ>::Ptr ScalePlyPointCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& input, double scale) const;
@@ -112,7 +123,15 @@ private:
     std::vector<double> initial_pose_;
     std::string save_path_;
     std::string save_file_;
-    
+    std::string prior_file_;
+    std::string debug_file_;
+
+    // Prior-guided matching: NDT starts from the prior and is rejected if it moves too far from it.
+    int frame_stride_ = 1;
+    double max_correction_xy_ = 3.0;
+    double max_correction_yaw_deg_ = 5.0;
+    double max_input_range_ = 0.0;
+
 
     double map_voxel_leaf_size_ = 1.0;
     double input_voxel_leaf_size_ = 0.3;
@@ -131,8 +150,10 @@ private:
     bool keep_alive_ = true;
 
     std::ofstream result_file_;
+    std::ofstream debug_stream_;
     pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud_;
     std::vector<PlyFrameInfo> ply_frames_;
+    std::vector<PriorPose> priors_;
 
 };
 

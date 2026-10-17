@@ -47,9 +47,17 @@ int LocalizationApp::Start(int argc, char** argv) {
         return -1;
     }
 
-    if (!IndexPlyFiles(ply_path_) || !LoadMap()) {
+    if (!IndexPlyFiles(ply_path_) || !LoadPriorFile() || !LoadMap()) {
         Shutdown();
         return -1;
+    }
+
+    if (!debug_file_.empty()) {
+        const boost::filesystem::path debug_path = boost::filesystem::path(save_path_) / debug_file_;
+        debug_stream_.open(debug_path.string());
+        debug_stream_.precision(10);
+        debug_stream_ << "idx,timestamp_ns,converged,accepted,score,input_points,"
+                         "prior_x,prior_y,prior_yaw,guess_x,guess_y,guess_z,guess_yaw,ndt_x,ndt_y,ndt_z,ndt_yaw\n";
     }
 
     if (publish_global_map_) {
@@ -81,6 +89,12 @@ bool LocalizationApp::LoadParameters() {
     node_->declare_parameter<std::vector<double>>("initial_pose", {0.0, 0.0, 0.0, 0.0});
     node_->declare_parameter<std::string>("save_path", "");
     node_->declare_parameter<std::string>("save_file", "track_result.txt");
+    node_->declare_parameter<std::string>("prior_file", "");
+    node_->declare_parameter<std::string>("debug_file", "");
+    node_->declare_parameter<int>("frame_stride", frame_stride_);
+    node_->declare_parameter<double>("max_correction_xy", max_correction_xy_);
+    node_->declare_parameter<double>("max_correction_yaw_deg", max_correction_yaw_deg_);
+    node_->declare_parameter<double>("max_input_range", max_input_range_);
 
     node_->declare_parameter<double>("map_voxel_leaf_size", map_voxel_leaf_size_);
     node_->declare_parameter<double>("input_voxel_leaf_size", input_voxel_leaf_size_);
@@ -109,6 +123,12 @@ bool LocalizationApp::LoadParameters() {
     initial_pose_ = node_->get_parameter("initial_pose").as_double_array();
     save_path_ = node_->get_parameter("save_path").as_string();
     save_file_ = node_->get_parameter("save_file").as_string();
+    prior_file_ = node_->get_parameter("prior_file").as_string();
+    debug_file_ = node_->get_parameter("debug_file").as_string();
+    frame_stride_ = node_->get_parameter("frame_stride").as_int();
+    max_correction_xy_ = node_->get_parameter("max_correction_xy").as_double();
+    max_correction_yaw_deg_ = node_->get_parameter("max_correction_yaw_deg").as_double();
+    max_input_range_ = node_->get_parameter("max_input_range").as_double();
 
     map_voxel_leaf_size_ = node_->get_parameter("map_voxel_leaf_size").as_double();
     input_voxel_leaf_size_ = node_->get_parameter("input_voxel_leaf_size").as_double();
@@ -140,7 +160,7 @@ bool LocalizationApp::LoadParameters() {
     if (!std::all_of(positive.begin(), positive.end(), [](double value) { return std::isfinite(value) && value > 0.0; }) ||
         !std::isfinite(map_voxel_leaf_size_) || map_voxel_leaf_size_ < 0.0 ||
         !std::isfinite(input_voxel_leaf_size_) || input_voxel_leaf_size_ < 0.0 ||
-        max_frames_ < 0 || min_input_points_ < 1 || ndt_max_iterations_ < 1) {
+        max_frames_ < 0 || min_input_points_ < 1 || ndt_max_iterations_ < 1 || frame_stride_ < 1) {
         RCLCPP_ERROR(node_->get_logger(), "Invalid filtering or NDT parameters.");
         return false;
     }
@@ -392,6 +412,65 @@ bool LocalizationApp::LoadInitialPose(Eigen::Matrix4f& pose) const {
     return true;
 }
 
+// Prior CSV: header line, then "idx,x,y,yaw" with one row per PLY frame in timestamp order.
+bool LocalizationApp::LoadPriorFile() {
+    priors_.clear();
+    if (prior_file_.empty()) return true;
+
+    std::ifstream input(prior_file_);
+    if (!input.is_open()) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to open prior file: %s", prior_file_.c_str());
+        return false;
+    }
+    std::string line;
+    std::getline(input, line);
+    while (std::getline(input, line)) {
+        if (line.empty()) continue;
+        std::replace(line.begin(), line.end(), ',', ' ');
+        std::istringstream values(line);
+        double index = 0.0;
+        PriorPose prior;
+        if (!(values >> index >> prior.x >> prior.y >> prior.yaw)) {
+            RCLCPP_ERROR(node_->get_logger(), "Invalid prior row: %s", line.c_str());
+            return false;
+        }
+        priors_.push_back(prior);
+    }
+    if (priors_.size() != ply_frames_.size()) {
+        RCLCPP_ERROR(node_->get_logger(), "Prior has %zu rows but there are %zu PLY frames.", priors_.size(), ply_frames_.size());
+        return false;
+    }
+    RCLCPP_INFO(node_->get_logger(), "Loaded %zu prior poses from %s", priors_.size(), prior_file_.c_str());
+    return true;
+}
+
+// Replace x, y and heading of `reference` with the prior, keeping its z, roll and pitch.
+Eigen::Matrix4f LocalizationApp::PriorGuess(const PriorPose& prior, const Eigen::Matrix4f& reference) const {
+    const Eigen::Matrix3f rotation = reference.block<3, 3>(0, 0);
+    const float reference_yaw = std::atan2(rotation(1, 0), rotation(0, 0));
+    const Eigen::Matrix3f yaw_delta =
+        Eigen::AngleAxisf(static_cast<float>(prior.yaw) - reference_yaw, Eigen::Vector3f::UnitZ()).toRotationMatrix();
+
+    Eigen::Matrix4f guess = reference;
+    guess.block<3, 3>(0, 0) = yaw_delta * rotation;
+    guess(0, 3) = static_cast<float>(prior.x);
+    guess(1, 3) = static_cast<float>(prior.y);
+    return guess;
+}
+
+void LocalizationApp::WriteDebug(const std::size_t index, const PriorPose* prior, const Eigen::Matrix4f& guess,
+                                 const Eigen::Matrix4f& ndt_pose, const bool converged, const bool accepted,
+                                 const double score, const std::size_t input_points) {
+    if (!debug_stream_.is_open()) return;
+    const auto yaw_of = [](const Eigen::Matrix4f& m) { return std::atan2(m(1, 0), m(0, 0)); };
+    debug_stream_ << index << ',' << ply_frames_[index].timestamp_ns << ',' << converged << ',' << accepted << ','
+                  << score << ',' << input_points << ','
+                  << (prior ? prior->x : 0.0) << ',' << (prior ? prior->y : 0.0) << ',' << (prior ? prior->yaw : 0.0) << ','
+                  << guess(0, 3) << ',' << guess(1, 3) << ',' << guess(2, 3) << ',' << yaw_of(guess) << ','
+                  << ndt_pose(0, 3) << ',' << ndt_pose(1, 3) << ',' << ndt_pose(2, 3) << ',' << yaw_of(ndt_pose) << '\n';
+    debug_stream_.flush();
+}
+
 // ** ================================================================== **
 // ** ==================== input data/map processing =================== **
 // ** ================================================================== **
@@ -435,8 +514,12 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr LocalizationApp::FilterInputCloud(const pcl:
     auto finite = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
     finite->points.reserve(input->size());
 
+    // Image-derived depth gets noisier with distance; optionally drop far points.
+    const float max_range_sq = static_cast<float>(max_input_range_ * max_input_range_);
     for (const auto& point : input->points) {
-        if (pcl::isFinite(point)) finite->points.push_back(point);
+        if (!pcl::isFinite(point)) continue;
+        if (max_input_range_ > 0.0 && point.getVector3fMap().squaredNorm() > max_range_sq) continue;
+        finite->points.push_back(point);
     }
     finite->width = static_cast<std::uint32_t>(finite->size());
     finite->height = 1;
@@ -503,15 +586,28 @@ bool LocalizationApp::RunLocalization() {
 
     std::size_t processed = 0;
     std::size_t failed = 0;
-    for (const auto& frame : ply_frames_) {
+    for (std::size_t index = 0; index < ply_frames_.size(); ++index) {
+        const auto& frame = ply_frames_[index];
         if (!rclcpp::ok()) break;
         if (max_frames_ > 0 && processed >= static_cast<std::size_t>(max_frames_)) break;
         if (!LoadDB3Frame(frame.timestamp_ns, db3_frame)) return false;
+
+        const PriorPose* prior = priors_.empty() ? nullptr : &priors_[index];
+        const Eigen::Matrix4f guess = prior ? PriorGuess(*prior, pose) : pose;
+
+        // With a prior, frames between strides take the prior directly; the fusion step fills them in later.
+        if (prior && index % static_cast<std::size_t>(frame_stride_) != 0) {
+            pose = guess;
+            WritePose(pose);
+            ++processed;
+            continue;
+        }
+
         pcl::PointCloud<pcl::PointXYZ>::Ptr raw_cloud;
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr raw_color;
         if (!LoadPlyFrame(frame, raw_cloud, raw_color)) return false;
         const auto input = FilterInputCloud(ScalePlyPointCloud(raw_cloud, ply_scale_));
-        const auto submap = CropSubmap(pose);
+        const auto submap = CropSubmap(guess);
         if (submap->empty()) {
             RCLCPP_ERROR(node_->get_logger(), "Empty submap at frame %zu.", processed);
             return false;
@@ -527,14 +623,29 @@ bool LocalizationApp::RunLocalization() {
         // 　　　　　　使用前請檢查 has_gnss_pose、has_imu_data，並確認時間與座標系是否適用。
         // 預期輸出：candidate 為點雲座標系到 map 座標系的 4x4 姿態矩陣， score 為配準評分，converged 表示本幀定位是否成功。
         // 可替換 AlignNDT() 或加入 GNSS / IMU 融合與自訂成功判定。
-        Eigen::Matrix4f candidate = pose;
+        Eigen::Matrix4f candidate = guess;
         double score = std::numeric_limits<double>::infinity();
-        const bool converged = AlignNDT(input, submap, pose, candidate, score);
-        if (converged) {
+        const bool converged = input->size() >= static_cast<std::size_t>(min_input_points_) &&
+                               AlignNDT(input, submap, guess, candidate, score);
+
+        // Reject matches that wander too far from the prior: they are almost always wrong local minima.
+        bool accepted = converged;
+        if (converged && prior) {
+            const float dx = candidate(0, 3) - guess(0, 3);
+            const float dy = candidate(1, 3) - guess(1, 3);
+            const float dyaw = std::atan2(candidate(1, 0), candidate(0, 0)) - std::atan2(guess(1, 0), guess(0, 0));
+            const float wrapped_dyaw = std::atan2(std::sin(dyaw), std::cos(dyaw));
+            accepted = std::hypot(dx, dy) <= max_correction_xy_ &&
+                       std::abs(wrapped_dyaw) <= max_correction_yaw_deg_ * M_PI / 180.0;
+        }
+        WriteDebug(index, prior, guess, candidate, converged, accepted, score, input->size());
+
+        if (accepted) {
             pose = candidate;
         } else {
             ++failed;
-            RCLCPP_WARN(node_->get_logger(), "NDT failed at frame %zu; keeping previous pose.", processed);
+            pose = guess;
+            RCLCPP_DEBUG(node_->get_logger(), "NDT rejected at frame %zu; using %s.", index, prior ? "prior" : "previous pose");
         }
         // ======================================================
         
