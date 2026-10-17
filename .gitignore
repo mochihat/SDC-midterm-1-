@@ -1,0 +1,8 @@
+build/
+install/
+log/
+build_*/
+install_*/
+log_*/
+__pycache__/
+src/localization/result/
