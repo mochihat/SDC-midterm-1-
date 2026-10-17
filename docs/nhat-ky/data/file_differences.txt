@@ -1,0 +1,18 @@
+track  from                           to                               pos RMS m yaw RMS deg mean(from-to) deg
+track1 gnss_1.csv                     gnss_smooth_1.csv                    0.095       0.501       -0.000
+track1 gnss_smooth_1.csv              gnss_heading_1.csv                   0.000       2.379       -0.416
+track1 gnss_smooth_1.csv              rts_pos_gnssyaw_1.csv                0.108       0.000       +0.000
+track1 rts_pos_gnssyaw_1.csv          rts_pos_gnssyaw_dt-0.1_1.csv         1.010       0.000       +0.000
+track1 rts_pos_gnssyaw_1.csv          rts_pos_gnssyaw_dt0.1_1.csv          1.011       0.000       +0.000
+track1 rts_pos_gnssyaw_1.csv          probe_lat+0.5_1.csv                  0.500       0.000       +0.000
+track1 rts_pos_gnssyaw_1.csv          probe_lat-0.5_1.csv                  0.500       0.000       +0.000
+track1 rts_pos_gnssyaw_1.csv          probe_yaw+1_1.csv                    0.000       1.000       -1.000
+track1 rts_pos_gnssyaw_1.csv          probe_yaw-1_1.csv                    0.000       1.000       +1.000
+track1 rts_pos_gnssyaw_1.csv          phys_yawb_1.csv                      0.000       0.420       -0.420
+track1 phys_yawb_1.csv                phys_yawb_ndt_1.csv                  0.471       0.000       +0.000
+track2 gnss_2.csv                     gnss_smooth_2.csv                    0.089       0.227       +0.000
+track2 gnss_smooth_2.csv              gnss_heading_2.csv                   0.000       1.370       +0.570
+track2 gnss_heading_2.csv             fusion_s9r4_headingyaw_2.csv         0.197       0.000       +0.000
+track2 gnss_heading_2.csv             rts_heading_2.csv                    0.116       0.363       +0.083
+track2 rts_heading_2.csv              rts_heading_dt-0.1_2.csv             1.128       0.100       -0.034
+track2 rts_heading_2.csv              rts_heading_dt0.1_2.csv              1.129       0.100       +0.035

@@ -1,0 +1,30 @@
+== Track1: GNSS /localizer_node/gnss_pose
+  messages 440, duration 109.7 s, dt mean 0.250 s max 0.305 s
+  header stamp - bag time: mean -1.2 ms (min -4.1, max -0.4)
+  z: min 110.132 max 110.132 (constant -> planar pose)
+  path length 1052.9 m, mean speed 9.60 m/s, max step 3.34 m, repeated positions 0
+  position second difference RMS 0.142 m (jitter indicator)
+  motion heading - GNSS yaw (moving): mean +0.44 deg, std 3.91 deg
+  init_guess vs first GNSS: position diff 0.55 m, yaw diff +2.00 deg, z diff -0.20 m
+== Track1: IMU /imu/data (frame imu_link)
+  messages 10999, rate 100 Hz, accel mean [-0.91  0.4   9.74], gyro std [0.0184 0.0223 0.0119] rad/s
+  IMU orientation yaw - GNSS yaw: mean -2.95 deg, std 2.15 deg
+  total yaw change: GNSS +28.0 deg, IMU orientation +24.3 deg, integrated gyro z -4.1 deg
+  corr(GNSS yaw rate, gyro z): 0.193 at lag 0, best 0.368 at lag -1.70 s
+  gyro z bias fit (2 s yaw changes): lag 0 -> bias -0.296 deg/s, residual 2.667 deg; best lag -1.80 s -> bias -0.296 deg/s, residual 2.485 deg
+
+== Track2: GNSS /localizer_node/gnss_pose
+  messages 475, duration 118.5 s, dt mean 0.250 s max 0.266 s
+  header stamp - bag time: mean -1.2 ms (min -4.8, max -0.4)
+  z: min 17.344 max 17.344 (constant -> planar pose)
+  path length 1247.4 m, mean speed 10.53 m/s, max step 3.81 m, repeated positions 8
+  position second difference RMS 0.052 m (jitter indicator)
+  motion heading - GNSS yaw (moving): mean -0.66 deg, std 1.66 deg
+  init_guess vs first GNSS: position diff 0.65 m, yaw diff +14.85 deg, z diff -0.18 m
+== Track2: IMU /imu/data (frame imu_link)
+  messages 11872, rate 100 Hz, accel mean [-0.78  0.02  9.76], gyro std [0.0228 0.0287 0.0153] rad/s
+  IMU orientation yaw - GNSS yaw: mean -2.83 deg, std 2.14 deg
+  total yaw change: GNSS -40.1 deg, IMU orientation -33.3 deg, integrated gyro z -71.2 deg
+  corr(GNSS yaw rate, gyro z): 0.692 at lag 0, best 0.905 at lag -1.45 s
+  gyro z bias fit (2 s yaw changes): lag 0 -> bias -0.259 deg/s, residual 1.230 deg; best lag -1.45 s -> bias -0.251 deg/s, residual 0.752 deg
+

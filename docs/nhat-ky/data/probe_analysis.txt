@@ -1,0 +1,14 @@
+
+Track1: base rts_pos_gnssyaw_1.csv score 1.25992; RMS speed 10.11 m/s, RMS yaw rate 1.88 deg/s
+    time probes (+-0.1 s)        c = 0.3540  ->  position RMSE 0.906 m, yaw RMSE 1.77 deg
+      optimal time offset -3.6 ms (yaw not shifted; exact)
+    lateral probes (+-0.5 m)     c = 0.3552  ->  position RMSE 0.905 m, yaw RMSE 1.78 deg
+      optimal lateral shift +0.025 m (positive = left)
+    yaw probes (+-1 deg)         c = 0.3553  ->  position RMSE 0.905 m, yaw RMSE 1.78 deg
+      optimal yaw offset +0.347 deg
+      prediction for phys_yawb_1.csv (yaw +0.42 deg): 1.25339; actual 1.25338
+    agreement of the 3 independent estimates of c: 0.3540 .. 0.3553 (spread 0.0014)
+
+Track2: base rts_heading_2.csv score 0.40778; RMS speed 11.29 m/s, RMS yaw rate 1.00 deg/s
+    time probes (+-0.1 s)        c = 0.1756  ->  position RMSE 0.232 m, yaw RMSE 0.88 deg
+      optimal time offset -4.7 ms (yaw also shifted, changing by ~0.10 deg RMS; ignored)

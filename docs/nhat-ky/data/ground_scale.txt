@@ -1,0 +1,58 @@
+== Track1
+frame     0: ground h 0.1904  x95 2.941  x95/h   15.4  map ground z 108.55
+frame   150: ground h 0.1803  x95 3.113  x95/h   17.3  map ground z 107.73
+frame   300: ground h 0.1737  x95 2.097  x95/h   12.1  map ground z 108.30
+frame   450: ground h 0.1803  x95 2.862  x95/h   15.9  map ground z 108.17
+frame   600: ground h 0.1802  x95 2.383  x95/h   13.2  map ground z 108.08
+frame   750: ground h 0.1795  x95 2.778  x95/h   15.5  map ground z 108.13
+frame   900: ground h 0.1897  x95 2.112  x95/h   11.1  map ground z 108.45
+frame  1050: ground h 0.1982  x95 2.354  x95/h   11.9  map ground z 108.05
+frame  1200: ground h 0.1806  x95 4.239  x95/h   23.5  map ground z 108.08
+frame  1350: ground h 0.1903  x95 3.695  x95/h   19.4  map ground z 108.22
+frame  1500: ground h 0.1776  x95 2.711  x95/h   15.3  map ground z 108.12
+frame  1650: ground h 0.1687  x95 2.587  x95/h   15.3  map ground z 108.14
+frame  1800: ground h 0.1697  x95 4.356  x95/h   25.7  map ground z 107.97
+frame  1950: ground h 0.1698  x95 2.828  x95/h   16.7  map ground z 108.47
+frame  2100: ground h 0.1698  x95 2.432  x95/h   14.3  map ground z 108.68
+frame  2250: ground h 0.1803  x95 2.410  x95/h   13.4  map ground z 108.32
+frame  2400: ground h 0.1725  x95 3.303  x95/h   19.1  map ground z 108.34
+frame  2550: ground h 0.1656  x95 3.579  x95/h   21.6  map ground z 108.14
+frame  2700: ground h 0.1682  x95 4.261  x95/h   25.3  map ground z 107.96
+frame  2850: ground h 0.1696  x95 4.648  x95/h   27.4  map ground z 108.57
+frame  3000: ground h 0.1902  x95 2.560  x95/h   13.5  map ground z 107.95
+
+h: median 0.1795  min 0.1656  max 0.1982  rel.std 5.03%
+  if camera height 1.5 m -> scale median 8.36
+  if camera height 1.8 m -> scale median 10.03
+  if camera height 2.0 m -> scale median 11.14
+  if camera height 2.2 m -> scale median 12.26
+
+== Track2
+frame     0: ground h 0.1996  x95 2.218  x95/h   11.1  map ground z 16.79
+frame   150: ground h 0.1902  x95 2.203  x95/h   11.6  map ground z 16.79
+frame   300: ground h 0.1797  x95 2.026  x95/h   11.3  map ground z 16.40
+frame   450: ground h 0.1798  x95 2.882  x95/h   16.0  map ground z 15.55
+frame   600: ground h 0.1602  x95 4.847  x95/h   30.3  map ground z 15.64
+frame   750: ground h 0.1803  x95 2.061  x95/h   11.4  map ground z 15.38
+frame   900: ground h 0.1707  x95 2.236  x95/h   13.1  map ground z 15.55
+frame  1050: ground h 0.1926  x95 1.740  x95/h    9.0  map ground z 15.55
+frame  1200: ground h 0.1836  x95 2.015  x95/h   11.0  map ground z 15.42
+frame  1350: ground h 0.1796  x95 3.871  x95/h   21.5  map ground z 15.52
+frame  1500: ground h 0.1802  x95 1.697  x95/h    9.4  map ground z 15.45
+frame  1650: ground h 0.1955  x95 2.231  x95/h   11.4  map ground z 15.78
+frame  1800: ground h 0.1902  x95 2.295  x95/h   12.1  map ground z 15.81
+frame  1950: ground h 0.1733  x95 2.372  x95/h   13.7  map ground z 15.45
+frame  2100: ground h 0.1697  x95 2.625  x95/h   15.5  map ground z 14.95
+frame  2250: ground h 0.1957  x95 1.455  x95/h    7.4  map ground z 16.13
+frame  2400: ground h 0.1703  x95 2.339  x95/h   13.7  map ground z 15.34
+frame  2550: ground h 0.1698  x95 1.841  x95/h   10.8  map ground z 15.51
+frame  2700: ground h 0.1969  x95 2.790  x95/h   14.2  map ground z 15.77
+frame  2850: ground h 0.1631  x95 1.574  x95/h    9.7  map ground z 15.55
+frame  3000: ground h 0.1602  x95 1.720  x95/h   10.7  map ground z 15.46
+frame  3150: ground h 0.1624  x95 1.644  x95/h   10.1  map ground z 15.46
+
+h: median 0.1798  min 0.1602  max 0.1996  rel.std 6.87%
+  if camera height 1.5 m -> scale median 8.34
+  if camera height 1.8 m -> scale median 10.01
+  if camera height 2.0 m -> scale median 11.12
+  if camera height 2.2 m -> scale median 12.24

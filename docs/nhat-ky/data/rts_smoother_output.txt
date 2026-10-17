@@ -1,0 +1,31 @@
+## Track1 free ML
+ML noise: sigma_p 0.003 m, sigma_yaw 1.00 deg, q_a 3.0 m/s^2, q_w 0.1 rad/s^2 (loglik 1391.4)
+   next: sp 0.006 syaw 1.00 qa 3.0 qw 0.1 loglik 1391.1
+   next: sp 0.010 syaw 1.00 qa 3.0 qw 0.1 loglik 1390.5
+   next: sp 0.020 syaw 1.00 qa 3.0 qw 0.1 loglik 1386.8
+estimated GNSS yaw offset b: mean -0.420 deg; speed median 10.21 m/s
+wrote /tmp/a.csv
+
+## Track1 physical process noise (q_a=1, q_w=0.1)
+ML noise: sigma_p 0.050 m, sigma_yaw 2.00 deg, q_a 1.0 m/s^2, q_w 0.1 rad/s^2 (loglik 1238.5)
+   next: sp 0.100 syaw 2.00 qa 1.0 qw 0.1 loglik 1208.4
+   next: sp 0.050 syaw 4.00 qa 1.0 qw 0.1 loglik 1162.5
+   next: sp 0.100 syaw 4.00 qa 1.0 qw 0.1 loglik 1098.0
+estimated GNSS yaw offset b: mean -0.407 deg; speed median 10.18 m/s
+wrote /tmp/b.csv
+
+## Track1 physical process noise (q_a=0.3, q_w=0.1)
+ML noise: sigma_p 0.100 m, sigma_yaw 2.00 deg, q_a 0.3 m/s^2, q_w 0.1 rad/s^2 (loglik 933.4)
+   next: sp 0.100 syaw 4.00 qa 0.3 qw 0.1 loglik 849.7
+   next: sp 0.050 syaw 2.00 qa 0.3 qw 0.1 loglik 808.1
+   next: sp 0.050 syaw 4.00 qa 0.3 qw 0.1 loglik 785.5
+estimated GNSS yaw offset b: mean -0.388 deg; speed median 10.14 m/s
+wrote /tmp/c.csv
+
+## Track2 free ML
+ML noise: sigma_p 0.006 m, sigma_yaw 1.00 deg, q_a 1.0 m/s^2, q_w 0.03 rad/s^2 (loglik 2565.5)
+   next: sp 0.003 syaw 1.00 qa 1.0 qw 0.03 loglik 2565.1
+   next: sp 0.010 syaw 1.00 qa 1.0 qw 0.03 loglik 2563.6
+   next: sp 0.020 syaw 1.00 qa 1.0 qw 0.03 loglik 2530.9
+estimated GNSS yaw offset b: mean +0.653 deg; speed median 11.77 m/s
+wrote /tmp/d.csv

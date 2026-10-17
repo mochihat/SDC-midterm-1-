@@ -1,0 +1,23 @@
+track,time_utc,time_utc+8,kaggle_file_name,file,public_score,status,note
+1,2026-10-15 20:32:07,2026-10-16 04:32,trial.csv,trial.csv,5822.14965,complete,nop truoc khi bat dau ghi chep nay; khong co file
+1,2026-10-16 01:36:00,2026-10-16 09:36,kaggle_track1_result.csv,kaggle_track1_result.csv,602.39927,complete,nop truoc khi bat dau ghi chep nay; khong co file
+1,2026-10-17 10:51:45,2026-10-17 18:51,gnss_1.csv,gnss_1.csv,1.31094,complete,
+1,2026-10-17 10:57:40,2026-10-17 18:57,gnss_smooth_1.csv,gnss_smooth_1.csv,1.26235,complete,
+1,2026-10-17 10:58:22,2026-10-17 18:58,gnss_heading_1.csv,gnss_heading_1.csv,1.35783,complete,
+1,2026-10-17 12:28:50,2026-10-17 20:28,rts_pos_gnssyaw_1_00e0cd.csv,rts_pos_gnssyaw_1.csv,1.25992,complete,
+1,2026-10-17 12:30:48,2026-10-17 20:30,rts_pos_gnssyaw_dt-0.1_1_6775a7.csv,rts_pos_gnssyaw_dt-0.1_1.csv,1.68409,complete,
+1,2026-10-17 12:31:30,2026-10-17 20:31,rts_pos_gnssyaw_dt0.1_1_70e5a9.csv,rts_pos_gnssyaw_dt0.1_1.csv,1.73784,complete,
+1,2026-10-17 12:35:32,2026-10-17 20:35,probe_lat0.5_1_328c09.csv,probe_lat+0.5_1.csv,1.37688,complete,
+1,2026-10-17 12:39:50,2026-10-17 20:39,probe_lat-0.5_1_3541d7.csv,probe_lat-0.5_1.csv,1.40077,complete,
+1,2026-10-17 12:40:11,2026-10-17 20:40,probe_yaw1_1_9c3030.csv,probe_yaw+1_1.csv,1.27676,complete,
+1,2026-10-17 12:43:22,2026-10-17 20:43,probe_yaw-1_1_86d0f5.csv,probe_yaw-1_1.csv,1.34505,complete,
+1,2026-10-17 12:44:49,2026-10-17 20:44,phys_yawb_1_86014b.csv,phys_yawb_1.csv,1.25338,complete,
+1,2026-10-17 12:45:09,2026-10-17 20:45,phys_yawb_ndt_1_3fb19c.csv,phys_yawb_ndt_1.csv,1.27855,complete,
+2,2026-10-17 10:52:41,2026-10-17 18:52,gnss_2.csv,gnss_2.csv,0.57111,complete,
+2,2026-10-17 10:59:07,2026-10-17 18:59,gnss_smooth_2.csv,gnss_smooth_2.csv,0.57811,complete,
+2,2026-10-17 10:59:43,2026-10-17 18:59,gnss_heading_1.csv,gnss_heading_1.csv,,error,Submission has 3011 rows but 3299 were expected.
+2,2026-10-17 11:00:14,2026-10-17 19:00,gnss_heading_2.csv,gnss_heading_2.csv,0.47281,complete,
+2,2026-10-17 12:18:49,2026-10-17 20:18,fusion_s9r4_headingyaw_2_897bd3.csv,fusion_s9r4_headingyaw_2.csv,0.53520,complete,
+2,2026-10-17 12:28:29,2026-10-17 20:28,rts_heading_2_6b9926.csv,rts_heading_2.csv,0.40778,complete,
+2,2026-10-17 12:30:27,2026-10-17 20:30,rts_heading_dt-0.1_2_da5bc6.csv,rts_heading_dt-0.1_2.csv,1.27503,complete,
+2,2026-10-17 12:31:09,2026-10-17 20:31,rts_heading_dt0.1_2_66c1c2.csv,rts_heading_dt0.1_2.csv,1.37861,complete,
