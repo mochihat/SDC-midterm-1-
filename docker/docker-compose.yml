@@ -1,0 +1,27 @@
+services:
+  sdc_ros2_dev:
+    build: .
+    image: sdc_ros2_dev:latest
+    # container_name: hw2_container
+    network_mode: host
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /home/thuhang/SDC-midterm01/midterm01:/root/midterm
+      - /home/thuhang/SDC-midterm01/data:/root/data
+
+    stdin_open: true
+    tty: true
+
+    # GPU disabled: nvidia-container-toolkit is not installed on this host,
+    # and the PCL-based localization runs on CPU.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
