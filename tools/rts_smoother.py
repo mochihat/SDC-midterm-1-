@@ -99,6 +99,8 @@ def main():
     ap.add_argument("out_csv")
     ap.add_argument("--yaw", default="heading", choices=["heading", "gnss"])
     ap.add_argument("--grid", default="full", choices=["small", "full"])
+    ap.add_argument("--time-offset", type=float, default=0.0,
+                    help="seconds added to frame timestamps before sampling the trajectory")
     ap.add_argument("--qa", type=float, help="fix longitudinal acceleration noise [m/s^2] (physical prior)")
     ap.add_argument("--qw", type=float, help="fix yaw acceleration noise [rad/s^2] (physical prior)")
     a = ap.parse_args()
@@ -106,7 +108,7 @@ def main():
     g_t, g_x, g_y, g_yaw = read_gnss(os.path.join(a.track_dir, f"{a.track_name}.db3"))
     f_t = frame_timestamps(os.path.join(a.track_dir, "raw_ply"))
     t0 = min(g_t[0], f_t[0])
-    gs, fs = (g_t - t0) / 1e9, (f_t - t0) / 1e9
+    gs, fs = (g_t - t0) / 1e9, (f_t - t0) / 1e9 + a.time_offset
     gnss = np.stack([g_x, g_y, g_yaw], axis=1)
 
     # Likelihood is evaluated on GNSS epochs only (frame epochs carry no information).
