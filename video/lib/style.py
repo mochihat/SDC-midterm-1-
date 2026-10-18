@@ -17,10 +17,13 @@ FONT = "Noto Sans"
 config.background_color = BG
 
 
+def chapter_dir(chapter):
+    return os.path.join(os.environ.get("VIDEO_ROOT", "."), "audio", chapter)
+
+
 def timing(chapter):
-    """Narration timing written by lib/tts.py (falls back to 3 s per line for a silent preview)."""
-    path = os.path.join(os.environ.get("VIDEO_ROOT", "."), "audio", chapter, "timing.json")
-    data = json.load(open(path))
+    """Narration timing written by lib/tts.py: the minimum length of each beat."""
+    data = json.load(open(os.path.join(chapter_dir(chapter), "timing.json")))
     return [line["dur"] + data["gap"] for line in data["lines"]]
 
 
@@ -36,6 +39,7 @@ class BeatScene(Scene):
         self.durs = timing(self.CHAPTER)
         self.beat_i = 0
         self.beat_used = 0.0
+        self.beat_starts = [0.0]
 
     def play(self, *args, **kwargs):
         before = self.renderer.time
@@ -43,12 +47,21 @@ class BeatScene(Scene):
         self.beat_used += self.renderer.time - before
 
     def end_beat(self):
-        """Wait out the rest of the current narration line, then start the next beat."""
+        """Wait out the rest of the current narration line, then start the next beat.
+
+        A beat whose animations run longer than its line simply lasts longer: the real start time of every beat
+        is saved (beats.json) and build.py places each narration line there, so voice and picture stay in sync.
+        """
         left = self.durs[self.beat_i] - self.beat_used
         if left > 0.02:
             self.wait(left)
         self.beat_i += 1
         self.beat_used = 0.0
+        self.beat_starts.append(self.renderer.time)
+
+    def tear_down(self):
+        with open(os.path.join(chapter_dir(self.CHAPTER), "beats.json"), "w") as f:
+            json.dump({"starts": self.beat_starts[:len(self.durs)], "end": self.renderer.time}, f)
 
     # ---- kinetic typography -------------------------------------------------
     def pop_text(self, mob, run_time=0.35):

@@ -26,7 +26,6 @@ def files(scene):
     for c in cards:
         scene.play(FadeIn(c, shift=UP * 0.3), run_time=0.35)
         scene.wait(1.6)
-        scene.beat_used += 1.6
     note = T("đề ghi process/…  ·  repo thật: src/localization/processing_codes/", 24, FG).to_edge(DOWN, buff=0.5)
     scene.play(FadeIn(note), run_time=0.3)
     return cards + [note]

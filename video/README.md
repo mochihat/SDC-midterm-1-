@@ -29,12 +29,18 @@ RUN="docker run --rm -u $(id -u):$(id -g) -e HOME=/tmp -v $PWD:/work -w /work sd
 
 $RUN python3 build.py --chapters c3_06_icp --preview   # 1 chương, 480p15, nhanh → out/c3_06_icp.preview.mp4
 $RUN python3 build.py --chapters c3_06_icp             # 1 chương, 1080p30 → out/c3_06_icp.mp4
-$RUN python3 build.py                                  # toàn bộ → out/midterm_localization.mp4 (+ .srt)
+$RUN python3 build.py                                  # toàn bộ → out/midterm_localization.mp4 (+ out/phude_midterm.srt)
 $RUN python3 build.py --no-music                       # chỉ giọng đọc + SFX
 $RUN python3 build.py --concat-only                    # chỉ ghép các chương đã render sẵn
 ```
 
 - Cần internet (edge-tts gửi lời thoại lên dịch vụ đọc của Microsoft). Câu đã đọc được lưu lại, sửa một câu chỉ đọc lại câu đó.
+- Hai giọng: tiếng Việt `vi-VN-HoaiMyNeural`, thuật ngữ tiếng Anh `en-US-JennyNeural` (danh sách `TERMS` trong
+  `lib/tts.py`; thêm từ vào đó nếu nghe thấy từ tiếng Anh bị đọc kiểu tiếng Việt). Hai giọng được chỉnh cùng âm lượng.
+- Đồng bộ: cảnh ghi thời điểm bắt đầu thật của từng nhịp (`audio/<id>/beats.json`), mỗi câu đọc được đặt đúng vào đó.
+- Phụ đề được in thẳng vào video, trong dải riêng dưới hình (hình thu nhỏ 5/6) nên không che nội dung; cỡ chữ
+  `SUB_SIZE` trong `build.py`. File phụ đề rời: `out/phude_midterm.srt` (đặt tên khác tên video để trình phát
+  không tự bật thêm một lớp phụ đề trùng).
 - Âm lượng nhạc từng chương: `music_volume` trong danh sách `CHAPTERS` ở `build.py` (0 = tắt nhạc chương đó).
 - Nhạc riêng: đặt `assets/music/custom.mp3` (ghi nguồn vào `assets/CREDITS.md`), `build.py` sẽ ưu tiên.
 - Mỗi chương render độc lập: sửa `scenes/<id>.py` rồi chạy lại với `--chapters <id>`, sau đó `--concat-only`.

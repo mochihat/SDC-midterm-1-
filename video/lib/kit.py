@@ -97,7 +97,6 @@ class ScriptScene(BeatScene):
             self.play(FadeIn(r, shift=RIGHT * 0.4), run_time=0.3, rate_func=rate_functions.ease_out_back)
             if step > 0.35:
                 self.wait(step - 0.3)
-                self.beat_used += step - 0.3
         return [rows]
 
     def el_image(self, name, height=5.4, shift=DOWN * 0.3):
