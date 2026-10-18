@@ -8,24 +8,21 @@ kết quả ra sao, rút ra kết luận gì) và các nhận xét sau khi làm.
 - Điểm Kaggle **càng thấp càng tốt**.
 - Phần công cụ tự động nộp bài không được ghi trong tài liệu này.
 
-## Kết quả hiện tại (chụp lúc ~08:10 ngày 18/10/2026)
+## Kết quả hiện tại (chụp lúc ~01:30 ngày 19/10/2026)
 
 | | Track01 | Track02 |
 |---|---|---|
 | Baseline của TA | 1.79075 | 1.92587 |
-| **File tốt nhất của nhóm (đội 11)** | **`posproj_v1_1.csv` – 1.07618** | **`yawproj_v4_2.csv` – 0.30984** |
-| File tốt nhất **chỉ dùng tham số vật lý** | `phys_yawb_1.csv` – 1.25338 | `rts_heading_2.csv` – 0.40778 |
-| Hạng | 3 / 5 đội | 3 / 4 đội |
-| Hạng 1 | đội 13 – 0.89331 | đội 12 – 0.28263 |
+| **File tốt nhất của nhóm (đội 11)** | **`pass2dm_bestyaw_1.csv` – 0.92775** | **`posyaw_v2_2.csv` – 0.29887** |
+| Tốt nhất mà vị trí chỉ từ thuật toán (GNSS + Kalman + GICP) | `gicp_ground_pass2_pos_1.csv` – 0.99283 | – |
+| Hạng | 3 / 6 đội | 3 / 6 đội |
+| Hạng 1 | đội 6 – 0.76085 | đội 6 – 0.25774 |
 
-Hai file tốt nhất dùng **trọng số chọn theo điểm Kaggle** (xem [05](05-phan-tich-loi.md) mục 5–6) – không phải tham số vật lý.
+Yaw của các file tốt nhất là **tổ hợp chọn theo điểm Kaggle** (xem [05](05-phan-tich-loi.md) mục 5–6);
+phần vị trí Track01 mới nhất là scan matching GICP – xem [08](08-gicp-va-scale.md) (kể cả phần nào dựa vào điểm).
 
-Leaderboard lúc đó:
-- Track01: đội 13 – 0.89331, đội 12 – 0.93699, **đội 11 – 1.07618**, đội 3 – 1.15275, đội 6 – 1.62239, baseline – 1.79075
-- Track02: đội 12 – 0.28263, đội 3 – 0.30576, **đội 11 – 0.30984**, đội 13 – 0.40677, baseline – 1.92587
-
-Diễn biến: 17/10 ~21:00 Track01 hạng 3 (1.25338), Track02 hạng 2 (0.40778) → ~22:20 Track01 1.21861, Track02 0.34530 →
-đêm 17/10 các đội 3, 12, 13 cải thiện mạnh → sáng 18/10 Track01 1.07618 (hạng 3), Track02 0.30984 (hạng 3).
+Diễn biến: 17/10 ~21:00 Track01 hạng 3 (1.25338), Track02 hạng 2 (0.40778) → sáng 18/10 Track01 1.07618, Track02 0.30984 →
+trưa 18/10 1.05448 / 0.29887 → đêm 18→19/10 GICP + tỉ lệ theo mặt đường: Track01 **0.92775**.
 
 ## Tóm tắt nhanh
 
@@ -58,6 +55,7 @@ Diễn biến: 17/10 ~21:00 Track01 hạng 3 (1.25338), Track02 hạng 2 (0.4077
 | [05-phan-tich-loi.md](05-phan-tich-loi.md) | Tách điểm thành lỗi vị trí / lỗi yaw bằng các file thăm dò |
 | [06-nhan-xet.md](06-nhan-xet.md) | Những điều nhận ra, cái gì hiệu quả / không, sai lầm, rủi ro, hướng tiếp theo |
 | [07-tai-tao.md](07-tai-tao.md) | Cách tạo lại **từng file đã nộp** (đã kiểm tra: 34/34 file trùng khớp từng byte) |
+| [08-gicp-va-scale.md](08-gicp-va-scale.md) | GICP / ICP 3 bậc tự do trên `3cameras_ply`, tỉ lệ theo mặt đường, trừ độ lệch trung bình – Track01 0.92775 |
 
 ## Cấu trúc thư mục
 
