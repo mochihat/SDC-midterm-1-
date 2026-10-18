@@ -1,0 +1,4 @@
+audio/
+out/
+docker/build.log
+__pycache__/
