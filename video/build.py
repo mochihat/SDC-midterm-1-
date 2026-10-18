@@ -5,6 +5,7 @@ Run inside the render container (see README.md):
   python3 build.py                         # all chapters, 1080p30 -> out/midterm_localization.mp4
   python3 build.py --preview               # 480p15, much faster
   python3 build.py --chapters c3_06_icp    # only some chapters (each also written as out/<id>.mp4)
+  python3 build.py --concat-only           # join already rendered chapters into the final video
   python3 build.py --no-music              # voice + sound effects only
 """
 import argparse
@@ -24,7 +25,26 @@ import tts  # noqa: E402
 
 # One entry per chapter, in video order. music_volume: background music level before ducking (0 = off).
 CHAPTERS = [
+    {"id": "c0_intro", "file": "scenes/c0_intro.py", "scene": "C0_Intro", "music_volume": 0.26},
+    {"id": "c1_big_picture", "file": "scenes/c1_big_picture.py", "scene": "C1_BigPicture", "music_volume": 0.22},
+    {"id": "c2_why", "file": "scenes/c2_why.py", "scene": "C2_Why", "music_volume": 0.22},
+    {"id": "c3_01_frames", "file": "scenes/c3_01_frames.py", "scene": "C3_01_Frames", "music_volume": 0.18},
+    {"id": "c3_02_pose", "file": "scenes/c3_02_pose.py", "scene": "C3_02_Pose", "music_volume": 0.18},
+    {"id": "c3_03_pointcloud", "file": "scenes/c3_03_pointcloud.py", "scene": "C3_03_PointCloud", "music_volume": 0.18},
+    {"id": "c3_04_scale", "file": "scenes/c3_04_scale.py", "scene": "C3_04_Scale", "music_volume": 0.18},
+    {"id": "c3_05_preprocess", "file": "scenes/c3_05_preprocess.py", "scene": "C3_05_Preprocess", "music_volume": 0.18},
     {"id": "c3_06_icp", "file": "scenes/c3_06_icp.py", "scene": "C3_06_ICP", "music_volume": 0.22},
+    {"id": "c3_07_ndt", "file": "scenes/c3_07_ndt.py", "scene": "C3_07_NDT", "music_volume": 0.18},
+    {"id": "c3_08_tracking", "file": "scenes/c3_08_tracking.py", "scene": "C3_08_Tracking", "music_volume": 0.18},
+    {"id": "c3_09_ros", "file": "scenes/c3_09_ros.py", "scene": "C3_09_ROS", "music_volume": 0.18},
+    {"id": "c3_10_metric", "file": "scenes/c3_10_metric.py", "scene": "C3_10_Metric", "music_volume": 0.18},
+    {"id": "c3_11_kaggle", "file": "scenes/c3_11_kaggle.py", "scene": "C3_11_Kaggle", "music_volume": 0.2},
+    {"id": "c4_code", "file": "scenes/c4_code.py", "scene": "C4_Code", "music_volume": 0.18},
+    {"id": "c5a_work", "file": "scenes/c5a_work.py", "scene": "C5a_Work", "music_volume": 0.18},
+    {"id": "c5b_work", "file": "scenes/c5b_work.py", "scene": "C5b_Work", "music_volume": 0.18},
+    {"id": "c6_next", "file": "scenes/c6_next.py", "scene": "C6_Next", "music_volume": 0.2},
+    {"id": "c7_checklist", "file": "scenes/c7_checklist.py", "scene": "C7_Checklist", "music_volume": 0.22},
+    {"id": "c8_end", "file": "scenes/c8_end.py", "scene": "C8_End", "music_volume": 0.26},
 ]
 
 SR = 44100
@@ -151,18 +171,31 @@ def build_chapter(ch, preview, music_on):
     return out, starts, dur
 
 
+def existing_chapter(ch, preview):
+    """An already rendered chapter (for --concat-only)."""
+    mod = load_module(ch["file"])
+    out = os.path.join(OUT, ch["id"] + (".preview" if preview else "") + ".mp4")
+    if not os.path.exists(out):
+        sys.exit(f"missing {out}: build it first with --chapters {ch['id']}")
+    return out, narration(ch["id"], mod.LINES), video_duration(out)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--chapters", nargs="*", help="chapter ids (default: all)")
     ap.add_argument("--preview", action="store_true", help="480p15 instead of 1080p30")
     ap.add_argument("--no-music", action="store_true")
+    ap.add_argument("--concat-only", action="store_true", help="only join chapters that are already rendered")
     a = ap.parse_args()
 
     os.makedirs(OUT, exist_ok=True)
     if not os.path.exists(os.path.join(ROOT, "assets", "music", "upbeat_loop.wav")):
         run([sys.executable, os.path.join(ROOT, "assets", "make_audio.py")])
     chosen = [c for c in CHAPTERS if not a.chapters or c["id"] in a.chapters]
-    built = [build_chapter(c, a.preview, not a.no_music) for c in chosen]
+    if a.concat_only:
+        built = [existing_chapter(c, a.preview) for c in chosen]
+    else:
+        built = [build_chapter(c, a.preview, not a.no_music) for c in chosen]
 
     if len(built) > 1:
         lst = os.path.join(OUT, "concat.txt")

@@ -223,7 +223,7 @@ Mọi con số lấy từ `video/research_notes.md` (nguồn: git, `docs/nhat-ky
   Hai: crop – chỉ cắt lấy phần bản đồ quanh xe, ở đây là cộng trừ một trăm mét.
   Ba: lọc điểm lạc loài – outlier – bằng thống kê hoặc bán kính. Bốn: bỏ mặt đường nếu nó gây nhiễu. Năm: che phần nắp capo xe bằng mask mà đề cho sẵn.
   Nói thật: mình mới dùng một và hai, cộng thêm bỏ điểm xa hơn bốn mươi mét. Ba cái còn lại đề có gợi ý nhưng mình chưa thử.
-- **Chữ:** "1. VOXEL GRID 🧊" · "2. CROP ✂️" · "3. OUTLIER" · "4. BỎ MẶT ĐẤT" · "5. MASK CAPO" · "đã dùng: 1, 2 (+ bỏ điểm > 40 m)"
+- **Chữ:** "1. VOXEL GRID ❄️" · "2. CROP ✂️" · "3. OUTLIER" · "4. BỎ MẶT ĐẤT" · "5. MASK CAPO" · "đã dùng: 1, 2 (+ bỏ điểm > 40 m)"
 - **Hình:** animation voxel: lưới ô vuông phủ lên đám điểm 2D, mỗi ô co lại thành 1 điểm; số điểm đếm giảm.
 
 ### 3.6 ICP
@@ -423,7 +423,7 @@ Mọi con số lấy từ `video/research_notes.md` (nguồn: git, `docs/nhat-ky
   Tệ nhất: khi xe đứng yên, nó đóng băng. Track02 mười ba giây đầu: GNSS báo âm mười lăm độ, góc thật khoảng âm hai mươi độ.
   Mình dựng lại góc lúc đứng yên bằng con quay hồi chuyển – gyro – trong IMU. Track02 xuống 0.335.
   Nhưng có một cú lừa: bù độ trễ cho "đúng vật lý" lại làm điểm tệ đi. Đáp án không dùng hướng chạy đúng giờ. Đúng với dữ liệu chưa chắc đúng với đáp án.
-- **Chữ:** "yaw GNSS: 1.25 s mới đổi 1 lần ⏱️" · "đứng yên → đóng băng 🧊" · "gyro cứu: T2 0.335 ✅" · "bù trễ 'đúng vật lý' → tệ hơn ❌"
+- **Chữ:** "yaw GNSS: 1.25 s mới đổi 1 lần ⏱️" · "đứng yên → đóng băng ❄️" · "gyro cứu: T2 0.335 ✅" · "bù trễ 'đúng vật lý' → tệ hơn ❌"
 - **Hình:** đồ thị bậc thang yaw GNSS vs đường mượt hướng chạy (dữ liệu thật Track02, 0–20 s).
 
 ### 5.9 "Chọn theo điểm Kaggle" là gì

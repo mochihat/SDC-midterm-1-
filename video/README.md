@@ -31,14 +31,21 @@ $RUN python3 build.py --chapters c3_06_icp --preview   # 1 chương, 480p15, nha
 $RUN python3 build.py --chapters c3_06_icp             # 1 chương, 1080p30 → out/c3_06_icp.mp4
 $RUN python3 build.py                                  # toàn bộ → out/midterm_localization.mp4 (+ .srt)
 $RUN python3 build.py --no-music                       # chỉ giọng đọc + SFX
+$RUN python3 build.py --concat-only                    # chỉ ghép các chương đã render sẵn
 ```
 
 - Cần internet (edge-tts gửi lời thoại lên dịch vụ đọc của Microsoft). Câu đã đọc được lưu lại, sửa một câu chỉ đọc lại câu đó.
 - Âm lượng nhạc từng chương: `music_volume` trong danh sách `CHAPTERS` ở `build.py` (0 = tắt nhạc chương đó).
 - Nhạc riêng: đặt `assets/music/custom.mp3` (ghi nguồn vào `assets/CREDITS.md`), `build.py` sẽ ưu tiên.
-- Mỗi chương render độc lập: sửa `scenes/<id>.py` rồi chạy lại với `--chapters <id>`.
+- Mỗi chương render độc lập: sửa `scenes/<id>.py` rồi chạy lại với `--chapters <id>`, sau đó `--concat-only`.
+- Emoji dùng font Symbola (nét đơn sắc), vì Manim đổi chữ thành đường vector và không vẽ được font emoji màu.
+  Đổi font hoặc Docker image thì xoá `out/media/texts/` (Manim lưu SVG từng dòng chữ theo nội dung, sẽ dùng lại bản cũ).
+- Dịch vụ đọc của Microsoft đôi khi không trả âm thanh (`NoAudioReceived`) hoặc treo: `lib/tts.py` tự thử lại; nếu
+  một chương vẫn lỗi thì chạy lại chương đó.
 
 ## Thêm một chương
-1. Tạo `scenes/<id>.py` theo mẫu `scenes/c3_06_icp.py`: `LINES` (mỗi câu một nhịp), `SFX` (hiệu ứng theo nhịp),
-   class kế thừa `BeatScene`, mỗi nhịp kết thúc bằng `self.end_beat()` (nhịp kéo dài đúng bằng câu đọc).
+1. Tạo `scenes/<id>.py`. Cách nhanh: theo mẫu `scenes/c6_next.py` – danh sách `BEATS` gồm (câu đọc, các thành phần
+   hiển thị: title, big, caption, bullets, image, formula, code, table, summary, note, custom), xem `lib/kit.py`.
+   Cảnh tự vẽ hoàn toàn: theo mẫu `scenes/c3_06_icp.py` (`LINES`, `SFX`, class kế thừa `BeatScene`, mỗi nhịp kết thúc
+   bằng `self.end_beat()` – nhịp kéo dài đúng bằng câu đọc).
 2. Thêm một dòng vào `CHAPTERS` trong `build.py`.

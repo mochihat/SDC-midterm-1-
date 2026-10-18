@@ -7,6 +7,7 @@ Lines whose text, voice and rate are unchanged are not re-synthesized.
 import json
 import os
 import subprocess
+import time
 
 VOICE = "vi-VN-HoaiMyNeural"
 RATE = "+8%"
@@ -35,11 +36,15 @@ def synthesize(chapter, lines, audio_root, voice=VOICE, rate=RATE):
         path = os.path.join(folder, name)
         cached = old.get((text, name))
         if cached is None or not os.path.exists(path):
-            for attempt in range(4):
-                proc = subprocess.run(["edge-tts", "--voice", voice, f"--rate={rate}", "--text", text,
-                                       "--write-media", path], capture_output=True, text=True)
+            for attempt in range(6):
+                try:  # edge-tts can hang forever on a stalled connection
+                    proc = subprocess.run(["edge-tts", "--voice", voice, f"--rate={rate}", "--text", text,
+                                           "--write-media", path], capture_output=True, text=True, timeout=90)
+                except subprocess.TimeoutExpired as e:
+                    proc = subprocess.CompletedProcess(e.cmd, 1, "", "timeout")
                 if proc.returncode == 0 and os.path.exists(path) and os.path.getsize(path) > 0:
                     break
+                time.sleep(5 * (attempt + 1))  # network hiccups: back off before retrying
             else:
                 raise RuntimeError(f"edge-tts failed for line {i}: {proc.stderr[-300:]}")
             cached = {"text": text, "file": name, "dur": duration(path)}

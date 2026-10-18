@@ -2,8 +2,9 @@
 import json
 import os
 
-from manim import (DOWN, LEFT, RIGHT, UP, BackgroundRectangle, FadeIn, FadeOut, GrowFromCenter, Indicate,
-                   LaggedStart, RoundedRectangle, Scene, Text, VGroup, Write, config, rate_functions)
+from manim import (DOWN, LEFT, RIGHT, UP, BackgroundRectangle, FadeIn, FadeOut, GrowFromCenter, ImageMobject,
+                   Indicate, LaggedStart, RoundedRectangle, Scene, Text, UpdateFromAlphaFunc, VGroup, Write, config,
+                   rate_functions)
 
 BG = "#101321"
 FG = "#F5F5F5"
@@ -55,6 +56,8 @@ class BeatScene(Scene):
 
     def caption(self, text, color=ACCENT, size=44, pos=UP * 3.2):
         mob = T(text, size, color, "BOLD").move_to(pos)
+        if mob.width > 13.4:
+            mob.scale_to_fit_width(13.4)
         bg = BackgroundRectangle(mob, color=BG, fill_opacity=0.85, buff=0.15)
         group = VGroup(bg, mob)
         self.pop_text(group)
@@ -64,9 +67,14 @@ class BeatScene(Scene):
         box = RoundedRectangle(corner_radius=0.3, width=11, height=3, color=ACCENT, stroke_width=4)
         num = T(number, 36, ACCENT, "BOLD").next_to(box.get_top(), DOWN, buff=0.35)
         ttl = T(title, 60, FG, "BOLD").move_to(box.get_center())
+        if ttl.width > box.width - 0.6:
+            ttl.scale_to_fit_width(box.width - 0.6)
         group = VGroup(box, num, ttl)
         if subtitle:
-            group.add(T(subtitle, 30, BLUE).next_to(ttl, DOWN, buff=0.25))
+            sub = T(subtitle, 30, BLUE).next_to(ttl, DOWN, buff=0.25)
+            if sub.width > box.width - 0.6:
+                sub.scale_to_fit_width(box.width - 0.6)
+            group.add(sub)
         self.play(LaggedStart(FadeIn(box, scale=1.2), Write(num), GrowFromCenter(ttl), lag_ratio=0.3), run_time=1.0)
         if subtitle:
             self.play(FadeIn(group[-1], shift=UP * 0.2), run_time=0.4)
@@ -75,6 +83,8 @@ class BeatScene(Scene):
     def summary_card(self, items):
         head = T("NHỚ 3 Ý NÀY", 52, ACCENT, "BOLD").to_edge(UP, buff=0.8)
         rows = VGroup(*[T(f"{i + 1}. {s}", 34) for i, s in enumerate(items)]).arrange(DOWN, aligned_edge=LEFT, buff=0.45)
+        if rows.width > 13.4:
+            rows.scale_to_fit_width(13.4)
         rows.next_to(head, DOWN, buff=0.7)
         self.play(GrowFromCenter(head), run_time=0.4)
         for r in rows:
@@ -84,7 +94,16 @@ class BeatScene(Scene):
     def highlight(self, mob):
         self.play(Indicate(mob, color=ACCENT, scale_factor=1.15), run_time=0.5)
 
+    @staticmethod
+    def image_fade(img, fade_in):
+        """Opacity animation for images (Manim 0.18's FadeIn/FadeOut break on ImageMobject pixel arrays)."""
+        def update(m, alpha):
+            m.set_opacity(alpha if fade_in else 1 - alpha)
+        return UpdateFromAlphaFunc(img, update)
+
     def clear(self, *mobs, run_time=0.3):
         mobs = [m for m in mobs if m is not None]
         if mobs:
-            self.play(*[FadeOut(m) for m in mobs], run_time=run_time)
+            anims = [self.image_fade(m, False) if isinstance(m, ImageMobject) else FadeOut(m) for m in mobs]
+            self.play(*anims, run_time=run_time)
+            self.remove(*mobs)
