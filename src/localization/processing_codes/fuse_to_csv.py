@@ -6,7 +6,11 @@ for every frame.
 
 Usage:
   python3 fuse_to_csv.py PRIOR_CSV DEBUG_CSV OUT_CSV [--weight W] [--sigma-s S]
-                         [--max-xy M] [--max-yaw-deg D] [--yaw-weight WY]
+                         [--max-xy M] [--max-yaw-deg D] [--yaw-weight WY] [--demean]
+
+--demean removes the mean along-track / lateral correction (vehicle frame) before smoothing: the prior keeps the
+long-run average position, scan matching only adds the local deviations (complementary filter). Use it when the
+matcher has a constant offset (e.g. camera mounting) that the prior does not have.
   python3 fuse_to_csv.py PRIOR_CSV DEBUG_CSV --stats     # print correction statistics only
 """
 import argparse
@@ -56,9 +60,18 @@ def print_stats(dbg):
     print(f"  score median {np.median(dbg['score'][ok]):.4f}")
 
 
-def fuse(prior, dbg, weight, yaw_weight, sigma_s, max_xy, max_yaw_deg):
-    dx, dy, dyaw, _, _ = corrections(dbg)
-    good = (dbg["converged"] > 0) & (np.hypot(dx, dy) <= max_xy) & (np.abs(np.degrees(dyaw)) <= max_yaw_deg)
+def fuse(prior, dbg, weight, yaw_weight, sigma_s, max_xy, max_yaw_deg, demean=False, need_converged=True):
+    dx, dy, dyaw, along, lat = corrections(dbg)
+    good = (np.hypot(dx, dy) <= max_xy) & (np.abs(np.degrees(dyaw)) <= max_yaw_deg)
+    if need_converged:
+        good &= dbg["converged"] > 0
+    if demean:
+        c, s = np.cos(dbg["guess_yaw"]), np.sin(dbg["guess_yaw"])
+        along = along - along[good].mean()
+        lat = lat - lat[good].mean()
+        dx, dy = along * c - lat * s, along * s + lat * c
+        print(f"removed mean correction: along {np.mean(corrections(dbg)[3][good]):+.3f} m, "
+              f"lateral {np.mean(corrections(dbg)[4][good]):+.3f} m")
     idx = dbg["idx"][good]
     t = (dbg["timestamp_ns"][good] - dbg["timestamp_ns"][0]) / 1e9
     print(f"using {good.sum()}/{len(good)} matched frames")
@@ -90,13 +103,15 @@ def main():
     p.add_argument("--sigma-s", type=float, default=2.0)
     p.add_argument("--max-xy", type=float, default=3.0)
     p.add_argument("--max-yaw-deg", type=float, default=5.0)
+    p.add_argument("--demean", action="store_true")
+    p.add_argument("--any", action="store_true", help="also use frames the matcher did not mark converged")
     a = p.parse_args()
 
     prior, dbg = load_prior(a.prior), load_debug(a.debug)
     if a.stats or not a.out:
         print_stats(dbg)
         return
-    out = fuse(prior, dbg, a.weight, a.yaw_weight, a.sigma_s, a.max_xy, a.max_yaw_deg)
+    out = fuse(prior, dbg, a.weight, a.yaw_weight, a.sigma_s, a.max_xy, a.max_yaw_deg, a.demean, not a.any)
     with open(a.out, "w") as f:
         f.write("idx,x,y,yaw\n")
         for i, (x, y, yaw) in enumerate(out):
