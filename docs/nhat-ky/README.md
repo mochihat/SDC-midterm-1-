@@ -4,27 +4,28 @@ Thư mục này ghi lại toàn bộ quá trình làm bài: chuẩn bị môi tr
 **từng file đã nộp lên Kaggle** (tạo ra thế nào, khác gì so với file trước, đã chỉnh gì, vì sao chỉnh,
 kết quả ra sao, rút ra kết luận gì) và các nhận xét sau khi làm.
 
-- Thời gian ghi theo giờ địa phương **UTC+8** (trừ khi ghi rõ UTC). Toàn bộ công việc diễn ra ngày **17/10/2026**.
+- Thời gian ghi theo giờ địa phương **UTC+8** (trừ khi ghi rõ UTC). Công việc diễn ra ngày **17–18/10/2026**.
 - Điểm Kaggle **càng thấp càng tốt**.
 - Phần công cụ tự động nộp bài không được ghi trong tài liệu này.
 
-## Kết quả hiện tại (chụp lúc ~22:20 ngày 17/10/2026)
+## Kết quả hiện tại (chụp lúc ~08:10 ngày 18/10/2026)
 
 | | Track01 | Track02 |
 |---|---|---|
 | Baseline của TA | 1.79075 | 1.92587 |
-| **File tốt nhất của nhóm (đội 11)** | **`yawproj_v1_1.csv` – 1.21861** | **`yawproj_v3_2.csv` – 0.34530** |
+| **File tốt nhất của nhóm (đội 11)** | **`posproj_v1_1.csv` – 1.07618** | **`yawproj_v4_2.csv` – 0.30984** |
 | File tốt nhất **chỉ dùng tham số vật lý** | `phys_yawb_1.csv` – 1.25338 | `rts_heading_2.csv` – 0.40778 |
-| Hạng | 3 / 5 đội | 2 / 4 đội |
-| Hạng 1 | đội 13 – 0.91335 | đội 12 – 0.33283 |
+| Hạng | 3 / 5 đội | 3 / 4 đội |
+| Hạng 1 | đội 13 – 0.89331 | đội 12 – 0.28263 |
 
-Hai file tốt nhất dùng **trọng số chọn theo điểm Kaggle** (xem [05](05-phan-tich-loi.md) mục 5) – không phải tham số vật lý.
+Hai file tốt nhất dùng **trọng số chọn theo điểm Kaggle** (xem [05](05-phan-tich-loi.md) mục 5–6) – không phải tham số vật lý.
 
 Leaderboard lúc đó:
-- Track01: đội 13 – 0.91335, đội 12 – 1.00423, **đội 11 – 1.21861**, đội 3 – 1.22369, đội 6 – 1.64067, baseline – 1.79075
-- Track02: đội 12 – 0.33283, **đội 11 – 0.34530**, đội 13 – 0.46354, đội 3 – 0.56063, baseline – 1.92587
+- Track01: đội 13 – 0.89331, đội 12 – 0.93699, **đội 11 – 1.07618**, đội 3 – 1.15275, đội 6 – 1.62239, baseline – 1.79075
+- Track02: đội 12 – 0.28263, đội 3 – 0.30576, **đội 11 – 0.30984**, đội 13 – 0.40677, baseline – 1.92587
 
-(Lúc ~21:00: Track01 hạng 3 với 1.25338, Track02 hạng 2 với 0.40778; đội 13 sau đó vượt lên ở Track01.)
+Diễn biến: 17/10 ~21:00 Track01 hạng 3 (1.25338), Track02 hạng 2 (0.40778) → ~22:20 Track01 1.21861, Track02 0.34530 →
+đêm 17/10 các đội 3, 12, 13 cải thiện mạnh → sáng 18/10 Track01 1.07618 (hạng 3), Track02 0.30984 (hạng 3).
 
 ## Tóm tắt nhanh
 
@@ -41,6 +42,10 @@ Leaderboard lúc đó:
 7. Khi chỉ đổi yaw (giữ vị trí), mỗi lượt nộp cho biết chính xác một "hướng thay đổi yaw" giúp bao nhiêu → tính được **tổ hợp tối ưu**
    (dự đoán trùng điểm thật đến 0.0003). Cách này đưa Track01 1.253 → **1.219** và Track02 0.408 → **0.345**, nhưng các trọng số
    **chọn theo điểm Kaggle, không có ý nghĩa vật lý**.
+8. **Yaw GNSS thực chất được tính từ các vị trí GNSS** (hướng dịch chuyển trong 1 s, cập nhật ~1.25 s/lần, giữ nguyên ở giữa) và
+   **đứng yên khi xe dừng** (Track02: −15.2° suốt 13 s đầu, trong khi yaw thật ≈ −19.8°). Sửa yaw đoạn khởi hành bằng gyro: Track02 0.345 → 0.335.
+9. **NDT với `3cameras_ply` ở tỉ lệ 0.8** cho cải thiện vị trí thật đầu tiên (Track01 1.219 → 1.150 chỉ bằng đổi vị trí);
+   tổ hợp vị trí theo điểm Kaggle đưa Track01 tới **1.07618**.
 
 ## Mục lục
 
@@ -52,7 +57,7 @@ Leaderboard lúc đó:
 | [04-cac-lan-nop-kaggle.md](04-cac-lan-nop-kaggle.md) | **Từng lần nộp**: cách tạo, khác gì, vì sao, điểm, kết luận |
 | [05-phan-tich-loi.md](05-phan-tich-loi.md) | Tách điểm thành lỗi vị trí / lỗi yaw bằng các file thăm dò |
 | [06-nhan-xet.md](06-nhan-xet.md) | Những điều nhận ra, cái gì hiệu quả / không, sai lầm, rủi ro, hướng tiếp theo |
-| [07-tai-tao.md](07-tai-tao.md) | Cách tạo lại **từng file đã nộp** (đã kiểm tra: 27/27 file trùng khớp từng byte) |
+| [07-tai-tao.md](07-tai-tao.md) | Cách tạo lại **từng file đã nộp** (đã kiểm tra: 33/33 file trùng khớp từng byte) |
 
 ## Cấu trúc thư mục
 
@@ -60,8 +65,8 @@ Leaderboard lúc đó:
 docs/nhat-ky/
 ├── README.md, 01-…07-*.md          tài liệu
 ├── submissions/
-│   ├── track1/*.csv                14 file đã nộp Track01 (đúng bản đã nộp)
-│   └── track2/*.csv                13 file đã nộp Track02
+│   ├── track1/*.csv                18 file đã nộp Track01 (đúng bản đã nộp)
+│   └── track2/*.csv                15 file đã nộp Track02
 └── data/
     ├── kaggle_submissions.csv       lịch sử nộp bài lấy từ Kaggle API (thời gian, tên file, điểm, trạng thái)
     ├── file_differences.txt         chênh lệch vị trí / yaw giữa các cặp file liên tiếp
@@ -77,6 +82,6 @@ docs/nhat-ky/
     ├── ndt_correction_stats.txt     thống kê hiệu chỉnh của NDT trong từng thí nghiệm
     ├── ndt_correction_stats_3cameras_test.txt   thử NDT với 3cameras_ply (tỉ lệ 0.8 / 1.0)
     ├── image_only_test.txt, image_only_test/    thử NDT chỉ dùng ảnh 150 frame đầu
-    ├── ndt_debug/*.csv              dữ liệu từng frame của các thí nghiệm NDT (dùng để tạo lại file fusion)
+    ├── ndt_debug/*.csv              dữ liệu từng frame của các thí nghiệm NDT, gồm cả 3cameras_ply (dùng để tạo lại file fusion)
     └── baseline_partial/            kết quả baseline TA chạy dở trên máy (đã trôi xa) – làm bằng chứng
 ```

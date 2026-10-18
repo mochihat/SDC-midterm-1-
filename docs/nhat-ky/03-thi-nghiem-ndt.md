@@ -111,5 +111,26 @@ Thử nhanh tỉ lệ (cứ 100 frame một lần, dừng sớm; `data/ndt_corre
 | 0.8 | 15 | 0.58 m | 47 % | +0.04 m | +0.15° / 1.25° |
 | **1.0** | 14 | **0.18 m** | **71 %** | 0.00 m | −0.02° / 1.64° |
 
-Đang chạy qua đêm (17→18/10): tỉ lệ 1.0 cứ 2 frame (`c3s10`), tỉ lệ 0.8 cứ 4 frame (`c3s08`).
-Kết quả sẽ được đánh giá bằng một lượt nộp "chỉ đổi vị trí" rồi tính hệ số tối ưu (như mục 05).
+Chạy đầy đủ qua đêm 17→18/10: tỉ lệ 1.0 cứ 2 frame (`c3s10`, 1506 frame), tỉ lệ 0.8 cứ 4 frame (`c3s08`, 753 frame).
+Ban đầu mỗi lượt 1 lõi (~12–25 s/frame); từ 00:07 chia phần còn lại thành **10 đoạn chạy song song** (`run_chunk.sh`, tham số mới
+`start_frame`, ghép bằng `tools/merge_debug.py`) → ~20 frame/phút, xong lúc 01:26.
+
+## 8. Kết quả NDT `3cameras_ply` và đánh giá trên Kaggle
+
+| Lượt chạy | Hiệu chỉnh (trung vị) | ≤ 0.5 m | ≤ 1 m | Yaw (trung vị / độ lệch chuẩn) |
+|---|---|---|---|---|
+| Track01 tỉ lệ 1.0 (`c3s10`) | 0.43 m | 52 % | 67 % | +0.12° / 1.82° |
+| Track01 tỉ lệ 0.8 (`c3s08`) | 0.47 m | 52 % | 71 % | +0.66° / 1.89° |
+| Track02 tỉ lệ 1.0 (`c3s10T2`, 10 lõi, xong 02:26) | 0.40 m | 56 % | 67 % | −0.28° / 2.85° |
+
+Đánh giá Track01 bằng lượt nộp **chỉ đổi vị trí** (hiệu chỉnh lọc ≤ 2 m / 3°, làm mượt 2 s, cộng vào vị trí của `yawproj_v1_1`):
+
+| File | Dịch vị trí | Điểm | Lỗi vị trí (từ điểm) |
+|---|---|---|---|
+| (gốc) `yawproj_v1_1.csv` | – | 1.21861 | 0.905 m |
+| `ndt3c_s10_pos_1.csv` (tỉ lệ 1.0) | 0.333 m RMS | 1.24807 | 0.934 m ❌ |
+| `ndt3c_s08_pos_1.csv` (tỉ lệ 0.8) | 0.384 m RMS | **1.15042** | **0.836 m** ✅ |
+
+→ **Tỉ lệ 0.8 là lần đầu scan matching sửa được lỗi vị trí GNSS** (0.905 → 0.836 m). Tỉ lệ 0.8 ứng với camera cao ~1.65 m,
+khớp với tỉ lệ ×9 của `raw_ply` (camera ~1.62 m) – hai nguồn point cloud cho cùng một độ cao camera.
+Tỉ lệ 1.0 (tin MapAnything) lại làm xấu đi. Tổ hợp 3 trường hiệu chỉnh (×1.0, ×0.8, raw ×9) theo điểm Kaggle: xem 04 #34, 05 mục 6.

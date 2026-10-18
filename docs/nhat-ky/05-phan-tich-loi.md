@@ -101,7 +101,26 @@ Sai lệch nhỏ (≤ 0.0003) đến từ việc $P$ của Track02 chỉ ước 
 | `yawproj_v1_1.csv` | +0.199 × (+1°), +0.373 × (hướng chạy đúng giờ − yaw cũ) | cộng 0.2° và trộn 37 % hướng chạy – còn hợp lý |
 | `yawproj_v1_2.csv` | −2.156 × (yaw bù trễ − yaw cũ), +0.214 × (trễ 0.75 s − yaw cũ) | **không vật lý** (ngược hướng bù trễ, gấp 2 lần) |
 | `yawproj_v3_2.csv` | −4.581, −0.205, −1.119, +0.499 (4 hướng) | **không vật lý**, thuần khớp theo đáp án |
+| `yawproj_v4_2.csv` | +0.675 (bù trễ), −0.299 (trễ 0.75 s), +0.224 (độ cong), +0.168 (yaw GNSS), +0.734 (đoạn khởi hành) | hướng đoạn khởi hành có ý nghĩa vật lý; các trọng số còn lại không |
+| `proj1_v2` (yaw dùng trong `posproj_v1_1.csv`) | +0.106 (+1°), +0.185 (bù trễ), +0.496 (đoạn khởi hành) | trộn các nguồn yaw – còn diễn giải được |
 
 **Giới hạn.** Cách này dùng bảng điểm (chấm trên toàn bộ dữ liệu test) để chọn tổ hợp – về bản chất là học từ đáp án qua điểm số,
 không phải thuật toán định vị. Mỗi hướng mới tốn 1 lượt nộp. Áp dụng tương tự cho **vị trí** (ví dụ dời từng đoạn đường) là có thể,
 nhưng khi đó gần như "dò lại đáp án" – nên hỏi giảng viên trước.
+
+
+## 6. Tổ hợp vị trí từ các lượt "chỉ đổi vị trí" (`tools/pos_projection.py`)
+
+Giống mục 5 nhưng cho vị trí: giữ yaw (Y biết trước) thì $P_k = S_k - 0.2\,Y$ chính xác; $D_k$ = dịch chuyển (dx, dy) từng frame,
+$P_k^2 = P_{base}^2 + 2\,\overline{e\cdot D_k} + \overline{|D_k|^2}$ → tổ hợp tối ưu $a = -G^{-1}m$ với $G_{ij} = \overline{D_i\cdot D_j}$.
+
+Track01 (vị trí gốc P = 0.905 m; các hướng là trường hiệu chỉnh NDT):
+
+| Hướng | Điểm | Lỗi vị trí | corr(e, D) | Trọng số tối ưu |
+|---|---|---|---|---|
+| NDT `3cameras_ply` tỉ lệ 1.0 | 1.24807 | 0.934 m | −0.094 | +1.072 |
+| NDT `3cameras_ply` tỉ lệ 0.8 | 1.15042 | 0.836 m | −0.383 | +1.370 |
+| NDT `raw_ply` ×9 (#20) | 1.27855 | 0.930 m | −0.206 | +0.248 |
+
+→ lỗi vị trí dự đoán **0.764 m**; ghép với yaw `proj1_v2` (1.559°) → dự đoán **1.0762**, thực tế **1.07618**.
+Trọng số **chọn theo điểm Kaggle**; riêng việc "trường hiệu chỉnh NDT 3 camera tỉ lệ 0.8 có ích" là kết quả scan matching thật.

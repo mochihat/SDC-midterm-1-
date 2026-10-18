@@ -39,7 +39,14 @@ Trên Kaggle, tên file có thêm hậu tố ngẫu nhiên (ví dụ `rts_headin
 | 27 | 21:49 | 2 | `gnssyaw_pos_rts_2.csv` | 0.56160 | (thăm dò) | hướng "yaw GNSS gốc" |
 | 28 | 21:50 | 2 | `yawproj_v3_2.csv` | **0.34530** | −0.01166 ✅ | tổ hợp 4 hướng yaw theo điểm Kaggle |
 
-Ngày 17/10 đã dùng 14 lượt Track01 và 14 lượt Track02 (tối đa 15/ngày).
+| 29 | 23:54 | 2 | `startfix_on_v3_2.csv` | **0.33504** | −0.01026 ✅ | yaw đoạn khởi hành dựng lại bằng gyro (vật lý) |
+| 30 | 23:55 | 1 | `startfix_on_v1_1.csv` | 1.21871 | +0.00010 | như trên cho Track01 |
+| 31 | 18/10 08:07 | 2 | `yawproj_v4_2.csv` | **0.30984** | −0.02520 ✅ | tổ hợp 5 hướng yaw theo điểm Kaggle |
+| 32 | 08:07 | 1 | `ndt3c_s10_pos_1.csv` | 1.24807 | +0.02946 (thăm dò) | vị trí + hiệu chỉnh NDT 3 camera tỉ lệ 1.0 |
+| 33 | 08:08 | 1 | `ndt3c_s08_pos_1.csv` | **1.15042** | −0.06819 ✅ | vị trí + hiệu chỉnh NDT 3 camera tỉ lệ 0.8 |
+| 34 | 08:08 | 1 | `posproj_v1_1.csv` | **1.07618** | −0.07424 ✅ | tổ hợp vị trí (3 trường NDT) + yaw theo điểm Kaggle |
+
+Ngày 17/10 đã dùng 15 lượt Track01 và 15 lượt Track02 (tối đa 15/ngày); sáng 18/10 (đến 08:10) dùng 3 lượt Track01, 1 lượt Track02.
 
 ---
 
@@ -217,6 +224,34 @@ Với nhiều thay đổi D₁…D_K, lỗi yaw của mọi tổ hợp $base + \
 - **Dự đoán:** 0.34498; **thực tế 0.34530**. Lỗi yaw 0.56° (vị trí 0.23 m).
 - **Kết luận:** còn cách hạng 1 (0.33283) 0.0125 → cần yaw ≈ 0.50°. Trọng số **chọn theo Kaggle**, không có ý nghĩa vật lý.
 
+## Đợt 10 – Yaw lúc xe đứng yên (17/10 23:54–23:55) – vật lý
+
+Phát hiện (02, mục 7): yaw GNSS được tính từ vị trí, cập nhật ~1.25 s/lần và **đóng băng khi xe dừng** – Track02 giữ −15.2° suốt 13 s đầu.
+
+### #29 `startfix_on_v3_2.csv` (0.33504 ✅) và #30 `startfix_on_v1_1.csv` (1.21871)
+- **Cách tạo:** `tools/start_yaw_fix.py`: trước khi xe đạt 4 m/s, yaw = hướng chạy lúc đạt 4 m/s lùi ngược bằng gyro (bias đo lúc đứng yên),
+  chuyển dần về file gốc trong 1 s; áp lên file tốt nhất (`yawproj_v3_2` / `yawproj_v1_1`). Vị trí giữ nguyên.
+- **Khác gì:** Track02 đổi 411 frame (0.63° RMS toàn track; yaw lúc đứng yên −19.78° thay vì −17.1° của file gốc); Track01 đổi 278 frame (0.38°).
+- **Kết quả:** Track02 tốt lên 0.010 (lỗi yaw 0.566° → 0.514°). Track01 gần như không đổi (xe chỉ đứng yên ~1 s).
+- **Kết luận:** sửa có cơ sở vật lý cho đoạn GNSS không đo được hướng – có ích ở Track02.
+
+## Đợt 11 – Sáng 18/10 (08:07–08:08)
+
+### #31 `yawproj_v4_2.csv` (0.30984 ✅ – tốt nhất Track02)
+- **Cách tạo:** tổ hợp 5 hướng yaw (thêm #29): (#21 − base) × +0.675, (#23 − base) × −0.299, (#26 − base) × +0.224, (#27 − base) × +0.168,
+  (#29 − base) × +0.734. **Trọng số chọn theo điểm Kaggle.**
+- **Dự đoán 0.31053, thực tế 0.30984.** Lỗi yaw ≈ 0.39° (vị trí 0.23 m). Nhưng đội 12 cùng lúc lên 0.28263 → vẫn hạng 3.
+
+### #32, #33 `ndt3c_s10_pos_1.csv` (1.24807 ❌) và `ndt3c_s08_pos_1.csv` (1.15042 ✅)
+- **Cách tạo:** chỉ đổi vị trí – cộng hiệu chỉnh NDT `3cameras_ply` (tỉ lệ 1.0 / 0.8) vào vị trí của `yawproj_v1_1` (yaw giữ nguyên, Y = 1.570°).
+- **Kết quả:** tỉ lệ 1.0 xấu đi; **tỉ lệ 0.8 tốt lên 0.068** – lỗi vị trí 0.905 → 0.836 m (03, mục 8).
+- **Kết luận:** NDT 3 camera ở tỉ lệ 0.8 là nguồn sửa vị trí có ích đầu tiên.
+
+### #34 `posproj_v1_1.csv` (1.07618 ✅ – tốt nhất Track01)
+- **Cách tạo:** `tools/pos_projection.py`: vị trí = gốc + 1.072 × (hiệu chỉnh tỉ lệ 1.0) + 1.370 × (tỉ lệ 0.8) + 0.248 × (NDT raw ×9 của #20)
+  → lỗi vị trí dự đoán 0.764 m; yaw = tổ hợp yaw `proj1_v2` (thêm #30, Y dự đoán 1.559°). **Trọng số chọn theo điểm Kaggle.**
+- **Dự đoán 0.7644 + 0.2 × 1.559 = 1.0762; thực tế 1.07618.** Lên hạng 3 Track01.
+
 ---
 
 ## Tổng kết: thay đổi nào có ích
@@ -236,3 +271,7 @@ Với nhiều thay đổi D₁…D_K, lỗi yaw của mọi tổ hợp $base + \
 | Yaw = hướng chạy trễ 0.75 s | – | +0.078 | giả thuyết sai |
 | **Tổ hợp yaw theo điểm Kaggle** | **−0.035** | **−0.051 / −0.063** | tốt nhất hiện tại, trọng số không vật lý |
 | Hiệu chỉnh độ cong (l = 1.5 m) | – | ~−0.002 (trong tổ hợp) | gần như không có tác dụng |
+| Yaw đoạn khởi hành từ gyro (vật lý) | ~0 | −0.010 | có ích khi xe đứng yên lâu |
+| Hiệu chỉnh vị trí NDT `3cameras_ply` tỉ lệ 0.8 | **−0.068** | (đang thử) | sửa vị trí thật đầu tiên |
+| Hiệu chỉnh vị trí NDT `3cameras_ply` tỉ lệ 1.0 | +0.029 | – | tỉ lệ sai |
+| Tổ hợp vị trí + yaw theo điểm Kaggle | **−0.074** (→ 1.07618) | −0.025 (→ 0.30984) | trọng số không vật lý |

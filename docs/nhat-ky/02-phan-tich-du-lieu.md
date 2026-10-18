@@ -118,16 +118,29 @@ Track02 rẽ phải −40° nên yaw trễ trông như lệch một góc có d�
 
 **Nhưng trên Kaggle, yaw đã bù trễ lại cho điểm xấu hơn** (xem [04](04-cac-lan-nop-kaggle.md) đợt 7): yaw của đáp án không phải hướng chạy đúng giờ.
 
-## 7. `3cameras_ply` (MapAnything) – tỉ lệ (`data/ground_scale_3cameras.txt`)
+## 7. Yaw GNSS được tính từ vị trí GNSS và chỉ cập nhật ~1.25 s/lần
+
+- Yaw của topic GNSS **chỉ đổi giá trị ~1.25 s một lần** (Track01: 93 lần cập nhật, Track02: 92; khoảng cách trung vị 1.24–1.25 s),
+  giữa các lần đó giữ nguyên (3–4 mẫu 4 Hz liên tiếp giống hệt nhau) – tín hiệu dạng **bậc thang**.
+- Giá trị mỗi lần cập nhật ≈ **hướng của đoạn dịch chuyển vị trí GNSS trong 1 s, kết thúc 0.25 s trước lúc cập nhật**:
+  khớp 0.16° RMS (Track02), 0.51° (Track01). ⇒ yaw GNSS **không mang thông tin mới** ngoài vị trí; "độ trễ ~1.1–1.4 s" ở mục 6
+  chính là (tâm cửa sổ 1 s) + (giữ giá trị ~1.25 s).
+- **Khi xe đứng yên/chạy chậm yaw GNSS bị "đóng băng":** Track02 giữ −15.206° suốt **13 s đầu** (xe đứng yên 0–6 s, lăn chậm 7–13 s);
+  Track01 chỉ ~1 s đứng yên. Yaw thật lúc đứng yên dựng lại bằng gyro (`tools/start_yaw_fix.py`):
+  hướng chạy khi xe vừa đạt 4 m/s, lùi ngược thời gian bằng gyro trừ bias (bias đo lúc đứng yên: −0.293 °/s Track02, −0.256 °/s Track01)
+  → Track02 ≈ **−19.78°**, không đổi suốt lúc đứng yên (sai ~4.6° so với yaw GNSS).
+
+## 8. `3cameras_ply` (MapAnything) – tỉ lệ (`data/ground_scale_3cameras.txt`)
 
 Mặt đường nằm ở **h = 2.06 m** dưới camera (1.80–2.19 m, dao động 5.5 %), tầm nhìn tới 20–70 m, ~330 nghìn điểm/frame, có cả điểm phía sau/hai bên
 (3 camera) → point cloud **gần đúng đơn vị mét**. So với độ cao camera ~1.62 m (suy ra từ tỉ lệ ×9 của `raw_ply`) thì tỉ lệ ≈ 0.8;
-nếu tin MapAnything thì tỉ lệ 1.0. Thử NDT ngắn cho thấy tỉ lệ **1.0** hiệu chỉnh nhỏ và nhất quán hơn (mục 03).
+nếu tin MapAnything thì tỉ lệ 1.0. Thử NDT ngắn cho thấy tỉ lệ 1.0 hiệu chỉnh nhỏ hơn, nhưng **trên Kaggle tỉ lệ 0.8 mới cải thiện vị trí**
+(mục 03, phần 8). Track02: mặt đường 2.11 m dưới camera (dao động 10.9 %).
 
-## 8. Kết luận phần phân tích
+## 9. Kết luận phần phân tích
 
 1. GNSS là nguồn thông tin mạnh nhất: cùng hệ toạ độ bản đồ, mượt, 4 Hz.
 2. Point cloud từ ảnh (`raw_ply`) cần **tỉ lệ ≈ 9** (không phải 3) và hệ trục FLU là đúng; `3cameras_ply` gần đúng mét (tỉ lệ ~1).
 3. `init_guess` có nhiễu lớn (Track02 lệch 15° yaw).
 4. IMU đúng giờ, gyro z có bias ≈ −0.25…−0.30 °/s.
-5. **Yaw GNSS trễ 1.1–1.4 s** so với vị trí GNSS (mục 6).
+5. **Yaw GNSS trễ 1.1–1.4 s** so với vị trí GNSS (mục 6) vì nó được **tính từ chính vị trí GNSS**, cập nhật ~1.25 s/lần và đóng băng khi xe dừng (mục 7).

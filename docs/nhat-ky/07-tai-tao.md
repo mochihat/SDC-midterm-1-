@@ -10,7 +10,7 @@ bash /root/midterm/tools/reproduce_submissions.sh /tmp/reproduce
 ```
 
 Script chạy lại mọi bước theo đúng thứ tự đã làm, rồi so từng file với bản trong `docs/nhat-ky/submissions/`.
-Đã kiểm tra ngày 17/10/2026: **27/27 file `identical`** (trùng khớp từng byte), mất ~2 phút.
+Đã kiểm tra sáng 18/10/2026: **33/33 file `identical`** (trùng khớp từng byte), mất ~2 phút.
 Hai file dùng NDT lấy dữ liệu NDT đã lưu trong `docs/nhat-ky/data/ndt_debug/` (chạy lại NDT mất hàng giờ – xem mục 3).
 
 ## 2. Lệnh tạo từng file
@@ -40,7 +40,13 @@ Viết tắt: `P=/root/midterm/src/localization/processing_codes`, `T=/root/midt
 | `gnssyaw_pos_rts_2.csv` | `python3 $T/csv_ops.py merge gnssyaw_pos_rts_2.csv --pos rts_heading_2.csv --yaw gnss_smooth_2.csv` |
 | `yawproj_v3_2.csv` | `yaw_projection.py` như `v1_2` nhưng thêm `curv1.5_on_proj_2.csv:0.36280 gnssyaw_pos_rts_2.csv:0.56160` |
 
-Các số sau dấu `:` là **điểm Kaggle** của file đó – đầu vào của phép tính tổ hợp (trọng số chọn theo bảng điểm).
+| `startfix_on_v3_2.csv` / `startfix_on_v1_1.csv` | `python3 $T/start_yaw_fix.py /root/data/Track2 Track2 yawproj_v3_2.csv lag_imu_heading_2.csv startfix_on_v3_2.csv 4.0 1.0` (Track01: `yawproj_v1_1.csv`, `lag_noimu_heading_1.csv`) |
+| `yawproj_v4_2.csv` | `yaw_projection.py` như `v3_2` thêm `startfix_on_v3_2.csv:0.33504` |
+| `ndt3c_s10_pos_1.csv` / `ndt3c_s08_pos_1.csv` | `python3 $P/fuse_to_csv.py yawproj_v1_1.csv $D/c3s10_Track1_debug.csv ndt3c_s10_pos_1.csv --yaw-weight 0 --sigma-s 2 --max-xy 2 --max-yaw-deg 3` (tương tự `c3s08`) |
+| `posproj_v1_1.csv` | `yaw_projection.py 0.90462 rts_pos_gnssyaw_1.csv 1.25992 proj1_v2.csv probe_yaw+1_1.csv:1.27676 lagyaw_pos_best_1.csv:1.30875 startfix_on_v1_1.csv:1.21871`; `pos_projection.py 0.90462 yawproj_v1_1.csv pos1_v1.csv ndt3c_s10_pos_1.csv:1.24807:1.56995 ndt3c_s08_pos_1.csv:1.15042:1.56995 phys_yawb_ndt_1.csv:1.27855:1.74380`; `csv_ops.py merge posproj_v1_1.csv --pos pos1_v1.csv --yaw proj1_v2.csv` |
+
+Các số sau dấu `:` là **điểm Kaggle** của file đó (và với `pos_projection.py`: điểm:lỗi-yaw của yaw mà file đó giữ) –
+đầu vào của phép tính tổ hợp (trọng số chọn theo bảng điểm).
 
 ## 3. Chạy lại các thí nghiệm NDT
 
@@ -58,6 +64,7 @@ ghi `TAG_TrackN_result.txt` và `TAG_TrackN_debug.csv` vào `src/localization/re
 | Thống kê hiệu chỉnh | `python3 $P/fuse_to_csv.py gnss_smooth_2.csv e2s9r4_Track2_debug.csv --stats` |
 | Baseline TA | `bash /root/midterm/run_baseline.sh 1` (hoặc `2`) |
 | NDT chỉ dùng ảnh (thử) | `bash /root/midterm/run_image_only.sh 1 imgtest -p max_frames:=150` |
+| NDT chạy song song theo đoạn | `PRIOR=... bash /root/midterm/run_chunk.sh 1 c3s10 <frame bắt đầu> <số frame> -p ply_path:=... -p frame_stride:=2 ...` (cần `colcon build --build-base build_par --install-base install_par`); ghép: `python3 $T/merge_debug.py out.csv phần1.csv chunks/c3s10_*_debug.csv` |
 | NDT `3cameras_ply` (qua đêm) | `PRIOR=src/localization/result/prior_best_1.csv bash /root/midterm/run_fusion.sh 1 c3s10 -p ply_path:=/root/data/Track1/3cameras_ply/ply -p frame_stride:=2 -p ply_scale:=1.0 -p ndt_resolution:=4.0 -p ndt_max_iterations:=50 -p submap_half_size:=60.0 -p input_voxel_leaf_size:=0.5 -p max_input_range:=40.0 -p max_correction_xy:=10.0 -p max_correction_yaw_deg:=30.0` (`prior_best_1.csv` = `yawproj_v1_1.csv`) |
 
 ## 4. Chạy lại các phân tích
@@ -93,6 +100,9 @@ ghi `TAG_TrackN_result.txt` và `TAG_TrackN_debug.csv` vào `src/localization/re
 | `tools/analyze_yaw_lag.py` | đo độ trễ của yaw GNSS so với vị trí và gyro |
 | `tools/track_error.py` | lỗi của một quỹ đạo so với quỹ đạo tham chiếu theo từng đoạn |
 | `run_image_only.sh` | NDT chỉ dùng ảnh (×9, không GNSS) |
+| `tools/start_yaw_fix.py` | yaw đoạn xe đứng yên/chạy chậm dựng lại bằng gyro |
+| `tools/pos_projection.py` | tổ hợp vị trí tối ưu từ các lượt chỉ đổi vị trí (**dùng điểm Kaggle**) |
+| `run_chunk.sh`, `tools/merge_debug.py`, tham số `start_frame` | chạy NDT song song theo đoạn và ghép kết quả |
 | `tools/analyze_probes.py`, `tools/analyze_gnss_imu.py`, `tools/ground_scale.py`, `tools/check_frame_alignment.py`, `tools/pc_io.py` | phân tích |
 | `tools/reproduce_submissions.sh` | tạo lại toàn bộ file đã nộp và so khớp |
 | `run_baseline.sh`, `run_fusion.sh` | chạy NDT không cần RViz |

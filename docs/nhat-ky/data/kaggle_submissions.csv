@@ -15,6 +15,10 @@ track,time_utc,time_utc+8,kaggle_file_name,file,public_score,status,note
 1,2026-10-17 12:45:09,2026-10-17 20:45,phys_yawb_ndt_1_3fb19c.csv,phys_yawb_ndt_1.csv,1.27855,complete,
 1,2026-10-17 13:39:08,2026-10-17 21:39,lagyaw_pos_best_1_efaed4.csv,lagyaw_pos_best_1.csv,1.30875,complete,
 1,2026-10-17 13:44:24,2026-10-17 21:44,yawproj_v1_1_6c708a.csv,yawproj_v1_1.csv,1.21861,complete,
+1,2026-10-17 15:55:01,2026-10-17 23:55,startfix_on_v1_1_b669df.csv,startfix_on_v1_1.csv,1.21871,complete,
+1,2026-10-18 00:07:50,2026-10-18 08:07,ndt3c_s10_pos_1_132928.csv,ndt3c_s10_pos_1.csv,1.24807,complete,
+1,2026-10-18 00:08:11,2026-10-18 08:08,ndt3c_s08_pos_1_c96569.csv,ndt3c_s08_pos_1.csv,1.15042,complete,
+1,2026-10-18 00:08:54,2026-10-18 08:08,posproj_v1_1_f3c4fc.csv,posproj_v1_1.csv,1.07618,complete,
 2,2026-10-17 10:52:41,2026-10-17 18:52,gnss_2.csv,gnss_2.csv,0.57111,complete,
 2,2026-10-17 10:59:07,2026-10-17 18:59,gnss_smooth_2.csv,gnss_smooth_2.csv,0.57811,complete,
 2,2026-10-17 10:59:43,2026-10-17 18:59,gnss_heading_1.csv,gnss_heading_1.csv,,error,Submission has 3011 rows but 3299 were expected.
@@ -29,3 +33,5 @@ track,time_utc,time_utc+8,kaggle_file_name,file,public_score,status,note
 2,2026-10-17 13:48:41,2026-10-17 21:48,curv1.5_on_proj_2_ed02d7.csv,curv1.5_on_proj_2.csv,0.36280,complete,
 2,2026-10-17 13:49:52,2026-10-17 21:49,gnssyaw_pos_rts_2_9f13af.csv,gnssyaw_pos_rts_2.csv,0.56160,complete,
 2,2026-10-17 13:50:58,2026-10-17 21:50,yawproj_v3_2_b739ee.csv,yawproj_v3_2.csv,0.34530,complete,
+2,2026-10-17 15:54:41,2026-10-17 23:54,startfix_on_v3_2_6bb031.csv,startfix_on_v3_2.csv,0.33504,complete,
+2,2026-10-18 00:07:24,2026-10-18 08:07,yawproj_v4_2_550c6f.csv,yawproj_v4_2.csv,0.30984,complete,

@@ -28,6 +28,13 @@
     nhưng trọng số thu được (vd. −4.58) **không có ý nghĩa vật lý**.
 16. **`3cameras_ply` gần đúng đơn vị mét** (mặt đường 2.06 m dưới camera), nhìn xa 30–70 m – nguồn tiềm năng để sửa vị trí Track01.
 17. **Đội 13 cải thiện rất nhanh** (Track01 1.118 → 0.913 trong ~20 phút) – có lẽ cũng đang dò bằng bảng điểm.
+18. **Yaw GNSS thực chất là hướng dịch chuyển của vị trí GNSS** (cửa sổ 1 s, cập nhật ~1.25 s/lần) – không có thông tin mới; "trễ 1.1–1.4 s"
+    là hệ quả của cách tính này.
+19. **Khi xe đứng yên yaw GNSS đóng băng** (Track02: 13 s đầu, sai ~4.6°). Gyro (bias đo lúc đứng yên) dựng lại được yaw thật → Track02 −0.010.
+20. **NDT `3cameras_ply` ở tỉ lệ 0.8 sửa được vị trí GNSS** (Track01 0.905 → 0.836 m) – lần đầu scan matching thắng GNSS; tỉ lệ 1.0 thì không.
+    Tỉ lệ 0.8 ứng với camera cao ~1.65 m, khớp tỉ lệ ×9 của `raw_ply` – hai cách đo độc lập cho cùng độ cao camera.
+21. **Chạy song song theo đoạn** (frame độc lập khi có prior) tăng tốc ~2.5× trên 10 lõi.
+22. Các đội khác cải thiện liên tục qua đêm (đội 12: Track02 0.333 → 0.283; Track01 1.004 → 0.937) – bảng xếp hạng thay đổi nhanh.
 
 ## 2. Cái gì hiệu quả, cái gì không
 
@@ -72,8 +79,7 @@
 
 ## 5. Hướng tiếp theo (cập nhật tối 17/10)
 
-1. **Track02 (cách hạng 1 0.0125):** thêm 2–4 hướng yaw (vd. chi tiết tần số cao từ gyro, yaw GNSS làm mượt mức khác) rồi tính lại tổ hợp – khả năng cao lên hạng 1
-   (vẫn là chọn trọng số theo Kaggle).
-2. **Track01 (cách hạng 1 0.305):** yaw không đủ – lỗi vị trí 0.905 m đã lớn hơn điểm hạng 1. Đánh giá NDT với `3cameras_ply` (đang chạy qua đêm)
-   bằng 1 lượt nộp "chỉ đổi vị trí" rồi tính hệ số tối ưu. Dời vị trí theo từng đoạn đường để dò điểm thì **hỏi giảng viên trước**.
+1. **Track02 (sáng 18/10: 0.30984, hạng 1 là 0.28263):** thêm hướng vị trí từ NDT 3 camera (đã chạy xong) và các hướng yaw mới.
+2. **Track01 (sáng 18/10: 1.07618, hạng 1 là 0.89331):** NDT 3 camera tỉ lệ 0.8 có ích → thử các tỉ lệ / độ phân giải khác (0.7, 0.85, NDT 2 m)
+   làm thêm hướng vị trí; người dùng đã cho phép tiếp tục chọn trọng số theo điểm Kaggle (dò theo từng đoạn đường nếu cần).
 3. **Kết quả chỉ dùng ảnh** cho báo cáo: thêm mô hình chuyển động + thử nhiều góc ban đầu vào NDT ×9.

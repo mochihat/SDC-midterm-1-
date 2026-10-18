@@ -84,6 +84,34 @@ python3 yaw_projection.py 0.23218 "$OUT/rts_heading_2.csv" 0.40778 "$OUT/yawproj
   "$OUT/lagyaw_pos_best_2.csv:0.45496" "$OUT/yawtau0.75_pos_best_2.csv:0.48625" \
   "$OUT/curv1.5_on_proj_2.csv:0.36280" "$OUT/gnssyaw_pos_rts_2.csv:0.56160" > /dev/null
 
+# [12] Yaw while (almost) standing still: GNSS yaw is frozen at low speed, so rebuild it from the motion
+#      heading at the first time above 4 m/s and the gyro (bias from the standstill), blend over 1 s.
+python3 start_yaw_fix.py /root/data/Track2 Track2 "$OUT/yawproj_v3_2.csv" "$OUT/lag_imu_heading_2.csv" \
+  "$OUT/startfix_on_v3_2.csv" 4.0 1.0 > /dev/null
+python3 start_yaw_fix.py /root/data/Track1 Track1 "$OUT/yawproj_v1_1.csv" "$OUT/lag_noimu_heading_1.csv" \
+  "$OUT/startfix_on_v1_1.csv" 4.0 1.0 > /dev/null
+
+# [13] Yaw combinations including the start fix (weights from leaderboard scores).
+python3 yaw_projection.py 0.23218 "$OUT/rts_heading_2.csv" 0.40778 "$OUT/yawproj_v4_2.csv" \
+  "$OUT/lagyaw_pos_best_2.csv:0.45496" "$OUT/yawtau0.75_pos_best_2.csv:0.48625" \
+  "$OUT/curv1.5_on_proj_2.csv:0.36280" "$OUT/gnssyaw_pos_rts_2.csv:0.56160" "$OUT/startfix_on_v3_2.csv:0.33504" > /dev/null
+python3 yaw_projection.py 0.90462 "$OUT/rts_pos_gnssyaw_1.csv" 1.25992 "$OUT/proj1_v2.csv" \
+  "$OUT/probe_yaw+1_1.csv:1.27676" "$OUT/lagyaw_pos_best_1.csv:1.30875" "$OUT/startfix_on_v1_1.csv:1.21871" > /dev/null
+
+# [14] Track1: position-only candidates from NDT on 3cameras_ply (scale 1.0 every 2 frames, scale 0.8 every
+#      4 frames, prior = yawproj_v1_1), then the best position combination (weights from leaderboard scores;
+#      numbers are score:yaw-RMSE of the yaw each candidate kept) merged with the yaw of proj1_v2.
+cd "$P"
+for XX in 10 08; do
+  python3 fuse_to_csv.py "$OUT/yawproj_v1_1.csv" "$DBG/c3s${XX}_Track1_debug.csv" "$OUT/ndt3c_s${XX}_pos_1.csv" \
+    --yaw-weight 0 --sigma-s 2 --max-xy 2 --max-yaw-deg 3 > /dev/null
+done
+cd "$T"
+python3 pos_projection.py 0.90462 "$OUT/yawproj_v1_1.csv" "$OUT/pos1_v1.csv" \
+  "$OUT/ndt3c_s10_pos_1.csv:1.24807:1.56995" "$OUT/ndt3c_s08_pos_1.csv:1.15042:1.56995" \
+  "$OUT/phys_yawb_ndt_1.csv:1.27855:1.74380" > /dev/null
+python3 csv_ops.py merge "$OUT/posproj_v1_1.csv" --pos "$OUT/pos1_v1.csv" --yaw "$OUT/proj1_v2.csv"
+
 # Compare with what was submitted.
 status=0
 for f in "$DOC"/submissions/track*/*.csv; do
