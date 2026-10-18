@@ -35,8 +35,9 @@ $RUN python3 build.py --concat-only                    # chỉ ghép các chươ
 ```
 
 - Cần internet (edge-tts gửi lời thoại lên dịch vụ đọc của Microsoft). Câu đã đọc được lưu lại, sửa một câu chỉ đọc lại câu đó.
-- Hai giọng: tiếng Việt `vi-VN-HoaiMyNeural`, thuật ngữ tiếng Anh `en-US-JennyNeural` (danh sách `TERMS` trong
-  `lib/tts.py`; thêm từ vào đó nếu nghe thấy từ tiếng Anh bị đọc kiểu tiếng Việt). Hai giọng được chỉnh cùng âm lượng.
+- Một giọng `vi-VN-HoaiMyNeural` đọc liền cả câu. Thuật ngữ tiếng Anh được viết lại theo cách người Việt làm kỹ thuật
+  vẫn đọc trước khi gửi đi (bảng `PRONOUNCE` trong `lib/tts.py`, ví dụ `Kaggle = ke gồ`); phụ đề giữ chữ gốc.
+  Nghe thấy từ nào đọc sai thì thêm/sửa một dòng trong bảng đó rồi build lại.
 - Đồng bộ: cảnh ghi thời điểm bắt đầu thật của từng nhịp (`audio/<id>/beats.json`), mỗi câu đọc được đặt đúng vào đó.
 - Phụ đề được in thẳng vào video, trong dải riêng dưới hình (hình thu nhỏ 5/6) nên không che nội dung; cỡ chữ
   `SUB_SIZE` trong `build.py`. File phụ đề rời: `out/phude_midterm.srt` (đặt tên khác tên video để trình phát
