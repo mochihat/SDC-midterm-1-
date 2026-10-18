@@ -13,6 +13,12 @@ pose actually used), error, inliers, inlier_ratio, scale, ground_h.
 only map points on vertical surfaces (walls, poles, trunks: horizontal normal) are used, since the road gives no
 x / y information, and a Geman-McClure kernel (--kernel) down-weights the badly estimated image points.
 
+Point cloud preprocessing (TA suggestions: noise handling, front-hood mask):
+  --hood-mask      drop points that project into the front-hood mask of the front camera (fisheye model, camera_info)
+  --sor K,STD      statistical outlier removal: drop points whose mean distance to their K neighbours is more than
+                   STD standard deviations above the average (as PCL StatisticalOutlierRemoval), on a 0.2 m voxel cloud
+  --no-ground M    drop points within M metres of the road plane (measured per frame)
+
 --ground-height H replaces the fixed --scale by a per-frame scale H / h, where h is the road height below the camera
 measured in the unscaled cloud (tools/ground_scale.py) and median-filtered over --ground-window processed frames.
 
@@ -52,15 +58,20 @@ def read_pcd_binary(path):
 
 def read_ply_xyz(path):
     with open(path, "rb") as f:
-        count, props = 0, []
+        count, props, fmt = 0, [], "binary_little_endian"
         while True:
             line = f.readline().decode("ascii", "replace").strip()
-            if line.startswith("element vertex"):
+            if line.startswith("format"):
+                fmt = line.split()[1]
+            elif line.startswith("element vertex"):
                 count = int(line.split()[-1])
             elif line.startswith("property"):
                 props.append(line.split())
             elif line == "end_header":
                 break
+        if fmt == "ascii":  # raw_ply (LoGeR)
+            xyz = np.loadtxt(f, max_rows=count, usecols=(0, 1, 2), dtype=np.float64)
+            return xyz[np.isfinite(xyz).all(axis=1)]
         types = {"float": "<f4", "double": "<f8", "uchar": "u1"}
         dtype = np.dtype([(p[2], types[p[1]]) for p in props])
         rec = np.frombuffer(f.read(count * dtype.itemsize), dtype=dtype, count=count)
@@ -111,7 +122,11 @@ def load_debug(path):
         return list(csv.DictReader(f))
 
 
-def frame_list(track_dir):
+def frame_list(track_dir, ply="3cameras_ply"):
+    if ply == "raw_ply":  # files named <timestamp_ns>.ply, one per frame in time order
+        names = sorted(f for f in os.listdir(os.path.join(track_dir, "raw_ply")) if f.endswith(".ply"))
+        return [(i, int(n.split(".")[0].split("_")[-1]), os.path.join(track_dir, "raw_ply", n))
+                for i, n in enumerate(names)]
     with open(os.path.join(track_dir, "3cameras_ply", "index.csv")) as f:
         rows = list(csv.DictReader(f))
     return [(int(r["index"]), int(r["f_ts"]), os.path.join(track_dir, "3cameras_ply", r["ply"])) for r in rows]
@@ -133,9 +148,59 @@ def build_target(map_xyz, method, resolution, threads):
     return pts, tree, None
 
 
-def source_cloud(path, scale, max_range, voxel):
+def read_yaml_list(path, key):
+    """`data: [...]` list that follows `key:` in a camera_info yaml (no yaml dependency)."""
+    lines = open(path).read().splitlines()
+    k = next(i for i, l in enumerate(lines) if l.startswith(key + ":"))
+    row = next(l for l in lines[k:] if "data:" in l)
+    return np.array([float(v) for v in row.split("[")[1].split("]")[0].split(",")])
+
+
+def load_hood(track_dir, track):
+    cam = os.path.join(track_dir, f"Track{track}_images", "camera_info")
+    K = read_yaml_list(os.path.join(cam, "gige_100_f_hdr_camera_info.yaml"), "camera_matrix")
+    D = read_yaml_list(os.path.join(cam, "gige_100_f_hdr_camera_info.yaml"), "distortion_coefficients")
+    return np.load(os.path.join(cam, "hood_mask.npy")), (K[0], K[4], K[2], K[5]), D
+
+
+def in_hood(xyz, hood):
+    """Points (front camera FLU) whose fisheye projection falls in the white (hood) part of the mask."""
+    mask, (fx, fy, cx, cy), D = hood
+    X, Y, Z = -xyz[:, 1], -xyz[:, 2], xyz[:, 0]
+    front = Z > 1e-3
+    a = np.where(front, X / np.where(front, Z, 1), 0)
+    b = np.where(front, Y / np.where(front, Z, 1), 0)
+    r = np.hypot(a, b)
+    th = np.arctan(r)
+    thd = th * (1 + D[0] * th ** 2 + D[1] * th ** 4 + D[2] * th ** 6 + D[3] * th ** 8)
+    k = np.where(r > 1e-9, thd / np.maximum(r, 1e-9), 1.0)
+    u, v = fx * k * a + cx, fy * k * b + cy
+    h, w = mask.shape
+    ok = front & (u >= 0) & (u < w) & (v >= 0) & (v < h)
+    out = np.zeros(len(xyz), bool)
+    out[ok] = mask[v[ok].astype(int), u[ok].astype(int)]
+    return out
+
+
+def statistical_outliers(xyz, k, std):
+    from scipy.spatial import cKDTree
+    d, _ = cKDTree(xyz).query(xyz, k=k + 1)
+    mean_d = d[:, 1:].mean(axis=1)
+    return mean_d > mean_d.mean() + std * mean_d.std()
+
+
+def source_cloud(path, scale, max_range, voxel, opts=None):
     xyz = read_ply_xyz(path)
+    opts = opts or {}
+    if opts.get("hood") is not None:
+        xyz = xyz[~in_hood(xyz, opts["hood"])]
     xyz = xyz[np.linalg.norm(xyz, axis=1) <= max_range / scale] * scale
+    if opts.get("sor"):
+        k, std = opts["sor"]
+        xyz = np.asarray(small_gicp.voxelgrid_sampling(xyz, 0.2).points())[:, :3]
+        xyz = xyz[~statistical_outliers(xyz, int(k), std)]
+    if opts.get("no_ground"):
+        xyz = xyz[xyz[:, 2] > -ground_height(xyz) + opts["no_ground"]]
     pts, _ = small_gicp.preprocess_points(xyz, downsampling_resolution=voxel, num_neighbors=20, num_threads=1)
     return pts
 
@@ -179,7 +244,7 @@ def register(job):
     idx, ts, path, init_T, guess_T, prior, scale, ground_h = job
     a = G["args"]
     o = G["origin"]
-    src = source_cloud(path, scale, a.max_range, a.voxel)
+    src = source_cloud(path, scale, a.max_range, a.voxel, G["opts"])
     init_local = init_T.copy()
     init_local[:3, 3] -= o
     if a.method == "PLANAR":
@@ -224,6 +289,10 @@ def main():
     p.add_argument("--scale", type=float, default=0.8)
     p.add_argument("--ground-height", type=float, help="per-frame scale = H / measured road height (see above)")
     p.add_argument("--ground-window", type=int, default=15)
+    p.add_argument("--hood-mask", action="store_true")
+    p.add_argument("--sor", help="K,STD statistical outlier removal")
+    p.add_argument("--no-ground", type=float, default=0.0)
+    p.add_argument("--ply", default="3cameras_ply", help="3cameras_ply (MapAnything) or raw_ply (LoGeR)")
     p.add_argument("--method", default="VGICP", choices=["ICP", "PLANE_ICP", "GICP", "VGICP", "PLANAR"])
     p.add_argument("--kernel", type=float, default=0.3, help="Geman-McClure scale (m) for --method PLANAR")
     p.add_argument("--map", default="map_downsampled_1m.pcd")
@@ -237,7 +306,7 @@ def main():
     a = p.parse_args()
 
     track_dir = os.path.join(a.data, f"Track{a.track}")
-    frames = frame_list(track_dir)
+    frames = frame_list(track_dir, a.ply)
     jobs = []
     if a.init_run:
         dbg = load_debug(os.path.join(RESULT, f"{a.init_run}_Track{a.track}_debug.csv"))
@@ -274,7 +343,10 @@ def main():
     map_xyz = read_pcd_binary(os.path.join(track_dir, a.map))
     origin = np.round(map_xyz.mean(axis=0))
     target, tree, vmap = build_target(map_xyz - origin, a.method, a.map_res, a.workers)
-    G.update(args=a, origin=origin, target=target, tree=tree, vmap=vmap)
+    opts = {"hood": load_hood(track_dir, a.track) if a.hood_mask else None,
+            "sor": tuple(float(v) for v in a.sor.split(",")) if a.sor else None,
+            "no_ground": a.no_ground}
+    G.update(args=a, origin=origin, target=target, tree=tree, vmap=vmap, opts=opts)
     n_target = len(target[0]) if isinstance(target, tuple) else target.size()
     print(f"map {len(map_xyz)} pts -> {n_target} (res {a.map_res}) in {time.time() - t0:.1f} s; "
           f"{len(jobs)} frames, {a.method}, scale {'ground' if a.ground_height else a.scale}", flush=True)
