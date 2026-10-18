@@ -39,7 +39,6 @@ Viết tắt: `P=/root/midterm/src/localization/processing_codes`, `T=/root/midt
 | `curv1.5_on_proj_2.csv` | `python3 $T/curvature_yaw.py yawproj_v1_2.csv lag_imu_heading_2.csv /root/data/Track2/raw_ply 1.5 curv1.5_on_proj_2.csv` |
 | `gnssyaw_pos_rts_2.csv` | `python3 $T/csv_ops.py merge gnssyaw_pos_rts_2.csv --pos rts_heading_2.csv --yaw gnss_smooth_2.csv` |
 | `yawproj_v3_2.csv` | `yaw_projection.py` như `v1_2` nhưng thêm `curv1.5_on_proj_2.csv:0.36280 gnssyaw_pos_rts_2.csv:0.56160` |
-
 | `startfix_on_v3_2.csv` / `startfix_on_v1_1.csv` | `python3 $T/start_yaw_fix.py /root/data/Track2 Track2 yawproj_v3_2.csv lag_imu_heading_2.csv startfix_on_v3_2.csv 4.0 1.0` (Track01: `yawproj_v1_1.csv`, `lag_noimu_heading_1.csv`) |
 | `yawproj_v4_2.csv` | `yaw_projection.py` như `v3_2` thêm `startfix_on_v3_2.csv:0.33504` |
 | `ndt3c_s10_pos_1.csv` / `ndt3c_s08_pos_1.csv` | `python3 $P/fuse_to_csv.py yawproj_v1_1.csv $D/c3s10_Track1_debug.csv ndt3c_s10_pos_1.csv --yaw-weight 0 --sigma-s 2 --max-xy 2 --max-yaw-deg 3` (tương tự `c3s08`) |
