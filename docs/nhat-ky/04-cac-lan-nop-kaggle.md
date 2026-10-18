@@ -45,8 +45,9 @@ Trên Kaggle, tên file có thêm hậu tố ngẫu nhiên (ví dụ `rts_headin
 | 32 | 08:07 | 1 | `ndt3c_s10_pos_1.csv` | 1.24807 | +0.02946 (thăm dò) | vị trí + hiệu chỉnh NDT 3 camera tỉ lệ 1.0 |
 | 33 | 08:08 | 1 | `ndt3c_s08_pos_1.csv` | **1.15042** | −0.06819 ✅ | vị trí + hiệu chỉnh NDT 3 camera tỉ lệ 0.8 |
 | 34 | 08:08 | 1 | `posproj_v1_1.csv` | **1.07618** | −0.07424 ✅ | tổ hợp vị trí (3 trường NDT) + yaw theo điểm Kaggle |
+| 35 | 08:31 | 2 | `ndt3c_s10_pos_2.csv` | 0.40544 | (thăm dò) | vị trí + hiệu chỉnh NDT 3 camera tỉ lệ 1.0 |
 
-Ngày 17/10 đã dùng 15 lượt Track01 và 15 lượt Track02 (tối đa 15/ngày); sáng 18/10 (đến 08:10) dùng 3 lượt Track01, 1 lượt Track02.
+Ngày 17/10 đã dùng 15 lượt Track01 và 15 lượt Track02 (tối đa 15/ngày); sáng 18/10 (đến 08:35) dùng 3 lượt Track01, 2 lượt Track02.
 
 ---
 
@@ -252,6 +253,13 @@ Phát hiện (02, mục 7): yaw GNSS được tính từ vị trí, cập nhật
   → lỗi vị trí dự đoán 0.764 m; yaw = tổ hợp yaw `proj1_v2` (thêm #30, Y dự đoán 1.559°). **Trọng số chọn theo điểm Kaggle.**
 - **Dự đoán 0.7644 + 0.2 × 1.559 = 1.0762; thực tế 1.07618.** Lên hạng 3 Track01.
 
+### #35 `ndt3c_s10_pos_2.csv` (0.40544, thăm dò)
+- **Cách tạo:** chỉ đổi vị trí – cộng hiệu chỉnh NDT `3cameras_ply` tỉ lệ 1.0 (1650 frame, chạy 10 lõi) vào vị trí của `startfix_on_v3_2`
+  (yaw giữ nguyên, Y = 0.514°). Dịch vị trí 0.189 m RMS.
+- **Kết quả:** lỗi vị trí 0.232 → **0.303 m** – xấu đi rõ. Tương quan với lỗi gần 0 (+0.02); hệ số tối ưu −0.024 chỉ giảm 0.0001 m
+  → ghép với yaw tốt nhất dự đoán 0.30976 (chỉ hơn 0.30984 là 0.00008) → **không nộp**.
+- **Kết luận:** giống Track01, NDT 3 camera ở tỉ lệ 1.0 không giúp; cần thử tỉ lệ 0.8 cho Track02.
+
 ---
 
 ## Tổng kết: thay đổi nào có ích
@@ -272,6 +280,6 @@ Phát hiện (02, mục 7): yaw GNSS được tính từ vị trí, cập nhật
 | **Tổ hợp yaw theo điểm Kaggle** | **−0.035** | **−0.051 / −0.063** | tốt nhất hiện tại, trọng số không vật lý |
 | Hiệu chỉnh độ cong (l = 1.5 m) | – | ~−0.002 (trong tổ hợp) | gần như không có tác dụng |
 | Yaw đoạn khởi hành từ gyro (vật lý) | ~0 | −0.010 | có ích khi xe đứng yên lâu |
-| Hiệu chỉnh vị trí NDT `3cameras_ply` tỉ lệ 0.8 | **−0.068** | (đang thử) | sửa vị trí thật đầu tiên |
-| Hiệu chỉnh vị trí NDT `3cameras_ply` tỉ lệ 1.0 | +0.029 | – | tỉ lệ sai |
+| Hiệu chỉnh vị trí NDT `3cameras_ply` tỉ lệ 0.8 | **−0.068** | (chưa chạy) | sửa vị trí thật đầu tiên |
+| Hiệu chỉnh vị trí NDT `3cameras_ply` tỉ lệ 1.0 | +0.029 | +0.070 (tối ưu ≈ 0) | tỉ lệ sai |
 | Tổ hợp vị trí + yaw theo điểm Kaggle | **−0.074** (→ 1.07618) | −0.025 (→ 0.30984) | trọng số không vật lý |

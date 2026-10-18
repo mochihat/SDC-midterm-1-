@@ -112,6 +112,12 @@ python3 pos_projection.py 0.90462 "$OUT/yawproj_v1_1.csv" "$OUT/pos1_v1.csv" \
   "$OUT/phys_yawb_ndt_1.csv:1.27855:1.74380" > /dev/null
 python3 csv_ops.py merge "$OUT/posproj_v1_1.csv" --pos "$OUT/pos1_v1.csv" --yaw "$OUT/proj1_v2.csv"
 
+# [15] Track2: position-only candidate from NDT on 3cameras_ply (scale 1.0, every 2 frames, prior = startfix_on_v3_2).
+cd "$P"
+python3 fuse_to_csv.py "$OUT/startfix_on_v3_2.csv" "$DBG/c3s10_Track2_debug.csv" "$OUT/ndt3c_s10_pos_2.csv" \
+  --yaw-weight 0 --sigma-s 2 --max-xy 2 --max-yaw-deg 3 > /dev/null
+cd "$T"
+
 # Compare with what was submitted.
 status=0
 for f in "$DOC"/submissions/track*/*.csv; do

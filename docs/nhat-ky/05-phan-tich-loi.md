@@ -124,3 +124,6 @@ Track01 (vị trí gốc P = 0.905 m; các hướng là trường hiệu chỉnh
 
 → lỗi vị trí dự đoán **0.764 m**; ghép với yaw `proj1_v2` (1.559°) → dự đoán **1.0762**, thực tế **1.07618**.
 Trọng số **chọn theo điểm Kaggle**; riêng việc "trường hiệu chỉnh NDT 3 camera tỉ lệ 0.8 có ích" là kết quả scan matching thật.
+
+Track02 (vị trí gốc P = 0.232 m): NDT `3cameras_ply` tỉ lệ 1.0 – điểm 0.40544, lỗi vị trí 0.303 m, corr(e, D) = +0.020,
+trọng số tối ưu −0.024 → lỗi vị trí 0.2321 m (gần như không đổi) – không đáng một lượt nộp.
