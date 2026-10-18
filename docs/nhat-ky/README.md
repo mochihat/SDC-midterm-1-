@@ -57,7 +57,7 @@ Diễn biến: 17/10 ~21:00 Track01 hạng 3 (1.25338), Track02 hạng 2 (0.4077
 | [04-cac-lan-nop-kaggle.md](04-cac-lan-nop-kaggle.md) | **Từng lần nộp**: cách tạo, khác gì, vì sao, điểm, kết luận |
 | [05-phan-tich-loi.md](05-phan-tich-loi.md) | Tách điểm thành lỗi vị trí / lỗi yaw bằng các file thăm dò |
 | [06-nhan-xet.md](06-nhan-xet.md) | Những điều nhận ra, cái gì hiệu quả / không, sai lầm, rủi ro, hướng tiếp theo |
-| [07-tai-tao.md](07-tai-tao.md) | Cách tạo lại **từng file đã nộp** (đã kiểm tra: 33/33 file trùng khớp từng byte) |
+| [07-tai-tao.md](07-tai-tao.md) | Cách tạo lại **từng file đã nộp** (đã kiểm tra: 34/34 file trùng khớp từng byte) |
 
 ## Cấu trúc thư mục
 
@@ -66,7 +66,7 @@ docs/nhat-ky/
 ├── README.md, 01-…07-*.md          tài liệu
 ├── submissions/
 │   ├── track1/*.csv                18 file đã nộp Track01 (đúng bản đã nộp)
-│   └── track2/*.csv                15 file đã nộp Track02
+│   └── track2/*.csv                16 file đã nộp Track02
 └── data/
     ├── kaggle_submissions.csv       lịch sử nộp bài lấy từ Kaggle API (thời gian, tên file, điểm, trạng thái)
     ├── file_differences.txt         chênh lệch vị trí / yaw giữa các cặp file liên tiếp

@@ -10,7 +10,7 @@ bash /root/midterm/tools/reproduce_submissions.sh /tmp/reproduce
 ```
 
 Script chạy lại mọi bước theo đúng thứ tự đã làm, rồi so từng file với bản trong `docs/nhat-ky/submissions/`.
-Đã kiểm tra sáng 18/10/2026: **33/33 file `identical`** (trùng khớp từng byte), mất ~2 phút.
+Đã kiểm tra sáng 18/10/2026: **34/34 file `identical`** (trùng khớp từng byte), mất ~2 phút.
 Hai file dùng NDT lấy dữ liệu NDT đã lưu trong `docs/nhat-ky/data/ndt_debug/` (chạy lại NDT mất hàng giờ – xem mục 3).
 
 ## 2. Lệnh tạo từng file
