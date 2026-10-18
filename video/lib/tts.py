@@ -1,12 +1,11 @@
 """Text-to-speech for one chapter: one wav per narration line, with measured durations.
 
-Vietnamese text is read by a Vietnamese voice; English terms (see TERMS) by an English voice, so words like
-"Kaggle", "point cloud" or "localization.cpp" are pronounced in English instead of with Vietnamese phonetics.
-Each line is cut into segments, every segment is synthesized once (cached in audio/_cache), silence at the
-segment edges is trimmed and the segments are joined with short pauses that follow the punctuation.
+Every line is read in one go by one Vietnamese voice, so the speech flows without voice changes. English terms are
+first rewritten the way Vietnamese engineers say them (PRONOUNCE: "Kaggle" -> "ke gồ", "NDT" -> "en đi ti"), so the
+voice does not spell them out with Vietnamese letter names. Subtitles keep the original spelling.
 
 Writes audio/<chapter>/line_XX.wav and audio/<chapter>/timing.json:
-    {"voices": ..., "rate": ..., "gap": ..., "lines": [{"text": ..., "file": ..., "dur": seconds}, ...]}
+    {"voice": ..., "rate": ..., "gap": ..., "lines": [{"text": ..., "spoken": ..., "file": ..., "dur": seconds}]}
 """
 import hashlib
 import json
@@ -18,67 +17,179 @@ import wave
 
 import numpy as np
 
-VOICE_VI = "vi-VN-HoaiMyNeural"
-VOICE_EN = "en-US-JennyNeural"
+VOICE = "vi-VN-HoaiMyNeural"
 RATE = "+8%"
 GAP = 0.25  # silence after each line (seconds)
 SR = 44100
-VERSION = 3  # bump to re-synthesize everything
+VERSION = 4  # bump to re-synthesize everything
 
-# English words and phrases in the narration, read by the English voice. Longest match wins; matching ignores case
-# and requires a word boundary on both sides (Vietnamese letters count as word characters).
-TERMS = """
-Normal Distributions Transform; Iterative Closest Point; Problems and Solutions; Claude Code; scan matching;
-point cloud; point-to-plane; point-to-point; motion model; sensor fusion; maximum likelihood; local minimum;
-initial guess; gimbal lock; homogeneous matrix; scale ambiguity; voxel grid; RTS smoother; ros2 launch; ROS 2;
-localization.cpp; map_modified.cpp; visualization.cpp; txt_to_idx_x_y_yaw.py; init_guess.txt; launch.py; map.pcd;
-result_1.csv; result_2.csv; result_1; result_2; Track1.db3; Track01; Track02; localizer_node; gnss_pose;
-sensor_msgs; base_link; raw_ply; RunLocalization; MapAnything; LoGeR; Dockerfile; Docker; Kaggle; Kalman;
-leaderboard; localization; baseline; template; Gaussian; quaternion; registration; correspondence; Contributions;
-Workload; Pipeline; Overfit; outlier; resolution; submap; rosbag; colcon; RViz; ROS; GNSS; GPS; IMU; LiDAR; Radar;
-ICP; NDT; RMSE; ATE; PCL; CSV; PDF; README; TODO; UTC; AI; C++; Python; Ubuntu; terminal; script; commit; repo;
-token; slide; checklist; midterm; video; camera; frame; pose; yaw; roll; pitch; radian; gyro; scale; prior;
-voxel; grid; filter; crop; mask; matching; model; node; topic; message; launch; build; source; code; file;
-test; track; map; point; cloud; delta; theta; byte; idx; ply; pcd; txt; laser; Library; rotation; translation;
-x, y, z, w; x, y, z; x, y, yaw; x, y; R; t
+# English term = how it is read. Longest match wins; matching ignores case and needs a word boundary on both sides
+# (Vietnamese letters count as word characters). Add a line here when a word still sounds wrong.
+PRONOUNCE = """
+Normal Distributions Transform = no mồ đít tri biu sần tran phom
+Iterative Closest Point = i tơ ra típ cờ lâu sợt poi
+Problems and Solutions = próp lầm en xơ lu sần
+Claude Code = cờ lốt cốt
+scan matching = xờ ken mát chinh
+point cloud = poi cờ lao
+point-to-plane = poi tu pờ lên
+point-to-point = poi tu poi
+motion model = mâu sần mo đồ
+sensor fusion = xen xơ phiu giần
+maximum likelihood = mác xi mầm lai cờ li hút
+local minimum = lâu cồ mi ni mầm
+initial guess = i ni sồ ghét
+gimbal lock = gim bồ lóc
+homogeneous matrix = hô mô gi ni ợt mây trích
+scale ambiguity = xờ kêu em bi ghiu i ti
+voxel grid = vóc xồ gờ rít
+RTS smoother = a ti ét xờ mu đơ
+ros2 launch = rốt tu lăn
+ROS 2 = rốt tu
+localization.cpp = lô cồ lai dê sần chấm xi pi pi
+map_modified.cpp = máp mo đi phai chấm xi pi pi
+visualization.cpp = vi giu ồ lai dê sần chấm xi pi pi
+txt_to_idx_x_y_yaw.py = tếch tu ai đi ếch ích oai giô chấm pai
+init_guess.txt = i nít ghét chấm tếch
+launch.py = lăn chấm pai
+map.pcd = máp chấm pi xi đi
+result_1.csv = ri dôn một chấm xi ét vi
+result_2.csv = ri dôn hai chấm xi ét vi
+result_1 = ri dôn một
+result_2 = ri dôn hai
+Track1.db3 = trác một chấm đi bi ba
+Track01 = trác không một
+Track02 = trác không hai
+localizer_node = lô cồ lai dơ nốt
+gnss_pose = gi en ét ét pâu
+sensor_msgs = xen xơ mét xịch
+base_link = bết linh
+raw_ply = rô pi eo oai
+RunLocalization = răn lô cồ lai dê sần
+MapAnything = máp e ni thinh
+LoGeR = lô gơ
+Dockerfile = đóc cơ phai
+Docker = đóc cơ
+Kaggle = ke gồ
+Kalman = kan mần
+leaderboard = li đơ bo
+localization = lô cồ lai dê sần
+baseline = bết lai
+template = tem pờ lết
+Gaussian = gao xi ần
+quaternion = quơ tơ ni ần
+registration = rê gít trây sần
+correspondence = co rét pon đần
+Contributions = con tri biu sần
+Workload = uốc lốt
+Pipeline = pai lai
+Overfit = âu vơ phít
+outlier = ao lai ơ
+resolution = rê dồ lu sần
+submap = xắp máp
+rosbag = rốt béc
+colcon = côn con
+RViz = a vi
+ROS = rốt
+GNSS = gi en ét ét
+GPS = gi pi ét
+IMU = ai em iu
+LiDAR = lai đa
+Radar = ra đa
+ICP = ai xi pi
+NDT = en đi ti
+RMSE = a em ét i
+ATE = ây ti i
+PCL = pi xi eo
+CSV = xi ét vi
+PDF = pi đi ép
+README = rít mi
+TODO = tu đu
+UTC = iu ti xi
+AI = ây ai
+C++ = xi cộng cộng
+Python = pai thần
+Ubuntu = u bun tu
+terminal = tơ mi nồ
+script = xờ cờ ríp
+commit = cơ mít
+repo = ri pô
+token = tâu cần
+slide = xờ lai
+checklist = chéc lít
+midterm = mít thơm
+video = vi đi ô
+camera = ca mê ra
+frame = phờ rêm
+pose = pâu
+yaw = giô
+roll = rôn
+pitch = pít
+radian = rây đi ần
+gyro = giai rô
+scale = xờ kêu
+prior = prai ơ
+voxel = vóc xồ
+grid = gờ rít
+filter = phin tơ
+crop = cờ róp
+mask = mát
+matching = mát chinh
+model = mo đồ
+node = nốt
+topic = tó pích
+message = mét xịch
+launch = lăn
+build = bin
+source = xo
+code = cốt
+file = phai
+test = tét
+track = trác
+map = máp
+point = poi
+cloud = cờ lao
+delta = đen ta
+theta = thê ta
+byte = bai
+idx = ai đi ếch
+ply = pi eo oai
+pcd = pi xi đi
+txt = tếch
+laser = lây dơ
+Library = lai bờ ra ri
+rotation = rô tây sần
+translation = tran xờ lây sần
+x, y, z, w = ích, oai, dét, đắp bờ liu
+x, y, z = ích, oai, dét
+x, y, yaw = ích, oai, giô
+x, y = ích, oai
+TA = ti ây
+E3 = i ba
+GB = gi ga bai
+DoF = đi âu ép
+robot = rô bốt
+chat = chát
+R = a
+t = ti
 """
-_terms = sorted({t.strip() for t in TERMS.replace("\n", " ").split(";") if t.strip()}, key=len, reverse=True)
-_TERM_RE = re.compile(r"(?<![\w.])(" + "|".join(re.escape(t) for t in _terms) + r")(?![\w])", re.IGNORECASE)
-# English terms separated only by spaces/commas/slashes ("x, y, yaw") are read as one English segment.
-_JOIN_RE = re.compile(r"^[\s,/+&-]*$")
+_say = {}
+for row in PRONOUNCE.strip().splitlines():
+    term, said = (s.strip() for s in row.split("=", 1))
+    _say[term.lower()] = said
+_TERM_RE = re.compile(r"(?<![\w.])(" + "|".join(re.escape(t) for t in sorted(_say, key=len, reverse=True))
+                      + r")(?!\w)", re.IGNORECASE)
 
 
-def segments(text):
-    """[(lang, text)] with lang 'vi' or 'en', in reading order."""
-    out, pos = [], 0
-    for m in _TERM_RE.finditer(text):
-        if m.start() > pos:
-            out.append(["vi", text[pos:m.start()]])
-        if out and out[-1][0] == "vi" and _JOIN_RE.match(out[-1][1]) and len(out) >= 2 and out[-2][0] == "en":
-            joiner = out.pop()[1]
-            out[-1][1] += joiner + m.group(0)
-        else:
-            out.append(["en", m.group(0)])
-        pos = m.end()
-    if pos < len(text):
-        out.append(["vi", text[pos:]])
-    return [(lang, s) for lang, s in out if re.search(r"\w", s)] or [("vi", text)]
+def spoken(text):
+    """The line as it is sent to the voice."""
+    return _TERM_RE.sub(lambda m: _say[m.group(0).lower()], text)
 
 
-def pause_after(piece):
-    """Pause (s) after a segment, from the punctuation at its end."""
-    tail = piece.rstrip()
-    if tail.endswith((".", "!", "?", ":")):
-        return 0.30
-    if tail.endswith((",", ";", "–", "-")):
-        return 0.15
-    return 0.04
-
-
-def _edge_tts(text, voice, rate, path):
+def _edge_tts(text, path):
     for attempt in range(6):
         try:  # edge-tts can hang forever on a stalled connection
-            proc = subprocess.run(["edge-tts", "--voice", voice, f"--rate={rate}", "--text", text,
+            proc = subprocess.run(["edge-tts", "--voice", VOICE, f"--rate={RATE}", "--text", text,
                                    "--write-media", path], capture_output=True, text=True, timeout=90)
         except subprocess.TimeoutExpired as e:
             proc = subprocess.CompletedProcess(e.cmd, 1, "", "timeout")
@@ -94,31 +205,12 @@ def _decode(path):
     return np.frombuffer(raw, dtype=np.int16).astype(np.float32).reshape(-1, 2) / 32768
 
 
-def _trim(x, thresh=0.01, keep=0.03):
+def _trim(x, thresh=0.01, keep=0.05):
     loud = np.flatnonzero(np.abs(x).max(axis=1) > thresh)
     if len(loud) == 0:
-        return x[:0]
+        return x
     k = int(keep * SR)
     return x[max(loud[0] - k, 0):loud[-1] + k]
-
-
-def _level(x, target_db=-20.0):
-    """Same loudness for both voices (the English voice is a few dB quieter)."""
-    if len(x) == 0:
-        return x
-    rms = np.sqrt((x ** 2).mean())
-    return x * min(10 ** (target_db / 20) / max(rms, 1e-6), 4.0)
-
-
-def segment_audio(lang, text, rate, cache):
-    voice = VOICE_EN if lang == "en" else VOICE_VI
-    seg_rate = "+0%" if lang == "en" else rate  # isolated English words sound rushed when sped up
-    key = hashlib.sha1(f"{voice}|{seg_rate}|{text.strip()}".encode()).hexdigest()[:16]
-    path = os.path.join(cache, key + ".mp3")
-    if not os.path.exists(path):
-        _edge_tts(text.strip(), voice, seg_rate, path + ".tmp.mp3")
-        os.replace(path + ".tmp.mp3", path)
-    return _level(_trim(_decode(path)))
 
 
 def write_wav(path, x):
@@ -129,31 +221,34 @@ def write_wav(path, x):
         w.writeframes((np.clip(x, -1, 1) * 32767).astype(np.int16).tobytes())
 
 
-def synthesize(chapter, lines, audio_root, rate=RATE):
+def synthesize(chapter, lines, audio_root):
     folder = os.path.join(audio_root, chapter)
     cache = os.path.join(audio_root, "_cache")
     os.makedirs(folder, exist_ok=True)
     os.makedirs(cache, exist_ok=True)
     timing_path = os.path.join(folder, "timing.json")
-    settings = {"version": VERSION, "voices": [VOICE_VI, VOICE_EN], "rate": rate}
+    settings = {"version": VERSION, "voice": VOICE, "rate": RATE}
     old = {}
     if os.path.exists(timing_path):
         prev = json.load(open(timing_path))
         if all(prev.get(k) == v for k, v in settings.items()):
-            old = {(l["text"], l["file"]): l for l in prev["lines"]}
+            old = {(l["spoken"], l["file"]): l for l in prev["lines"]}
     result = []
     for i, text in enumerate(lines):
+        say = spoken(text)
         name = f"line_{i:02d}.wav"
         path = os.path.join(folder, name)
-        cached = old.get((text, name))
+        cached = old.get((say, name))
         if cached is None or not os.path.exists(path):
-            parts = []
-            for lang, piece in segments(text):
-                parts.append(segment_audio(lang, piece, rate, cache))
-                parts.append(np.zeros((int(pause_after(piece) * SR), 2), np.float32))
-            x = np.vstack(parts[:-1]) if len(parts) > 1 else np.zeros((SR // 2, 2), np.float32)
+            key = hashlib.sha1(f"{VOICE}|{RATE}|{say}".encode()).hexdigest()[:16]
+            mp3 = os.path.join(cache, key + ".mp3")
+            if not os.path.exists(mp3):
+                _edge_tts(say, mp3 + ".tmp.mp3")
+                os.replace(mp3 + ".tmp.mp3", mp3)
+            x = _trim(_decode(mp3))
             write_wav(path, x)
-            cached = {"text": text, "file": name, "dur": len(x) / SR}
+            cached = {"text": text, "spoken": say, "file": name, "dur": len(x) / SR}
+        cached["text"] = text
         result.append(cached)
     json.dump({**settings, "gap": GAP, "lines": result}, open(timing_path, "w"), ensure_ascii=False, indent=1)
     return result
