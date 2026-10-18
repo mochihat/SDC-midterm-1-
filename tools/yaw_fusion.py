@@ -77,6 +77,8 @@ def main():
     p.add_argument("--gyro-shift", type=float, default=0.0, help="add this many seconds to the IMU clock")
     p.add_argument("--gyro-axis", default="gravity", choices=["gravity", "z"])
     p.add_argument("--auto-lever", action="store_true")
+    p.add_argument("--lf-from-debug", help="scan-matching debug CSV: use its yaw (ndt_yaw, gated <= 2 m / 3 deg) "
+                                          "instead of the motion heading as the slow reference")
     a = p.parse_args()
 
     track_dir = os.path.join(a.data, f"Track{a.track}")
@@ -126,7 +128,21 @@ def main():
         print(f"auto lever d = {lever:+.2f} m")
     h_body = heading - (np.arctan2(lever * omega_c, np.maximum(speed, 0.5)) if lever else 0.0)
 
-    corr = weighted_smooth(np.unwrap(h_body - psi_g), moving, a.tau * fps)
+    ref, w_ref = h_body, moving.astype(float)
+    if a.lf_from_debug:
+        with open(a.lf_from_debug) as f:
+            rows = list(csv.DictReader(f))
+        idx = np.array([int(r["idx"]) for r in rows])
+        col = lambda k: np.array([float(r[k]) for r in rows])
+        dyaw = wrap(col("ndt_yaw") - col("guess_yaw"))
+        good = (np.hypot(col("ndt_x") - col("guess_x"), col("ndt_y") - col("guess_y")) <= 2) & (np.abs(np.degrees(dyaw)) <= 3)
+        ref = np.zeros(len(t))
+        w_ref = np.zeros(len(t))
+        ref[idx[good]] = col("ndt_yaw")[good]
+        w_ref[idx[good]] = 1.0
+        ref = psi_g + wrap(ref - psi_g)  # same branch as psi_g
+        print(f"slow reference: scan-matching yaw on {int(w_ref.sum())} frames")
+    corr = weighted_smooth(np.unwrap(ref - psi_g), w_ref, a.tau * fps)
     yaw = wrap(psi_g + corr)
 
     with open(a.out, "w") as f:

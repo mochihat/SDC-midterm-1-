@@ -74,7 +74,35 @@ rồi cộng vào vị trí prior – y như các lượt NDT ở [03](03-thi-ng
 - Yaw của các file `*_bestyaw_1.csv` lấy từ `posproj_v2_1.csv`, vốn là **tổ hợp chọn theo điểm Kaggle** (xem 05).
   File chỉ dùng yaw `yawproj_v1_1` (ít phụ thuộc điểm hơn) tốt nhất là `gicp_ground_pass2_pos_1.csv` – 0.99283.
 
-## 7. Còn chờ nộp (đã tính sẵn)
+## 7. Các phương pháp TA gợi ý (slide: "Scale calibration、雜訊處理", front-hood mask trong `camera_info`)
 
-`gicp_ground_pass3dm_bestyaw_1.csv`, `gicp_ground_pass4dm_bestyaw_1.csv` (lượt 3, 4 có trừ độ lệch; độ dịch mỗi lượt
-0.259 → 0.188 → 0.143 m), `planar_pass2dm_bestyaw_1.csv` (ICP 3 bậc tự do lượt 2, có trừ độ lệch).
+| Thử | Kết quả offline | Nộp |
+|---|---|---|
+| **Mặt nạ nắp capo** (`--hood-mask`, chiếu điểm lên ảnh camera trước bằng mô hình fisheye) | `3cameras_ply`: chỉ 0.5–2 % điểm rơi vào vùng nắp capo, và chúng nằm ở độ cao mặt đường (z ≈ −2.1) – MapAnything đã tự bỏ nắp capo, phần còn lại là mặt đường "đoán" sau nắp capo. Kết quả GICP đổi rất ít (0.09 m RMS) | – |
+| **Lọc điểm lạc thống kê** (`--sor 10,2`, như PCL StatisticalOutlierRemoval) + nắp capo | GICP đổi 0.14 m RMS so với không lọc | `gicp_hood_sor_pos_1.csv` (chờ) |
+| **Bỏ mặt đường** (`--no-ground 0.3`) | GICP mất ràng buộc z / roll / pitch, chỉ 30 % frame hội tụ → chỉ dùng cho ICP 3 bậc tự do | `planar_clean_pos_1.csv` (chờ) |
+| `raw_ply` (LoGeR) + GICP, tỉ lệ theo mặt đường (trung vị ×9.27) | Độ sửa lệch dọc đường −0.79 m (3 camera: +0.38 m); sau khi trừ trung bình **không tương quan** (0.02) với 3 camera → coi là nhiễu, không nộp | – |
+| ICP point-to-plane (`--method PLANE_ICP`, chỉ dùng pháp tuyến bản đồ, không dùng hiệp phương sai của point cloud ảnh) | Độ lệch trung bình gần 0 (dọc +0.04, ngang −0.08 m) – ít lệch hơn GICP | `plane_icp_ground_pos_1.csv` (chờ) |
+
+## 8. Yaw: bộ lọc bù gyro + hướng chạy (`tools/yaw_fusion.py`)
+
+yaw = tích phân gyro (bias ước lượng bằng bình phương tối thiểu theo hướng chạy) + làm mượt Gauss τ giây của
+(hướng chạy − yaw gyro): gyro lo phần thay đổi nhanh, hướng chạy giữ phần trung bình. Không dùng điểm Kaggle.
+
+- Gyro được **chiếu lên phương trọng lực** (IMU nghiêng 5.8° / 4.6°): phần dư hướng chạy − yaw gyro (Track02) 0.342° → 0.309°;
+  hệ số tỉ lệ gyro khi đó 1.002 / 1.005 → không cần hiệu chỉnh tỉ lệ. Không có lệch thời gian IMU – vị trí (tối ưu ≈ 0 s).
+- Track02 (hướng chạy sạch, tương quan tốc độ quay – gyro 0.89): `cf_tau5_2.csv` (vị trí của `posyaw_v2_2`, τ = 5 s)
+  **0.29887 → 0.29268** ✅ (yaw ~−0.03°) – yaw hoàn toàn vật lý tốt hơn yaw cũ có thành phần chọn theo điểm.
+- Hệ số trượt ước lượng từ dữ liệu (`--auto-lever`, hồi quy phần dư theo độ cong ω/v): Track02 d = −2.0 m (hợp lý: hiệu ứng
+  understeer ở 11 m/s ≈ −1 m + vị trí điểm đo gần cầu sau). Track01 không tin được (hướng chạy nhiễu).
+- Track01: hướng chạy tính từ vị trí GNSS bị nhiễu (tương quan với gyro chỉ 0.35–0.56 dù làm mượt 0.5–2.5 s; phần dư ~1.2°,
+  cỡ chính lỗi yaw hiện tại 1.56°) → thử yaw dựa nhiều vào gyro (τ = 15, 30 s).
+
+## 9. Còn chờ nộp (đã tính sẵn)
+
+Track01: `gicp_ground_pass3dm_bestyaw_1.csv`, `gicp_ground_pass4dm_bestyaw_1.csv` (lượt 3, 4 có trừ độ lệch; độ dịch mỗi
+lượt 0.259 → 0.188 → 0.143 m), `planar_pass2dm_bestyaw_1.csv`, các file ở mục 7, `cfg1_tau15_al.csv`, `cfg1_tau30_al.csv`.
+Track02: `cfg2_tau5_al.csv`, `cfg2_tau5.csv`, `cfg2_tau15_al.csv`, `cfg2_tau2_al.csv`, cặp thăm dò yaw ±0.5° trên `cf_tau5_2.csv`.
+
+Dự phòng (chọn theo điểm Kaggle, chưa nộp): tổ hợp 10 trường vị trí Track01 (`pos_projection.py`) dự đoán lỗi vị trí
+**0.510 m** (bài thuần thuật toán tốt nhất ~0.616 m); trọng số +3.72, −2.03… không có ý nghĩa vật lý.
