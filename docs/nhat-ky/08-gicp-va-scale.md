@@ -172,3 +172,16 @@ Các tổ hợp này **khớp vào đáp án qua điểm số**, trọng số kh
 
 Track01: `lb_posyaw_v1_1.csv` (tổ hợp chọn theo điểm, dự đoán 0.555), `gicp_cf_p2dm_tau7_1.csv`, `cfz1_tau5.csv`, `cfz1_tau3.csv`.
 Track02: `lb_posyaw_v1_2.csv` (dự đoán 0.263), `cfz2_tau12.csv`, `cfz2_tau20.csv`.
+
+## 11. Dò lỗi vị trí theo dao động thời gian (người dùng đồng ý 19/10 chiều, sau khi hỏi TA)
+
+**Đây là chỉnh theo điểm Kaggle ở mức mạnh nhất: đo lỗi của đáp án qua bảng điểm, không phải thuật toán.**
+
+- Mỗi file dò = file nền + một dao động cosin theo thời gian (dao động DCT bậc k trên cả track, biên độ 0.5 m) cộng vào
+  x hoặc y, yaw giữ nguyên (`tools/make_probes.py`). Điểm cho đúng một con số mean(e·D) – hình chiếu của lỗi lên dao động đó.
+  Gộp mọi hướng đã đo (cả các file cũ) bằng `pos_projection.py` (bình phương tối thiểu, nghịch đảo giả).
+- Phổ độ sửa GICP (xấp xỉ phổ lỗi): 10 dao động đầu chứa 85 % năng lượng, 20 dao động 97 %, 30 dao động 99 % →
+  dự kiến cần ~20 dao động mỗi trục.
+- Nền Track01: `yawproj_v1_1.csv` (lỗi vị trí 0.90462 m, đo chính xác bằng các lượt thăm dò cũ). Nền Track02: `cfz2_tau15.csv`
+  (lỗi vị trí 0.2268 m, yaw 0.2488°).
+- Đợt 1 (sáng 20/10): dao động 0–6 cho x và y ở mỗi track (14 lượt/track) + `lb_posyaw_v1_1/2.csv`.
