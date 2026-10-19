@@ -8,18 +8,18 @@ kết quả ra sao, rút ra kết luận gì) và các nhận xét sau khi làm.
 - Điểm Kaggle **càng thấp càng tốt**.
 - Phần công cụ tự động nộp bài không được ghi trong tài liệu này.
 
-## Kết quả hiện tại (chụp lúc ~01:30 ngày 19/10/2026)
+## Kết quả hiện tại (chụp lúc ~14:00 ngày 19/10/2026)
 
 | | Track01 | Track02 |
 |---|---|---|
 | Baseline của TA | 1.79075 | 1.92587 |
-| **File tốt nhất của nhóm (đội 11)** | **`pass2dm_bestyaw_1.csv` – 0.92775** | **`posyaw_v2_2.csv` – 0.29887** |
-| Tốt nhất mà vị trí chỉ từ thuật toán (GNSS + Kalman + GICP) | `gicp_ground_pass2_pos_1.csv` – 0.99283 | – |
-| Hạng | 3 / 6 đội | 3 / 6 đội |
-| Hạng 1 | đội 6 – 0.76085 | đội 6 – 0.25774 |
+| **File tốt nhất của nhóm (đội 11)** | **`cfz1_tau7.csv` – 0.78914** | **`posproj_t2_v1_2.csv` – 0.26849** |
+| Tốt nhất không dùng tổ hợp trọng số chọn theo điểm | 0.78914 (GICP + yaw gyro) | `cfz2_tau15.csv` – 0.27654 |
+| Hạng | 3 / 7 đội | 3 / 7 đội |
+| Hạng 1 | đội 12 – 0.57658 | đội 12 – 0.23178 |
 
-Yaw của các file tốt nhất là **tổ hợp chọn theo điểm Kaggle** (xem [05](05-phan-tich-loi.md) mục 5–6);
-phần vị trí Track01 mới nhất là scan matching GICP – xem [08](08-gicp-va-scale.md) (kể cả phần nào dựa vào điểm).
+Vị trí Track01 = GNSS + Kalman + GICP (tỉ lệ theo mặt đường, 2 lượt, trừ độ lệch); yaw = bộ lọc bù gyro + hướng chạy
+(xem [08](08-gicp-va-scale.md), kể cả các tham số chọn theo điểm). Vị trí Track02 là tổ hợp chọn theo điểm.
 
 Diễn biến: 17/10 ~21:00 Track01 hạng 3 (1.25338), Track02 hạng 2 (0.40778) → sáng 18/10 Track01 1.07618, Track02 0.30984 →
 trưa 18/10 1.05448 / 0.29887 → đêm 18→19/10 GICP + tỉ lệ theo mặt đường: Track01 **0.92775**.

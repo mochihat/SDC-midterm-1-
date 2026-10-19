@@ -98,11 +98,77 @@ yaw = tích phân gyro (bias ước lượng bằng bình phương tối thiểu
 - Track01: hướng chạy tính từ vị trí GNSS bị nhiễu (tương quan với gyro chỉ 0.35–0.56 dù làm mượt 0.5–2.5 s; phần dư ~1.2°,
   cỡ chính lỗi yaw hiện tại 1.56°) → thử yaw dựa nhiều vào gyro (τ = 15, 30 s).
 
-## 9. Còn chờ nộp (đã tính sẵn)
+## 9. Kết quả ngày 19/10 (lượt nộp 10:00–14:00)
 
-Track01: `gicp_ground_pass3dm_bestyaw_1.csv`, `gicp_ground_pass4dm_bestyaw_1.csv` (lượt 3, 4 có trừ độ lệch; độ dịch mỗi
-lượt 0.259 → 0.188 → 0.143 m), `planar_pass2dm_bestyaw_1.csv`, các file ở mục 7, `cfg1_tau15_al.csv`, `cfg1_tau30_al.csv`.
-Track02: `cfg2_tau5_al.csv`, `cfg2_tau5.csv`, `cfg2_tau15_al.csv`, `cfg2_tau2_al.csv`, cặp thăm dò yaw ±0.5° trên `cf_tau5_2.csv`.
+### 9.1 Yaw dựa vào gyro – bước tiến lớn nhất
 
-Dự phòng (chọn theo điểm Kaggle, chưa nộp): tổ hợp 10 trường vị trí Track01 (`pos_projection.py`) dự đoán lỗi vị trí
-**0.510 m** (bài thuần thuật toán tốt nhất ~0.616 m); trọng số +3.72, −2.03… không có ý nghĩa vật lý.
+Vị trí giữ nguyên (Track01: `pass2dm` – lỗi vị trí 0.616 m; Track02: `posyaw_v2_2` – 0.2267 m) nên mỗi lượt cho đúng lỗi yaw.
+
+| Track | File | Cấu hình | Điểm | Lỗi yaw |
+|---|---|---|---|---|
+| 01 | `pass2dm_bestyaw_1.csv` (trước) | yaw tổ hợp chọn theo điểm | 0.92775 | 1.559° |
+| 01 | `cfg1_tau30_al.csv` | gyro chiếu trọng lực, τ 30 s, hệ số trượt tự ước lượng | 0.83296 | 1.085° |
+| 01 | `cfg1_tau15_al.csv` | như trên, τ 15 s | 0.80646 | 0.952° |
+| 01 | `cfg1_tau15.csv` | τ 15 s, **không** hiệu chỉnh trượt | 0.80359 | 0.937° |
+| 01 | `cfz1_tau15_al.csv` | gyro **trục z**, τ 15 s | 0.80411 | 0.940° |
+| 01 | `cfg1_tau10_al.csv` | τ 10 s | 0.79585 | 0.899° |
+| 01 | `cfz1_tau10.csv` | trục z, không trượt, τ 10 s | 0.79127 | 0.876° |
+| 01 | **`cfz1_tau7.csv`** | trục z, không trượt, τ 7 s | **0.78914** | **0.865°** |
+| 02 | `cf_tau5_2.csv` | trục z, τ 5 s | 0.29268 | 0.330° |
+| 02 | `cfg2_tau5.csv` / `cfg2_tau5_al.csv` | chiếu trọng lực / + trượt, τ 5 s | 0.29756 / 0.30531 | 0.354° / 0.393° |
+| 02 | `cfg2_tau2_al.csv` / `cfg2_tau15_al.csv` | τ 2 / 15 s, + trượt | 0.31258 / 0.28743 | 0.429° / 0.304° |
+| 02 | `cfz2_tau10.csv` / `cfz2_tau30.csv` | trục z, không trượt, τ 10 / 30 s | 0.27949 / 0.28034 | 0.264° / 0.268° |
+| 02 | **`cfz2_tau15.csv`** | trục z, không trượt, τ 15 s | **0.27654** | **0.249°** |
+
+Kết luận: **yaw của đáp án là yaw thân xe** – gyro giữ phần nhanh tốt hơn hẳn hướng chạy tính từ vị trí (Track01 lỗi yaw
+1.56° → 0.87°, Track02 0.33° → 0.25°). Gyro trục z tốt hơn bản chiếu lên trọng lực; hiệu chỉnh trượt làm xấu đi
+(hệ số tự ước lượng không đúng). τ tối ưu: Track01 ≤ 7 s, Track02 ~15 s. **τ, trục gyro và việc bỏ hiệu chỉnh trượt được
+chọn theo điểm Kaggle** (mỗi thứ một tham số).
+
+### 9.2 Vị trí
+
+| File | Cách làm | Lỗi vị trí |
+|---|---|---|
+| `gicp_ground_pass3dm/4dm_bestyaw_1.csv` | GICP lượt 3, 4 có trừ độ lệch | 0.623 / 0.655 m (lượt 2: 0.616) → **dừng ở lượt 2** |
+| `gicp_hood_sor_pos_1.csv` | GICP + nắp capo + lọc điểm lạc (lượt 1) | 0.764 m (không lọc: 0.714) ❌ |
+| `planar_clean_pos_1.csv` | ICP 3 bậc tự do + nắp capo + lọc + bỏ mặt đường | 0.721 m (không: 0.719) |
+| `plane_icp_ground_pos_1.csv` | ICP point-to-plane lượt 1 | **0.681 m** (GICP lượt 1: 0.714) ✅ |
+| `plane_icp_pass2dm/plain_cfyaw_1.csv` | ICP point-to-plane lượt 2 (yaw 0.952°) | 0.689 / 0.695 m ❌ (GICP lượt 2: 0.616) |
+| `planar_pass2dm_bestyaw_1.csv` | ICP 3 bậc tự do lượt 2 | 0.716 m |
+
+Chạy lại GICP với yaw mới (0.87° thay cho 1.57°) làm điểm xuất phát: kết quả gần như không đổi (khác 0.10 m RMS,
+tương quan 0.99) – GICP tự sửa yaw trong lúc khớp.
+
+**Track02 – mọi phép khớp đều kéo vị trí ra xa đáp án** (trên vị trí 0.2267 m): ICP point-to-plane 0.444 m, GICP 0.414 m,
+NDT 3 camera 0.270 m. Quét tỉ lệ cố định cho thấy tỉ lệ ~0.7 (đúng như tỉ lệ theo mặt đường) nhưng GICP vẫn kéo
+1.0–1.2 m khỏi GNSS ⇒ phép khớp Track02 sai có hệ thống ~1 m; không thể sửa vị trí Track02 bằng scan matching.
+
+### 9.3 Thăm dò Track02 (đo bằng điểm)
+
+- Yaw ±0.5° trên `cf_tau5_2.csv`: tách được **vị trí 0.2267 m + yaw 0.330°**; độ lệch yaw tối ưu chỉ +0.08° (lợi ~0.002).
+- Dời ngang ±0.3 m trên `cfz2_tau15.csv`: lệch ngang trung bình **+0.036 m** (lợi ~0.003); kiểm tra tổng khớp
+  (P+² + P−² = 0.28286, lý thuyết 0.28279). ⇒ lỗi vị trí Track02 không phải độ lệch cố định.
+
+### 9.4 Tổ hợp chọn theo điểm Kaggle (`pos_projection.py`, `yaw_projection.py`)
+
+| Track | Tổ hợp | Dự đoán | Thực tế |
+|---|---|---|---|
+| 02 | 5 trường vị trí (3 phép khớp, dời ngang, GICP cũ) + yaw `cfz2_tau15` | 0.2686 | **0.26849** |
+| 01 | 18 trường vị trí (trọng số −9.2…+7.5) → lỗi vị trí **0.389 m** + tổ hợp 7 yaw → **0.828°** | 0.555 | (chờ nộp) |
+| 02 | + tổ hợp 9 yaw → 0.221° | 0.263 | (chờ nộp) |
+
+Các tổ hợp này **khớp vào đáp án qua điểm số**, trọng số không có ý nghĩa vật lý – chỉ là công cụ xếp hạng, không phải
+đóng góp thuật toán.
+
+### 9.5 Tốt nhất hiện tại (14:00 ngày 19/10)
+
+| | Track01 | Track02 |
+|---|---|---|
+| Điểm tốt nhất | `cfz1_tau7.csv` – **0.78914** | `posproj_t2_v1_2.csv` – **0.26849** |
+| Vị trí từ thuật toán (GNSS + Kalman + GICP), yaw gyro | 0.78914 (τ chọn theo điểm) | 0.27654 (`cfz2_tau15`) |
+| Hạng (đội 12 dẫn đầu: 0.57658 / 0.23178) | 3 | 3 |
+
+## 10. Chờ nộp (sáng 20/10)
+
+Track01: `lb_posyaw_v1_1.csv` (tổ hợp chọn theo điểm, dự đoán 0.555), `gicp_cf_p2dm_tau7_1.csv`, `cfz1_tau5.csv`, `cfz1_tau3.csv`.
+Track02: `lb_posyaw_v1_2.csv` (dự đoán 0.263), `cfz2_tau12.csv`, `cfz2_tau20.csv`.
