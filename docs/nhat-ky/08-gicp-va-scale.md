@@ -185,3 +185,11 @@ Track02: `lb_posyaw_v1_2.csv` (dự đoán 0.263), `cfz2_tau12.csv`, `cfz2_tau20
 - Nền Track01: `yawproj_v1_1.csv` (lỗi vị trí 0.90462 m, đo chính xác bằng các lượt thăm dò cũ). Nền Track02: `cfz2_tau15.csv`
   (lỗi vị trí 0.2268 m, yaw 0.2488°).
 - Đợt 1 (sáng 20/10): dao động 0–6 cho x và y ở mỗi track (14 lượt/track) + `lb_posyaw_v1_1/2.csv`.
+
+### 11.1 Kết quả đợt 1 (20/10 10:30–11:00)
+
+- `lb_posyaw_v1_1.csv` (tổ hợp 18 trường vị trí + 7 yaw, dự đoán 0.555): **0.55496** ✅. `lb_posyaw_v1_2.csv` (dự đoán 0.263): **0.26291** ✅.
+- 14 file dò dao động 0–6 (x, y) mỗi track đã có điểm. Gộp với các hướng cũ (`pos_projection.py`):
+  Track01 lỗi vị trí dự đoán **0.389 → 0.296 m** (điểm ~0.462 với yaw 0.828°); Track02 **0.219 → 0.153 m** (điểm ~0.197).
+- Đợt 2 (sáng 21/10, đã xếp hàng): `corr_r1_1/2.csv` (file sửa để kiểm chứng) + dao động 7–13.
+- Leaderboard 20/10 10:30: đội 12 dẫn 0.41123 / 0.17429.
