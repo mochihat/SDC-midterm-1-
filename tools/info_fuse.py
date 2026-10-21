@@ -13,6 +13,12 @@ the Hessian is not trustworthy (image point clouds are distorted, so errors are 
 keeps the Hessian's shape and is normalised: eigenvalues l1 >= l2 become w * (1, (l2 / l1)^gamma) / sigma_match^2.
 gamma = 0 is the isotropic case (every direction trusted alike, like the Gaussian smoothing in fuse_to_csv.py).
 
+--vehicle-noise replaces the per-frame Hessian shape by one noise shape fixed in the vehicle frame and MEASURED from
+the data: the frame-to-frame scatter of the along-track and lateral corrections (correction minus its own 2 s smooth;
+the GNSS error is slow, so the scatter is matcher noise). W_i = f f^T / (sigma_match * r)^2 + l l^T / sigma_match^2,
+r = measured along / lateral scatter. Reason (tools/segment_analysis.py): the Hessian gets the average anisotropy
+right but has no skill frame by frame (rank correlation with the measured noise ~0).
+
 --demean removes the mean along / lateral scan-match offset (vehicle frame) first, as in fuse_to_csv.py.
 Gating: |d_i| <= --max-xy and |dyaw| <= --max-yaw-deg, converged frames only, median filter over 5 matched frames.
 
@@ -24,7 +30,7 @@ import argparse
 import csv
 
 import numpy as np
-from scipy.ndimage import median_filter
+from scipy.ndimage import gaussian_filter1d, median_filter
 from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import spsolve
 
@@ -98,6 +104,7 @@ def main():
     p.add_argument("--max-xy", type=float, default=2.0)
     p.add_argument("--max-yaw-deg", type=float, default=3.0)
     p.add_argument("--demean", action="store_true")
+    p.add_argument("--vehicle-noise", action="store_true", help="fixed along/lateral noise shape measured from data")
     a = p.parse_args()
 
     prior_rows = list(csv.reader(open(a.prior)))[1:]
@@ -126,6 +133,15 @@ def main():
     d = along_d[:, None] * fwd + lat_d[:, None] * lat
 
     W, ratios = weights(dbg, good, a.gamma, a.sigma_match)
+    if a.vehicle_noise:
+        t_good = t_all[good]
+        step = np.median(np.diff(t_good))
+        scatter = [np.sqrt(np.mean((v[good] - gaussian_filter1d(v[good], 2 / step, mode="nearest")) ** 2))
+                   for v in (along_d, lat_d)]
+        r = scatter[0] / scatter[1]
+        print(f"vehicle-frame noise from data: along {scatter[0]:.3f} m, lateral {scatter[1]:.3f} m, ratio {r:.2f}")
+        for k in np.flatnonzero(good):
+            W[k] = np.outer(fwd[k], fwd[k]) / (a.sigma_match * r) ** 2 + np.outer(lat[k], lat[k]) / a.sigma_match ** 2
     sel = np.flatnonzero(good)
     # Direction of the weak axis relative to the vehicle, for the log.
     print(f"using {len(sel)}/{len(good)} matched frames; information ratio weak/strong median "

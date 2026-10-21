@@ -302,3 +302,25 @@ mang theo sai số GNSS → **giả định độc lập sai, thước đo này 
 
 Báo cáo và slide "như nộp thật" (tiếng Anh) làm trên claude.ai: báo cáo https://claude.ai/artifact/Kwr2eFuztKcaopy3q2pvc6,
 slide https://claude.ai/artifact/HtWevyxNDjiZXwFW6LJnqt (riêng tư).
+
+### 13.6 Hessian có dự báo được nhiễu của GICP không? (`tools/segment_analysis.py`, không dùng đáp án / leaderboard)
+
+Nhiễu đo được = độ sửa GICP trừ chính nó sau làm mượt 2 s (lỗi GNSS trôi chậm nên phần còn lại là nhiễu của phép khớp).
+
+| | Track01 lượt 1 | Track01 lượt 2 | Track02 |
+|---|---|---|---|
+| Nhiễu mỗi frame, dọc / ngang | 0.713 / 0.559 m | 0.700 / 0.553 m | 0.641 / 0.562 m |
+| Tỉ lệ dọc/ngang: đo được / Hessian dự báo | 1.28 / 1.38 | 1.27 / 1.38 | 1.14 / 1.35 |
+| Spearman(σ dự báo, \|nhiễu\|) dọc / ngang | +0.05 / −0.07 | −0.01 / −0.06 | −0.02 / −0.10 |
+| Spearman(dị hướng dự báo, dị hướng đo) từng frame | −0.00 | +0.01 | −0.02 |
+
+- Hessian **đúng xu hướng trung bình** (dọc nhiễu hơn ngang) nhưng **không có khả năng dự báo từng frame** (tương quan ≈ 0) →
+  trọng số theo Hessian từng frame (`if_aniso`) khó tốt hơn đẳng hướng.
+- Mô hình nhiễu cố định theo hệ xe đo từ dữ liệu (`info_fuse.py --vehicle-noise`): sau lọc trung vị 5 frame và loại
+  frame > 2 m, nhiễu dọc / ngang **0.505 / 0.494 m (tỉ lệ 1.02)** → gần như đẳng hướng; `if_veh_*` ≈ `if_iso_*`, không nộp.
+- Tỉ lệ point cloud ổn định trong từng đoạn 10 % (độ lệch chuẩn 0.009–0.077); đoạn 9 Track01 tỉ lệ 0.885 (mặt đường thấp hơn).
+- Đoạn khó: Track01 đoạn 1 (xe đứng / chậm, chỉ 51–53 % frame hội tụ) và đoạn 5–7 (nhanh 12 m/s, nhiễu dọc 0.75–0.86 m).
+
+**Kết luận:** phần lỗi còn lại sau ghép không phải nhiễu (đã bị làm mượt) mà là **độ lệch có hệ thống, kéo dài theo thời gian** của
+GICP trên point cloud méo – làm mượt hay trọng số khác không sửa được. Hướng có cơ sở tiếp theo là giảm độ lệch đó ở đầu vào
+(chất lượng point cloud), không phải ở bộ ghép.
