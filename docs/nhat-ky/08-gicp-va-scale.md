@@ -276,3 +276,29 @@ Track01 +58…+411 ms, Track02 +224…+500 ms tuỳ độ làm mượt, bootstra
 | 02 | `if_iso_2.csv` / `if_aniso_2.csv` | + GICP qua bộ làm mượt mới, γ = 0 / 1 |
 
 Yaw như nhau trong cả 3 file mỗi track (gyro τ 7 / 15 s, hướng chạy từ vị trí Kalman) → chênh điểm chỉ do vị trí.
+
+### 13.5 Hai thước đo offline không cần đáp án (21/10)
+
+**Thước đo 1 – độ khớp bản đồ** (`tools/map_fit.py`): đặt point cloud `3cameras_ply` của mỗi frame thứ 10 vào bản đồ
+0.3 m theo pose của file kết quả, đo khoảng cách điểm–bản đồ (chỉ điểm cao hơn mặt đường 0.3 m). Kiểm tra trên các
+file pipeline / lai đã nộp (`--validate`, tương quan hạng Spearman với điểm Kaggle):
+
+| | Track01 | Track02 |
+|---|---|---|
+| Số file | 37 | 25 |
+| Spearman(điểm Kaggle, khoảng cách trung vị) | **+0.92** | **+0.67** |
+| Bắt được lệch thời gian 0.1 s | có | có |
+| Bị GICP đánh lừa | có: 5 lượt khớp tốt hơn 2 lượt (0.585 / 0.591 m) nhưng điểm 1.115 / 0.993 | có: file có độ sửa GICP khớp tốt nhất (0.633 m) nhưng điểm 0.46 |
+| Phân biệt các cấu hình yaw (τ) | không | không |
+
+→ GICP tối ưu gần đúng thứ mà thước đo đo, nên **chỉ dùng để loại cấu hình hỏng**, không dùng để chọn giữa các biến thể GICP.
+File chờ nộp 22/10: Track01 `clean_cfz1_tau7` 0.5780, `if_iso_1` 0.5764, `if_aniso_1` 0.5780; Track02 `clean_cfz2_tau15`
+0.6420, `if_iso_2` 0.6379, `if_aniso_2` 0.6385 (chênh quá nhỏ để kết luận).
+
+**Thước đo 2 – three-cornered hat** (`tools/three_hat.py`): ≥ 3 nguồn vị trí có sai số độc lập → var(i − j) = s_i² + s_j²
+cho sai số từng nguồn. Track01 (GNSS, GICP `3cameras_ply`, GICP `raw_ply`, NDT): sai số dọc đường của GNSS ra ~0 / âm –
+mâu thuẫn với việc cộng độ sửa GICP làm điểm tốt hơn nhiều. Mọi phép khớp đều bắt đầu từ GNSS và chỉ dịch một phần nên
+mang theo sai số GNSS → **giả định độc lập sai, thước đo này không dùng được** ở dạng hiện tại.
+
+Báo cáo và slide "như nộp thật" (tiếng Anh) làm trên claude.ai: báo cáo https://claude.ai/artifact/Kwr2eFuztKcaopy3q2pvc6,
+slide https://claude.ai/artifact/HtWevyxNDjiZXwFW6LJnqt (riêng tư).
