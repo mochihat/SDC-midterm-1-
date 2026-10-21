@@ -3,7 +3,7 @@ record what i do
 
 SDC 2026 Midterm 01 – image point cloud localization (Kaggle Track01 / Track02).
 
-**Hướng dẫn chạy từ code tới kết quả: [docs/HUONG-DAN-CHAY.md](docs/HUONG-DAN-CHAY.md)**
+**Trạng thái dự án, luật và việc tiếp theo: [CLAUDE.md](CLAUDE.md)** · **Hướng dẫn chạy từ code tới kết quả: [docs/HUONG-DAN-CHAY.md](docs/HUONG-DAN-CHAY.md)**
 
 **Process log (Vietnamese): [docs/nhat-ky/](docs/nhat-ky/README.md)** – data analysis, NDT experiments, every Kaggle
 submission (how it was made, what changed, why, score, conclusion), error analysis and lessons learned.
