@@ -206,3 +206,35 @@ Track02: `lb_posyaw_v1_2.csv` (dự đoán 0.263), `cfz2_tau12.csv`, `cfz2_tau20
   Track01 lỗi vị trí dự đoán **0.296 → 0.268 m** (điểm ~0.434 với yaw 0.828°); Track02 **0.153 → 0.109 m**
   (điểm ~0.153 với yaw 0.221°). File `corr_r2_1/2.csv` (yaw giữ như `corr_r1`), xếp hàng nộp 22/10 08:00.
 - Leaderboard 21/10 08:35: đội 12 dẫn 0.41 / 0.17; đội 11 hạng 2 cả hai track.
+
+## 12. Trả lời của TA (20/10 13:51) – dừng dò lỗi qua leaderboard
+
+TA trả lời câu hỏi về chiến lược dùng điểm leaderboard:
+1. Dùng điểm để **chọn mô hình / chỉnh tham số bình thường** (so sánh pipeline, chọn tham số hợp lý) là được.
+   **Nộp có hệ thống các nhiễu loạn có kiểm soát để ước lượng lỗi tịnh tiến / hướng của đáp án ẩn, rồi suy ra độ sửa quỹ
+   đạo là "leaderboard-based fitting"** và không được dùng làm cơ sở chính cho kết quả chấm điểm.
+2. Được chỉ định một bài nộp **tạo trực tiếp từ pipeline định vị** (vd. GNSS + Kalman smoother + NDT), **không có độ sửa
+   suy ra từ việc dò leaderboard**, để chấm.
+3. Dò / sửa theo từng đoạn dựa vào leaderboard **không được dùng** cho bài chấm / xếp hạng cuối.
+   Có thể trình bày phương pháp này trong báo cáo như một phân tích chiến lược thi đấu.
+
+Việc đã làm sau khi đọc trả lời (21/10):
+- **Dừng hẳn** việc dò lỗi: rút `corr_r2_1/2.csv` khỏi hàng nộp (chuyển vào `held/` của bot), không tạo đợt dò 3.
+  Mọi file `probe_*`, `corr_r*`, `lb_posyaw_*`, `posproj_*`, `yawproj_*`, `pp_*` (và các `*_bestyaw_*`) là
+  **tổ hợp / dò theo điểm Kaggle** → chỉ dùng để phân tích trong báo cáo, không chọn làm bài chấm.
+- Kiểm tra nguồn gốc file "tốt nhất không dùng tổ hợp" cũ: `cfz1_tau7.csv` đúng là GICP + yaw gyro nhưng GICP được
+  khởi tạo từ prior `yawproj_v1_1.csv` (yaw là tổ hợp chọn theo điểm); `cfz2_tau15.csv` lấy vị trí của `posyaw_v2_2.csv`
+  (vị trí là tổ hợp chọn theo điểm, lệch 0.054 m RMS so với Kalman thuần). → **dựng lại từ đầu bằng pipeline sạch**:
+
+| Track | File | Cách làm (chỉ pipeline) |
+|---|---|---|
+| 01 | `clean_cfz1_tau7.csv` | vị trí GNSS + Kalman/RTS (`phys_yawb_1`) → yaw gyro trục z τ 7 s làm prior → GICP (`3cameras_ply`, tỉ lệ theo mặt đường 1.646/h, bản đồ 0.3 m) 2 lượt, `--demean` → yaw gyro trục z τ 7 s, hướng chạy từ vị trí Kalman (σ 1.5 s) |
+| 02 | `clean_cfz2_tau15.csv` | vị trí GNSS + Kalman/RTS (`rts_heading_2`) → yaw gyro trục z τ 15 s (σ hướng chạy 1.0 s); không scan matching (không có ích ở Track02) |
+
+  So với bản cũ: vị trí lệch 0.101 m / 0.054 m RMS, yaw gần như trùng → dự kiến ~0.79 / ~0.28.
+  Xếp hàng nộp 22/10 08:00 để lấy điểm chính thức.
+- Các tham số chọn theo điểm còn lại trong pipeline sạch (thuộc loại "chỉnh tham số bình thường" TA cho phép, ghi rõ):
+  τ (7 / 15 s), trục gyro z, σ hướng chạy, số lượt GICP (2), dùng `--demean` (lý do vật lý: GICP lệch cố định do vị trí
+  camera trong point cloud; được củng cố bởi một lượt dời ngang ±0.5 m – xem mục 4), tỉ lệ 0.8 / 1.646.
+- **Cần tự chọn bài chấm trên Kaggle** (tab Submissions → "Use for Final Score"): Track01 `clean_cfz1_tau7`,
+  Track02 `clean_cfz2_tau15` (sau khi có điểm).

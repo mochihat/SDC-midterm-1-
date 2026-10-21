@@ -8,6 +8,8 @@ kết quả ra sao, rút ra kết luận gì) và các nhận xét sau khi làm.
 - Điểm Kaggle **càng thấp càng tốt**.
 - Phần công cụ tự động nộp bài không được ghi trong tài liệu này.
 
+> **21/10: TA không cho dùng độ sửa suy ra từ dò leaderboard cho bài chấm** – xem [08 §12](08-gicp-va-scale.md). Các file tổ hợp / dò chỉ còn là phân tích.
+
 ## Kết quả hiện tại (chụp lúc ~14:00 ngày 19/10/2026)
 
 | | Track01 | Track02 |
@@ -15,6 +17,7 @@ kết quả ra sao, rút ra kết luận gì) và các nhận xét sau khi làm.
 | Baseline của TA | 1.79075 | 1.92587 |
 | **File tốt nhất của nhóm (đội 11)** | **`cfz1_tau7.csv` – 0.78914** | **`posproj_t2_v1_2.csv` – 0.26849** |
 | Tốt nhất không dùng tổ hợp trọng số chọn theo điểm | 0.78914 (GICP + yaw gyro) | `cfz2_tau15.csv` – 0.27654 |
+| **Bài chấm (chỉ pipeline, sau trả lời TA 20/10)** | `clean_cfz1_tau7.csv` (chờ điểm) | `clean_cfz2_tau15.csv` (chờ điểm) |
 | Hạng | 3 / 7 đội | 3 / 7 đội |
 | Hạng 1 | đội 12 – 0.57658 | đội 12 – 0.23178 |
 
