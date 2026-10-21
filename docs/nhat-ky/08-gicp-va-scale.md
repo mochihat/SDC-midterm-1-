@@ -193,3 +193,16 @@ Track02: `lb_posyaw_v1_2.csv` (dự đoán 0.263), `cfz2_tau12.csv`, `cfz2_tau20
   Track01 lỗi vị trí dự đoán **0.389 → 0.296 m** (điểm ~0.462 với yaw 0.828°); Track02 **0.219 → 0.153 m** (điểm ~0.197).
 - Đợt 2 (sáng 21/10, đã xếp hàng): `corr_r1_1/2.csv` (file sửa để kiểm chứng) + dao động 7–13.
 - Leaderboard 20/10 10:30: đội 12 dẫn 0.41123 / 0.17429.
+
+### 11.2 Kết quả đợt 2 (21/10 08:00, bot tự nộp)
+
+- **Từ 21/10 Kaggle chỉ hiện điểm 2 chữ số thập phân** (kể cả các bài cũ: 0.55496 → 0.55). Sai số làm tròn ±0.005 làm
+  mỗi hình chiếu mean(e·D) sai ~0.004 m² (Track01) / ~0.001 m² (Track02); ước tính chỉ làm lỗi vị trí dự đoán tăng
+  ~0.003 m / ~0.001 m, nên phép gộp vẫn dùng được, nhưng kiểm chứng chỉ còn chính xác đến 0.01.
+- `corr_r1_1.csv`: **0.46** (dự đoán 0.462) ✅; `corr_r1_2.csv`: **0.19** (dự đoán 0.197) ✅ → hạng 2 cả hai track.
+- Dao động 7–13: Track01 x 1.29 1.25 1.25 1.32 1.30 1.25 1.27, y 1.35 1.29 1.32 1.28 1.29 1.22 1.26;
+  Track02 x 0.48 0.45 0.45 0.49 0.42 0.45 0.46, y 0.47 0.49 0.50 0.49 0.51 0.43 0.44.
+- Gộp `corr_r1` (hình chiếu lấy từ lỗi dự đoán 0.296 / 0.153 m) + 28 file dò 0–13 (`pos_projection.py`):
+  Track01 lỗi vị trí dự đoán **0.296 → 0.268 m** (điểm ~0.434 với yaw 0.828°); Track02 **0.153 → 0.109 m**
+  (điểm ~0.153 với yaw 0.221°). File `corr_r2_1/2.csv` (yaw giữ như `corr_r1`), xếp hàng nộp 22/10 08:00.
+- Leaderboard 21/10 08:35: đội 12 dẫn 0.41 / 0.17; đội 11 hạng 2 cả hai track.
