@@ -238,3 +238,41 @@ Việc đã làm sau khi đọc trả lời (21/10):
   camera trong point cloud; được củng cố bởi một lượt dời ngang ±0.5 m – xem mục 4), tỉ lệ 0.8 / 1.646.
 - **Cần tự chọn bài chấm trên Kaggle** (tab Submissions → "Use for Final Score"): Track01 `clean_cfz1_tau7`,
   Track02 `clean_cfz2_tau15` (sau khi có điểm).
+
+## 13. Cải thiện thuật toán sau khi dừng dò (21/10, mỗi lần nộp ~3 file)
+
+### 13.1 GICP khống chế yếu theo hướng dọc đường (đo từ dữ liệu)
+
+`gicp_refine.py` giờ ghi thêm `info_xx/xy/yy`: Hessian của GICP rút gọn về vị trí x, y trong hệ thế giới (Schur
+complement bỏ góc quay và z). Track01 (lượt 1 và 2 từ prior sạch): **thông tin theo hướng dọc đường chỉ ~0.51 lần
+hướng ngang** (trung vị; từng đoạn 10 %: 0.37–0.75), trị riêng yếu/mạnh trung vị 0.43. Track02: tỉ lệ yếu/mạnh 0.48.
+→ trên đường thẳng, point cloud (mặt đường + hai bên đường) giữ chặt phương ngang nhưng lỏng phương dọc.
+
+### 13.2 Bộ làm mượt bình phương tối thiểu theo thông tin (`tools/info_fuse.py`)
+
+Thay cho "lọc trung vị + làm mượt Gauss 2 s đều mọi hướng" (`fuse_to_csv.py`): ẩn là độ sửa c_i của mọi frame,
+cực tiểu |c|²/σ_prior² + Σ|c_{i+1} − c_i|²/(q·dt) (lỗi GNSS trôi chậm – bước ngẫu nhiên) + Σ (c_i − d_i)ᵀ W_i (c_i − d_i),
+W_i giữ **hình dạng** Hessian (trị riêng chuẩn hoá: 1 và (λ_yếu/λ_mạnh)^γ, chia σ_match²). γ = 0: mọi hướng như nhau.
+Hướng yếu được lấy trung bình trên cửa sổ thời gian dài hơn thay vì tin từng frame.
+
+Track01 (prior Kalman `phys_yawb_1` + yaw gyro, GICP lượt 2, `--demean`, σ_prior 1.5 m, σ_match 0.5 m, q 0.02 m²/s):
+độ sửa RMS 0.572 m (γ 0) / 0.502 m (γ 1). Track02 (prior `clean_cfz2_tau15`, GICP lượt 1, σ_prior 0.3 m): 0.098 / 0.081 m.
+(Lưu ý: lượt GICP Track02 đầu tiên hỏng vì `--pose-source c3s10` lấy nhầm độ cao z của Track01 – phải dùng `c3s10T2`.)
+
+### 13.3 Lệch thời gian GNSS – IMU (`tools/time_offset.py`) – không đo được
+
+So gia tốc dọc đường từ vị trí GNSS với gia tốc kế IMU (trục tiến ước lượng từ dữ liệu), tương quan chéo theo độ trễ:
+Track01 +58…+411 ms, Track02 +224…+500 ms tuỳ độ làm mượt, bootstrap ±75–220 ms; tương quan gần như phẳng
+(0.62 → 0.63). Gia tốc kế lẫn nghiêng/chúi xe và quá nhiễu → **không xác định được độ lệch cỡ 20 ms** – không dùng.
+
+### 13.4 Lần nộp 22/10 (bot, tối đa 3 file / lần chạy)
+
+| Track | File | Ý nghĩa |
+|---|---|---|
+| 01 | `clean_cfz1_tau7.csv` | mốc: pipeline sạch cũ (Gauss 2 s, 2 lượt cộng dồn) |
+| 01 | `if_iso_1.csv` | bộ làm mượt mới, γ = 0 |
+| 01 | `if_aniso_1.csv` | bộ làm mượt mới, γ = 1 (theo Hessian) |
+| 02 | `clean_cfz2_tau15.csv` | mốc: Kalman + yaw gyro, không scan matching |
+| 02 | `if_iso_2.csv` / `if_aniso_2.csv` | + GICP qua bộ làm mượt mới, γ = 0 / 1 |
+
+Yaw như nhau trong cả 3 file mỗi track (gyro τ 7 / 15 s, hướng chạy từ vị trí Kalman) → chênh điểm chỉ do vị trí.

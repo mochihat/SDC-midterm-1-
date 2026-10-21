@@ -7,7 +7,9 @@ Two ways to start each frame:
 
 The output is a debug CSV in the same format as the C++ node (guess = prior-based start, ndt_* = refined pose),
 so it goes through processing_codes/fuse_to_csv.py exactly like the NDT runs. Extra columns: init_* (the start
-pose actually used), error, inliers, inlier_ratio, scale, ground_h.
+pose actually used), error, inliers, inlier_ratio, scale, ground_h, and info_xx / info_xy / info_yy: the GICP
+Hessian reduced to the world x, y position (Schur complement over rotation and z), i.e. how firmly the scan pins
+the position in each direction (a long straight road gives little along-track information).
 
 --method PLANAR is a robust point-to-plane ICP that only moves x, y and yaw (z, roll, pitch stay at the start pose):
 only map points on vertical surfaces (walls, poles, trunks: horizontal normal) are used, since the road gives no
@@ -240,6 +242,18 @@ def planar_icp(target, src_xyz, T, max_corr, kernel, iterations):
     return T, converged, err, n_in
 
 
+def xy_information(H, R):
+    """small_gicp Hessian (perturbation [rot, trans] on the right, i.e. in the source frame) -> 2x2 information of
+    the world x, y position, with rotation and z marginalised out. Returns (xx, xy, yy)."""
+    J = np.zeros((6, 6))  # world translation delta = R @ local translation delta
+    J[:3, :3] = np.eye(3)
+    J[3:, 3:] = R.T
+    Hw = J.T @ H @ J  # Hessian in [rot, world trans]
+    keep, rest = [3, 4], [0, 1, 2, 5]
+    S = Hw[np.ix_(keep, keep)] - Hw[np.ix_(keep, rest)] @ np.linalg.pinv(Hw[np.ix_(rest, rest)]) @ Hw[np.ix_(rest, keep)]
+    return S[0, 0], S[0, 1], S[1, 1]
+
+
 def register(job):
     idx, ts, path, init_T, guess_T, prior, scale, ground_h = job
     a = G["args"]
@@ -262,6 +276,7 @@ def register(job):
         res = small_gicp.align(G["target"], src, G["tree"], init_local, registration_type=a.method,
                                max_correspondence_distance=a.max_corr, max_iterations=a.iterations, num_threads=1)
     T = np.array(res.T_target_source)
+    info = xy_information(np.array(res.H), T[:3, :3]) if hasattr(res, "H") else np.full(3, np.nan)
     T[:3, 3] += o
     n = src.size()
     return {
@@ -273,6 +288,7 @@ def register(job):
         "init_x": init_T[0, 3], "init_y": init_T[1, 3], "init_yaw": yaw_of(init_T),
         "error": res.error, "inliers": res.num_inliers, "inlier_ratio": res.num_inliers / max(n, 1),
         "scale": scale, "ground_h": ground_h,
+        "info_xx": info[0], "info_xy": info[1], "info_yy": info[2],
     }
 
 
