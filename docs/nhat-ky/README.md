@@ -17,7 +17,7 @@ kết quả ra sao, rút ra kết luận gì) và các nhận xét sau khi làm.
 | Baseline của TA | 1.79075 | 1.92587 |
 | **File tốt nhất của nhóm (đội 11)** | **`cfz1_tau7.csv` – 0.78914** | **`posproj_t2_v1_2.csv` – 0.26849** |
 | Tốt nhất không dùng tổ hợp trọng số chọn theo điểm | 0.78914 (GICP + yaw gyro) | `cfz2_tau15.csv` – 0.27654 |
-| **Bài chấm (chỉ pipeline, sau trả lời TA 20/10)** | `clean_cfz1_tau7.csv` (chờ điểm) | `clean_cfz2_tau15.csv` (chờ điểm) |
+| **Bài chấm (chỉ pipeline, sau trả lời TA 20/10)** | `clean_cfz1_tau7.csv` (chưa nộp, dự kiến ~0.79) | `clean_cfz2_tau15.csv` (chưa nộp, dự kiến ~0.28) |
 | Hạng | 3 / 7 đội | 3 / 7 đội |
 | Hạng 1 | đội 12 – 0.57658 | đội 12 – 0.23178 |
 
@@ -59,6 +59,7 @@ trưa 18/10 1.05448 / 0.29887 → đêm 18→19/10 GICP + tỉ lệ theo mặt �
 | [06-nhan-xet.md](06-nhan-xet.md) | Những điều nhận ra, cái gì hiệu quả / không, sai lầm, rủi ro, hướng tiếp theo |
 | [07-tai-tao.md](07-tai-tao.md) | Cách tạo lại **từng file đã nộp** (đã kiểm tra: 34/34 file trùng khớp từng byte) |
 | [08-gicp-va-scale.md](08-gicp-va-scale.md) | GICP / ICP 3 bậc tự do trên `3cameras_ply`, tỉ lệ theo mặt đường, trừ độ lệch trung bình – Track01 0.92775 |
+| [09-thong-ke-nop-bai.md](09-thong-ke-nop-bai.md) | Thống kê mọi lần nộp: pipeline / lai / dò leaderboard, điểm và tiến độ theo thời gian (`tools/submission_stats.py`) |
 
 ## Cấu trúc thư mục
 

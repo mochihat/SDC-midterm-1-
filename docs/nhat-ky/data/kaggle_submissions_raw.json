@@ -1,0 +1,1070 @@
+{
+"1": [
+{
+"date": "2026-10-21T00:32:09.867Z",
+"fileName": "probe_y13_1_e0402f.csv",
+"description": "bot: probe_y13_1.csv",
+"publicScore": "1.26",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:31:48.837Z",
+"fileName": "probe_y12_1_367f36.csv",
+"description": "bot: probe_y12_1.csv",
+"publicScore": "1.22",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:31:28.44Z",
+"fileName": "probe_y11_1_f24dc3.csv",
+"description": "bot: probe_y11_1.csv",
+"publicScore": "1.29",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:31:08.723Z",
+"fileName": "probe_y10_1_ea934a.csv",
+"description": "bot: probe_y10_1.csv",
+"publicScore": "1.28",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:30:48.373Z",
+"fileName": "probe_y9_1_1bb80c.csv",
+"description": "bot: probe_y9_1.csv",
+"publicScore": "1.32",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:30:26.563Z",
+"fileName": "probe_y8_1_db8d9b.csv",
+"description": "bot: probe_y8_1.csv",
+"publicScore": "1.29",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:30:06.91Z",
+"fileName": "probe_y7_1_7e7f09.csv",
+"description": "bot: probe_y7_1.csv",
+"publicScore": "1.35",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:02:30.673Z",
+"fileName": "probe_x13_1_f3644a.csv",
+"description": "bot: probe_x13_1.csv",
+"publicScore": "1.27",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:02:10.813Z",
+"fileName": "probe_x12_1_3aa6e6.csv",
+"description": "bot: probe_x12_1.csv",
+"publicScore": "1.25",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:01:50.96Z",
+"fileName": "probe_x11_1_4e4c88.csv",
+"description": "bot: probe_x11_1.csv",
+"publicScore": "1.30",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:01:30.663Z",
+"fileName": "probe_x10_1_c8461a.csv",
+"description": "bot: probe_x10_1.csv",
+"publicScore": "1.32",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:01:10.217Z",
+"fileName": "probe_x9_1_d37eaa.csv",
+"description": "bot: probe_x9_1.csv",
+"publicScore": "1.25",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:00:48.2Z",
+"fileName": "probe_x8_1_10a1e6.csv",
+"description": "bot: probe_x8_1.csv",
+"publicScore": "1.25",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:00:27.833Z",
+"fileName": "probe_x7_1_866f8d.csv",
+"description": "bot: probe_x7_1.csv",
+"publicScore": "1.29",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:00:07.33Z",
+"fileName": "corr_r1_1_38de58.csv",
+"description": "bot: corr_r1_1.csv",
+"publicScore": "0.46",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:35:15.877Z",
+"fileName": "probe_y6_1_3e4aa3.csv",
+"description": "bot: probe_y6_1.csv",
+"publicScore": "1.29",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:34:54.433Z",
+"fileName": "probe_y5_1_05814c.csv",
+"description": "bot: probe_y5_1.csv",
+"publicScore": "1.27",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:34:33.387Z",
+"fileName": "probe_y4_1_5f84d9.csv",
+"description": "bot: probe_y4_1.csv",
+"publicScore": "1.35",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:34:12.373Z",
+"fileName": "probe_y3_1_dd1ab4.csv",
+"description": "bot: probe_y3_1.csv",
+"publicScore": "1.38",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:33:35.233Z",
+"fileName": "probe_y2_1_aa1495.csv",
+"description": "bot: probe_y2_1.csv",
+"publicScore": "1.28",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:33:13.807Z",
+"fileName": "probe_y1_1_3c6323.csv",
+"description": "bot: probe_y1_1.csv",
+"publicScore": "1.19",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:32:51.5Z",
+"fileName": "probe_y0_1_13cbeb.csv",
+"description": "bot: probe_y0_1.csv",
+"publicScore": "1.33",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:32:28.527Z",
+"fileName": "probe_x6_1_e6fb5e.csv",
+"description": "bot: probe_x6_1.csv",
+"publicScore": "1.31",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:32:06.177Z",
+"fileName": "probe_x5_1_65cb6f.csv",
+"description": "bot: probe_x5_1.csv",
+"publicScore": "1.33",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:31:43.817Z",
+"fileName": "probe_x4_1_1aab5d.csv",
+"description": "bot: probe_x4_1.csv",
+"publicScore": "1.18",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:31:21.47Z",
+"fileName": "probe_x3_1_f9f465.csv",
+"description": "bot: probe_x3_1.csv",
+"publicScore": "1.12",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:31:00.583Z",
+"fileName": "probe_x2_1_37e0d5.csv",
+"description": "bot: probe_x2_1.csv",
+"publicScore": "1.26",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:30:39.05Z",
+"fileName": "probe_x1_1_c83950.csv",
+"description": "bot: probe_x1_1.csv",
+"publicScore": "1.40",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:30:17.377Z",
+"fileName": "probe_x0_1_198370.csv",
+"description": "bot: probe_x0_1.csv",
+"publicScore": "1.32",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:29:56.16Z",
+"fileName": "lb_posyaw_v1_1_bec740.csv",
+"description": "bot: lb_posyaw_v1_1.csv",
+"publicScore": "0.55",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:11:46.383Z",
+"fileName": "cfz1_tau7_c48db5.csv",
+"description": "bot: cfz1_tau7.csv",
+"publicScore": "0.78",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:11:11.227Z",
+"fileName": "cfz1_tau10_d5db4c.csv",
+"description": "bot: cfz1_tau10.csv",
+"publicScore": "0.79",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:09:54.937Z",
+"fileName": "cfg1_tau15_458e57.csv",
+"description": "bot: cfg1_tau15.csv",
+"publicScore": "0.80",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:09:33.667Z",
+"fileName": "cfz1_tau15_al_698788.csv",
+"description": "bot: cfz1_tau15_al.csv",
+"publicScore": "0.80",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:09:11.753Z",
+"fileName": "cfg1_tau10_al_2df0be.csv",
+"description": "bot: cfg1_tau10_al.csv",
+"publicScore": "0.79",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:08:47.89Z",
+"fileName": "plane_icp_pass2plain_cfyaw_1_170b24.csv",
+"description": "bot: plane_icp_pass2plain_cfyaw_1.csv",
+"publicScore": "0.88",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:08:21.087Z",
+"fileName": "plane_icp_pass2dm_cfyaw_1_64a5ae.csv",
+"description": "bot: plane_icp_pass2dm_cfyaw_1.csv",
+"publicScore": "0.87",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:31:41.09Z",
+"fileName": "plane_icp_ground_pos_1_a540bd.csv",
+"description": "bot: plane_icp_ground_pos_1.csv",
+"publicScore": "0.99",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:31:10.027Z",
+"fileName": "cfg1_tau30_al_ea8191.csv",
+"description": "bot: cfg1_tau30_al.csv",
+"publicScore": "0.83",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:30:43.407Z",
+"fileName": "cfg1_tau15_al_14e0c7.csv",
+"description": "bot: cfg1_tau15_al.csv",
+"publicScore": "0.80",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:30:18.31Z",
+"fileName": "planar_clean_pos_1_44e568.csv",
+"description": "bot: planar_clean_pos_1.csv",
+"publicScore": "1.03",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:01:18.02Z",
+"fileName": "gicp_hood_sor_pos_1_d9ad53.csv",
+"description": "bot: gicp_hood_sor_pos_1.csv",
+"publicScore": "1.07",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:00:58.807Z",
+"fileName": "planar_pass2dm_bestyaw_1_1e50c8.csv",
+"description": "bot: planar_pass2dm_bestyaw_1.csv",
+"publicScore": "1.02",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:00:23.99Z",
+"fileName": "gicp_ground_pass4dm_bestyaw_1_7c4848.csv",
+"description": "bot: gicp_ground_pass4dm_bestyaw_1.csv",
+"publicScore": "0.96",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:00:04.937Z",
+"fileName": "gicp_ground_pass3dm_bestyaw_1_b42d2c.csv",
+"description": "bot: gicp_ground_pass3dm_bestyaw_1.csv",
+"publicScore": "0.93",
+"status": "complete"
+},
+{
+"date": "2026-10-18T17:28:54.667Z",
+"fileName": "pass2dm_bestyaw_1_31d788.csv",
+"description": "bot: pass2dm_bestyaw_1.csv",
+"publicScore": "0.92",
+"status": "complete"
+},
+{
+"date": "2026-10-18T17:24:31.497Z",
+"fileName": "pass2pos_bestyaw_1_88749e.csv",
+"description": "bot: pass2pos_bestyaw_1.csv",
+"publicScore": "0.99",
+"status": "complete"
+},
+{
+"date": "2026-10-18T17:18:01.08Z",
+"fileName": "planar_ground_all_pos_1_83052e.csv",
+"description": "bot: planar_ground_all_pos_1.csv",
+"publicScore": "1.03",
+"status": "complete"
+},
+{
+"date": "2026-10-18T17:06:59.37Z",
+"fileName": "gicp_ground_pass5_pos_1_053357.csv",
+"description": "bot: gicp_ground_pass5_pos_1.csv",
+"publicScore": "1.11",
+"status": "complete"
+},
+{
+"date": "2026-10-18T16:54:49.56Z",
+"fileName": "gicp_ground_pass2_pos_1_885b97.csv",
+"description": "bot: gicp_ground_pass2_pos_1.csv",
+"publicScore": "0.99",
+"status": "complete"
+},
+{
+"date": "2026-10-18T16:50:30.913Z",
+"fileName": "gicp_ground_all_posyaw_1_e83c76.csv",
+"description": "bot: gicp_ground_all_posyaw_1.csv",
+"publicScore": "1.03",
+"status": "complete"
+},
+{
+"date": "2026-10-18T16:49:03Z",
+"fileName": "ndt_gicp_s08_pos_1_ac4fbb.csv",
+"description": "bot: ndt_gicp_s08_pos_1.csv",
+"publicScore": "1.08",
+"status": "complete"
+},
+{
+"date": "2026-10-18T16:48:40.18Z",
+"fileName": "gicp_ground_all_pos_1_68129f.csv",
+"description": "bot: gicp_ground_all_pos_1.csv",
+"publicScore": "1.02",
+"status": "complete"
+},
+{
+"date": "2026-10-18T16:48:16.963Z",
+"fileName": "gicp_ground_pos_1_261fea.csv",
+"description": "bot: gicp_ground_pos_1.csv",
+"publicScore": "1.06",
+"status": "complete"
+},
+{
+"date": "2026-10-18T16:45:53.69Z",
+"fileName": "gicp_s08_pos_1_15593a.csv",
+"description": "bot: gicp_s08_pos_1.csv",
+"publicScore": "1.11",
+"status": "complete"
+},
+{
+"date": "2026-10-18T03:39:32.987Z",
+"fileName": "posproj_v2_1_b5fd67.csv",
+"description": "bot: posproj_v2_1.csv",
+"publicScore": "1.05",
+"status": "complete"
+},
+{
+"date": "2026-10-18T03:38:29.127Z",
+"fileName": "ndt3c_s085_pos_1_79b2fb.csv",
+"description": "bot: ndt3c_s085_pos_1.csv",
+"publicScore": "1.19",
+"status": "complete"
+},
+{
+"date": "2026-10-18T00:08:54.167Z",
+"fileName": "posproj_v1_1_f3c4fc.csv",
+"description": "bot: posproj_v1_1.csv",
+"publicScore": "1.07",
+"status": "complete"
+},
+{
+"date": "2026-10-18T00:08:11.423Z",
+"fileName": "ndt3c_s08_pos_1_c96569.csv",
+"description": "bot: ndt3c_s08_pos_1.csv",
+"publicScore": "1.15",
+"status": "complete"
+},
+{
+"date": "2026-10-18T00:07:50.777Z",
+"fileName": "ndt3c_s10_pos_1_132928.csv",
+"description": "bot: ndt3c_s10_pos_1.csv",
+"publicScore": "1.24",
+"status": "complete"
+},
+{
+"date": "2026-10-17T15:55:01.35Z",
+"fileName": "startfix_on_v1_1_b669df.csv",
+"description": "bot: startfix_on_v1_1.csv",
+"publicScore": "1.21",
+"status": "complete"
+},
+{
+"date": "2026-10-17T13:44:24.48Z",
+"fileName": "yawproj_v1_1_6c708a.csv",
+"description": "bot: yawproj_v1_1.csv",
+"publicScore": "1.21",
+"status": "complete"
+},
+{
+"date": "2026-10-17T13:39:08.35Z",
+"fileName": "lagyaw_pos_best_1_efaed4.csv",
+"description": "bot: lagyaw_pos_best_1.csv",
+"publicScore": "1.30",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:45:09.903Z",
+"fileName": "phys_yawb_ndt_1_3fb19c.csv",
+"description": "bot: phys_yawb_ndt_1.csv",
+"publicScore": "1.27",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:44:49.42Z",
+"fileName": "phys_yawb_1_86014b.csv",
+"description": "bot: phys_yawb_1.csv",
+"publicScore": "1.25",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:43:22.287Z",
+"fileName": "probe_yaw-1_1_86d0f5.csv",
+"description": "bot: probe_yaw-1_1.csv",
+"publicScore": "1.34",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:40:11.607Z",
+"fileName": "probe_yaw1_1_9c3030.csv",
+"description": "bot: probe_yaw+1_1.csv",
+"publicScore": "1.27",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:39:50.717Z",
+"fileName": "probe_lat-0.5_1_3541d7.csv",
+"description": "bot: probe_lat-0.5_1.csv",
+"publicScore": "1.40",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:35:32.507Z",
+"fileName": "probe_lat0.5_1_328c09.csv",
+"description": "bot: probe_lat+0.5_1.csv",
+"publicScore": "1.37",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:31:30.96Z",
+"fileName": "rts_pos_gnssyaw_dt0.1_1_70e5a9.csv",
+"description": "bot: rts_pos_gnssyaw_dt0.1_1.csv",
+"publicScore": "1.73",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:30:48.44Z",
+"fileName": "rts_pos_gnssyaw_dt-0.1_1_6775a7.csv",
+"description": "bot: rts_pos_gnssyaw_dt-0.1_1.csv",
+"publicScore": "1.68",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:28:50.487Z",
+"fileName": "rts_pos_gnssyaw_1_00e0cd.csv",
+"description": "bot: rts_pos_gnssyaw_1.csv",
+"publicScore": "1.25",
+"status": "complete"
+},
+{
+"date": "2026-10-17T10:58:22.513Z",
+"fileName": "gnss_heading_1.csv",
+"description": "",
+"publicScore": "1.35",
+"status": "complete"
+},
+{
+"date": "2026-10-17T10:57:40.527Z",
+"fileName": "gnss_smooth_1.csv",
+"description": "",
+"publicScore": "1.26",
+"status": "complete"
+},
+{
+"date": "2026-10-17T10:51:45.477Z",
+"fileName": "gnss_1.csv",
+"description": "new test \n",
+"publicScore": "1.31",
+"status": "complete"
+},
+{
+"date": "2026-10-16T01:36:00.44Z",
+"fileName": "kaggle_track1_result.csv",
+"description": "",
+"publicScore": "602.39",
+"status": "complete"
+},
+{
+"date": "2026-10-15T20:32:07.78Z",
+"fileName": "trial.csv",
+"description": "testing with fake data to understand how kaggle work",
+"publicScore": "5822.14",
+"status": "complete"
+}
+],
+"2": [
+{
+"date": "2026-10-21T00:35:04.883Z",
+"fileName": "probe_y13_2_cc2a04.csv",
+"description": "bot: probe_y13_2.csv",
+"publicScore": "0.44",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:34:44.433Z",
+"fileName": "probe_y12_2_08ad7a.csv",
+"description": "bot: probe_y12_2.csv",
+"publicScore": "0.43",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:34:08.467Z",
+"fileName": "probe_y11_2_2b97d5.csv",
+"description": "bot: probe_y11_2.csv",
+"publicScore": "0.51",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:33:48.513Z",
+"fileName": "probe_y10_2_35b755.csv",
+"description": "bot: probe_y10_2.csv",
+"publicScore": "0.49",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:33:12.923Z",
+"fileName": "probe_y9_2_051aeb.csv",
+"description": "bot: probe_y9_2.csv",
+"publicScore": "0.50",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:32:52.103Z",
+"fileName": "probe_y8_2_5ad7d2.csv",
+"description": "bot: probe_y8_2.csv",
+"publicScore": "0.49",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:32:30.153Z",
+"fileName": "probe_y7_2_3b70e7.csv",
+"description": "bot: probe_y7_2.csv",
+"publicScore": "0.47",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:05:29.04Z",
+"fileName": "probe_x13_2_64fda7.csv",
+"description": "bot: probe_x13_2.csv",
+"publicScore": "0.46",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:05:08.41Z",
+"fileName": "probe_x12_2_b8d7d1.csv",
+"description": "bot: probe_x12_2.csv",
+"publicScore": "0.45",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:04:48.31Z",
+"fileName": "probe_x11_2_310b85.csv",
+"description": "bot: probe_x11_2.csv",
+"publicScore": "0.42",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:04:26.917Z",
+"fileName": "probe_x10_2_dd3e9c.csv",
+"description": "bot: probe_x10_2.csv",
+"publicScore": "0.49",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:04:06.31Z",
+"fileName": "probe_x9_2_95016c.csv",
+"description": "bot: probe_x9_2.csv",
+"publicScore": "0.45",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:03:46.623Z",
+"fileName": "probe_x8_2_6c00d2.csv",
+"description": "bot: probe_x8_2.csv",
+"publicScore": "0.45",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:03:26.047Z",
+"fileName": "probe_x7_2_663316.csv",
+"description": "bot: probe_x7_2.csv",
+"publicScore": "0.48",
+"status": "complete"
+},
+{
+"date": "2026-10-21T00:03:06.267Z",
+"fileName": "corr_r1_2_df89b2.csv",
+"description": "bot: corr_r1_2.csv",
+"publicScore": "0.19",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:41:02.907Z",
+"fileName": "probe_y6_2_0748a2.csv",
+"description": "bot: probe_y6_2.csv",
+"publicScore": "0.49",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:40:41.167Z",
+"fileName": "probe_y5_2_70dbdb.csv",
+"description": "bot: probe_y5_2.csv",
+"publicScore": "0.50",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:40:18.233Z",
+"fileName": "probe_y4_2_dd4ecd.csv",
+"description": "bot: probe_y4_2.csv",
+"publicScore": "0.48",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:39:55.047Z",
+"fileName": "probe_y3_2_6879b3.csv",
+"description": "bot: probe_y3_2.csv",
+"publicScore": "0.49",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:39:33.417Z",
+"fileName": "probe_y2_2_3312ad.csv",
+"description": "bot: probe_y2_2.csv",
+"publicScore": "0.49",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:39:11.303Z",
+"fileName": "probe_y1_2_82738f.csv",
+"description": "bot: probe_y1_2.csv",
+"publicScore": "0.50",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:38:48.85Z",
+"fileName": "probe_y0_2_d66fd2.csv",
+"description": "bot: probe_y0_2.csv",
+"publicScore": "0.62",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:38:27.367Z",
+"fileName": "probe_x6_2_b6b034.csv",
+"description": "bot: probe_x6_2.csv",
+"publicScore": "0.44",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:38:06.023Z",
+"fileName": "probe_x5_2_6198a5.csv",
+"description": "bot: probe_x5_2.csv",
+"publicScore": "0.36",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:37:44.533Z",
+"fileName": "probe_x4_2_f09163.csv",
+"description": "bot: probe_x4_2.csv",
+"publicScore": "0.46",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:37:21.63Z",
+"fileName": "probe_x3_2_daf11a.csv",
+"description": "bot: probe_x3_2.csv",
+"publicScore": "0.50",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:36:44.42Z",
+"fileName": "probe_x2_2_987f73.csv",
+"description": "bot: probe_x2_2.csv",
+"publicScore": "0.43",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:36:22.54Z",
+"fileName": "probe_x1_2_a8b866.csv",
+"description": "bot: probe_x1_2.csv",
+"publicScore": "0.43",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:36:00.95Z",
+"fileName": "probe_x0_2_49bb1a.csv",
+"description": "bot: probe_x0_2.csv",
+"publicScore": "0.61",
+"status": "complete"
+},
+{
+"date": "2026-10-20T02:35:39.407Z",
+"fileName": "lb_posyaw_v1_2_ab52d7.csv",
+"description": "bot: lb_posyaw_v1_2.csv",
+"publicScore": "0.26",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:25:04.877Z",
+"fileName": "posproj_t2_v1_2_e54679.csv",
+"description": "bot: posproj_t2_v1_2.csv",
+"publicScore": "0.26",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:24:04.393Z",
+"fileName": "ndt3c_cf_dm_2_b0980a.csv",
+"description": "bot: ndt3c_cf_dm_2.csv",
+"publicScore": "0.32",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:23:41.403Z",
+"fileName": "gicp_cf_dm_2_188215.csv",
+"description": "bot: gicp_cf_dm_2.csv",
+"publicScore": "0.46",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:23:18.497Z",
+"fileName": "plane_icp_cf_dm_2_92af42.csv",
+"description": "bot: plane_icp_cf_dm_2.csv",
+"publicScore": "0.49",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:16:19.39Z",
+"fileName": "probe_lat-0.3_2_702fe9.csv",
+"description": "bot: probe_lat-0.3_2.csv",
+"publicScore": "0.39",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:15:57.87Z",
+"fileName": "probe_lat_0.3_2_b41190.csv",
+"description": "bot: probe_lat+0.3_2.csv",
+"publicScore": "0.45",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:13:31.857Z",
+"fileName": "cfz2_tau30_336ec6.csv",
+"description": "bot: cfz2_tau30.csv",
+"publicScore": "0.28",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:13:09.92Z",
+"fileName": "cfz2_tau10_249b11.csv",
+"description": "bot: cfz2_tau10.csv",
+"publicScore": "0.27",
+"status": "complete"
+},
+{
+"date": "2026-10-19T05:12:38.227Z",
+"fileName": "cfz2_tau15_0a7185.csv",
+"description": "bot: cfz2_tau15.csv",
+"publicScore": "0.27",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:32:32.54Z",
+"fileName": "probe_cf5_yaw-0.5_2_f22c13.csv",
+"description": "bot: probe_cf5_yaw-0.5_2.csv",
+"publicScore": "0.35",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:32:05.727Z",
+"fileName": "probe_cf5_yaw_0.5_2_1f3ad8.csv",
+"description": "bot: probe_cf5_yaw+0.5_2.csv",
+"publicScore": "0.33",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:02:35.23Z",
+"fileName": "cfg2_tau2_al_52376f.csv",
+"description": "bot: cfg2_tau2_al.csv",
+"publicScore": "0.31",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:02:16.113Z",
+"fileName": "cfg2_tau15_al_ef3fc8.csv",
+"description": "bot: cfg2_tau15_al.csv",
+"publicScore": "0.28",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:01:56.97Z",
+"fileName": "cfg2_tau5_55bac1.csv",
+"description": "bot: cfg2_tau5.csv",
+"publicScore": "0.29",
+"status": "complete"
+},
+{
+"date": "2026-10-19T02:01:37.29Z",
+"fileName": "cfg2_tau5_al_b2668c.csv",
+"description": "bot: cfg2_tau5_al.csv",
+"publicScore": "0.30",
+"status": "complete"
+},
+{
+"date": "2026-10-18T18:01:55.227Z",
+"fileName": "cf_tau5_2_03cdff.csv",
+"description": "bot: cf_tau5_2.csv",
+"publicScore": "0.29",
+"status": "complete"
+},
+{
+"date": "2026-10-18T17:22:38.033Z",
+"fileName": "gicp_dm_w05_on_best_2_17a54b.csv",
+"description": "bot: gicp_dm_w05_on_best_2.csv",
+"publicScore": "0.36",
+"status": "complete"
+},
+{
+"date": "2026-10-18T03:39:11.773Z",
+"fileName": "posyaw_v2_2_68db8d.csv",
+"description": "bot: posyaw_v2_2.csv",
+"publicScore": "0.29",
+"status": "complete"
+},
+{
+"date": "2026-10-18T03:38:07.2Z",
+"fileName": "ndt3c_s08_pos_2_bc087d.csv",
+"description": "bot: ndt3c_s08_pos_2.csv",
+"publicScore": "0.41",
+"status": "complete"
+},
+{
+"date": "2026-10-18T02:37:37.6Z",
+"fileName": "bump9_8_2_76fe3f.csv",
+"description": "bot: bump9_8_2.csv",
+"publicScore": "0.32",
+"status": "complete"
+},
+{
+"date": "2026-10-18T02:37:11.983Z",
+"fileName": "bump9_4_2_94945b.csv",
+"description": "bot: bump9_4_2.csv",
+"publicScore": "0.32",
+"status": "complete"
+},
+{
+"date": "2026-10-18T02:36:39.943Z",
+"fileName": "bump9_2_2_0a9189.csv",
+"description": "bot: bump9_2_2.csv",
+"publicScore": "0.33",
+"status": "complete"
+},
+{
+"date": "2026-10-18T02:36:14.43Z",
+"fileName": "bump9_1_2_2024a5.csv",
+"description": "bot: bump9_1_2.csv",
+"publicScore": "0.32",
+"status": "complete"
+},
+{
+"date": "2026-10-18T02:32:07.637Z",
+"fileName": "bump9_7_2_7f1c3e.csv",
+"description": "bot: bump9_7_2.csv",
+"publicScore": "0.33",
+"status": "complete"
+},
+{
+"date": "2026-10-18T02:31:38.797Z",
+"fileName": "bump9_6_2_0a49a7.csv",
+"description": "bot: bump9_6_2.csv",
+"publicScore": "0.34",
+"status": "complete"
+},
+{
+"date": "2026-10-18T02:31:15.683Z",
+"fileName": "bump9_5_2_df2b0a.csv",
+"description": "bot: bump9_5_2.csv",
+"publicScore": "0.33",
+"status": "complete"
+},
+{
+"date": "2026-10-18T02:28:38.323Z",
+"fileName": "bump9_3_2_2b981a.csv",
+"description": "bot: bump9_3_2.csv",
+"publicScore": "0.33",
+"status": "complete"
+},
+{
+"date": "2026-10-18T02:24:04.94Z",
+"fileName": "bump9_0_2_85abd8.csv",
+"description": "bot: bump9_0_2.csv",
+"publicScore": "0.32",
+"status": "complete"
+},
+{
+"date": "2026-10-18T00:31:16.957Z",
+"fileName": "ndt3c_s10_pos_2_762d57.csv",
+"description": "bot: ndt3c_s10_pos_2.csv",
+"publicScore": "0.40",
+"status": "complete"
+},
+{
+"date": "2026-10-18T00:07:24.553Z",
+"fileName": "yawproj_v4_2_550c6f.csv",
+"description": "bot: yawproj_v4_2.csv",
+"publicScore": "0.30",
+"status": "complete"
+},
+{
+"date": "2026-10-17T15:54:41.15Z",
+"fileName": "startfix_on_v3_2_6bb031.csv",
+"description": "bot: startfix_on_v3_2.csv",
+"publicScore": "0.33",
+"status": "complete"
+},
+{
+"date": "2026-10-17T13:50:58.097Z",
+"fileName": "yawproj_v3_2_b739ee.csv",
+"description": "bot: yawproj_v3_2.csv",
+"publicScore": "0.34",
+"status": "complete"
+},
+{
+"date": "2026-10-17T13:49:52.547Z",
+"fileName": "gnssyaw_pos_rts_2_9f13af.csv",
+"description": "bot: gnssyaw_pos_rts_2.csv",
+"publicScore": "0.56",
+"status": "complete"
+},
+{
+"date": "2026-10-17T13:48:41.203Z",
+"fileName": "curv1.5_on_proj_2_ed02d7.csv",
+"description": "bot: curv1.5_on_proj_2.csv",
+"publicScore": "0.36",
+"status": "complete"
+},
+{
+"date": "2026-10-17T13:44:04Z",
+"fileName": "yawproj_v1_2_df6844.csv",
+"description": "bot: yawproj_v1_2.csv",
+"publicScore": "0.35",
+"status": "complete"
+},
+{
+"date": "2026-10-17T13:41:55.617Z",
+"fileName": "yawtau0.75_pos_best_2_e434c3.csv",
+"description": "bot: yawtau0.75_pos_best_2.csv",
+"publicScore": "0.48",
+"status": "complete"
+},
+{
+"date": "2026-10-17T13:38:47.723Z",
+"fileName": "lagyaw_pos_best_2_78e645.csv",
+"description": "bot: lagyaw_pos_best_2.csv",
+"publicScore": "0.45",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:31:09.757Z",
+"fileName": "rts_heading_dt0.1_2_66c1c2.csv",
+"description": "bot: rts_heading_dt0.1_2.csv",
+"publicScore": "1.37",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:30:27.223Z",
+"fileName": "rts_heading_dt-0.1_2_da5bc6.csv",
+"description": "bot: rts_heading_dt-0.1_2.csv",
+"publicScore": "1.27",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:28:29.55Z",
+"fileName": "rts_heading_2_6b9926.csv",
+"description": "bot: rts_heading_2.csv",
+"publicScore": "0.40",
+"status": "complete"
+},
+{
+"date": "2026-10-17T12:18:49.733Z",
+"fileName": "fusion_s9r4_headingyaw_2_897bd3.csv",
+"description": "bot: fusion_s9r4_headingyaw_2.csv",
+"publicScore": "0.53",
+"status": "complete"
+},
+{
+"date": "2026-10-17T11:00:14.55Z",
+"fileName": "gnss_heading_2.csv",
+"description": "",
+"publicScore": "0.47",
+"status": "complete"
+},
+{
+"date": "2026-10-17T10:59:43.61Z",
+"fileName": "gnss_heading_1.csv",
+"description": "",
+"publicScore": "",
+"status": "error"
+},
+{
+"date": "2026-10-17T10:59:07.053Z",
+"fileName": "gnss_smooth_2.csv",
+"description": "",
+"publicScore": "0.57",
+"status": "complete"
+},
+{
+"date": "2026-10-17T10:52:41.94Z",
+"fileName": "gnss_2.csv",
+"description": "",
+"publicScore": "0.57",
+"status": "complete"
+}
+]
+}

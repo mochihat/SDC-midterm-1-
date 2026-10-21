@@ -232,7 +232,7 @@ Việc đã làm sau khi đọc trả lời (21/10):
 | 02 | `clean_cfz2_tau15.csv` | vị trí GNSS + Kalman/RTS (`rts_heading_2`) → yaw gyro trục z τ 15 s (σ hướng chạy 1.0 s); không scan matching (không có ích ở Track02) |
 
   So với bản cũ: vị trí lệch 0.101 m / 0.054 m RMS, yaw gần như trùng → dự kiến ~0.79 / ~0.28.
-  Xếp hàng nộp 22/10 08:00 để lấy điểm chính thức.
+  (21/10: người dùng quyết định chưa nộp – còn 1 tuần, ưu tiên cải thiện thuật toán; file ở `~/kaggle-sdc-bot/held/`.)
 - Các tham số chọn theo điểm còn lại trong pipeline sạch (thuộc loại "chỉnh tham số bình thường" TA cho phép, ghi rõ):
   τ (7 / 15 s), trục gyro z, σ hướng chạy, số lượt GICP (2), dùng `--demean` (lý do vật lý: GICP lệch cố định do vị trí
   camera trong point cloud; được củng cố bởi một lượt dời ngang ±0.5 m – xem mục 4), tỉ lệ 0.8 / 1.646.
