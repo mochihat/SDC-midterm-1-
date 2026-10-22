@@ -113,3 +113,77 @@ Hình: `fig/t2_synthetic.png`. Số liệu: `data/t2_synthetic_track{1,2}.csv` (
   của point cloud (tỉ lệ, gốc camera → T4, T7) và (2) giảm trọng số các frame / vùng méo nặng (độ tin cậy → T3).
 - Giới hạn: point cloud tổng hợp lấy từ bản đồ LiDAR (có thể có điểm camera không thấy, che khuất xử lý thô), "sự thật" là prior
   Kalman – đủ cho câu hỏi tách nguồn, không dùng để đánh giá vị trí tuyệt đối.
+
+## T3 – Ngân sách sai số, vùng sai lớn và độ tin cậy từng frame
+
+**Câu hỏi (tr. 6 "thành phần nào của RMSE lớn nhất"; tr. 9 "sai lớn nằm ở đoạn nào"; tr. 15 "khởi đầu xấu có gây sai không";
+người dùng 22/10: "xe làm gì thì sai lớn – quay đầu, ngã rẽ?" + "cải thiện độ tin cậy").**
+
+**Giả thuyết:** (H1) sai lớn ở khúc cua và lúc khởi hành; (H2) có một chỉ số chất lượng từng frame (tỉ lệ inlier, lỗi GICP…)
+dự báo được frame xấu → dùng làm trọng số; (H3, T3b) hai point cloud khác nhau cho cùng độ sửa nếu lỗi chủ yếu là lỗi GNSS.
+
+**Cách làm (`tools/error_budget.py`, không dùng đáp án / bảng điểm):** độ sửa d = pose GICP − prior Kalman (lượt 1, prior sạch).
+Lỗi GNSS biến đổi chậm → phần nhanh hơn 2 s (d trừ làm mượt 2 s của chính nó) là nhiễu của point cloud + phép khớp.
+Bảng theo đoạn 10 %: §13.6 trong `08-gicp-va-scale.md` (`tools/segment_analysis.py`).
+
+```bash
+docker run --rm -u $(id -u):$(id -g) -v $PWD:/w -w /w sdc-reg python3 tools/error_budget.py \
+  $C/clean_prior_1.csv $C/clean_gicp_p1_Track1_debug.csv --other-debug $C/t3/raw_gicp_p1_Track1_debug.csv
+```
+
+**Đường đi:** không có quay đầu hay rẽ gắt – tổng góc đổi hướng chỉ +28° (Track01) / −40° (Track02), tốc độ quay ≤ ~3 °/s.
+
+**1. Theo tình huống** (Track01 / Track02; ok = % frame hội tụ, lệch ≤ 2 m, yaw ≤ 3°; spread = RMS nhiễu nhanh):
+
+| Tình huống | số frame | ok % | lệch TB dọc (m) | lệch TB ngang (m) | spread (m) |
+|---|---|---|---|---|---|
+| Đứng / khởi hành (v < 2 m/s) | 67 / 327 | 54 / 81 | −0.27 / −0.09 | −0.02 / +0.27 | 0.88 / **0.48** |
+| Chậm 2–5 m/s | 212 / 88 | **34** / 59 | +0.01 / −0.34 | +0.28 / −0.09 | 0.92 / 0.76 |
+| Bình thường 5–12 m/s | 2125 / 1684 | 57 / 54 | +0.26 / +0.16 | −0.19 / −0.28 | 0.82 / 0.78 |
+| Nhanh ≥ 12 m/s | 607 / 1200 | 48 / 48 | −0.13 / +0.28 | −0.03 / −0.20 | **0.97 / 0.96** |
+| Đang cua ≥ 1 °/s | 223 / 895 | **35** / 52 | +0.15 / +0.35 | +0.17 / −0.26 | **1.07** / 0.87 |
+| Phanh / tăng tốc (\|a\| ≥ 1) | 113 / 122 | 66 / 45 | +0.23 / −0.46 | −0.41 / −0.39 | 0.94 / 0.78 |
+
+- **H1 xác nhận một phần:** frame xấu nhất là khi **cua** (Track01: chỉ 35 % dùng được, nhiễu 1.07 m), **chạy chậm 2–5 m/s**
+  (34 %) và **chạy nhanh ≥ 12 m/s** (nhiễu ~0.97 m). Đứng yên thì Track02 lại tốt nhất (0.48 m) – không phải "khởi hành = xấu".
+- **Độ lệch có hệ thống đổi theo tình huống** (vd. Track02 dọc −0.34 khi chậm, +0.28 khi nhanh) → `--demean` (trừ một hằng số)
+  chỉ khử được phần trung bình. Hồi quy độ sửa dọc theo tốc độ: Track02 **+36 ms × v** (KTC 95 % +17…+66 ms, có ý nghĩa);
+  Track01 −18 ms (lượt 1, KTC −149…+34) / −36 ms (lượt 2, KTC −103…−3) → **dấu ngược nhau giữa hai track** ⇒ không phải lệch
+  thời gian chung của camera mà là méo point cloud phụ thuộc chuyển động; giải thích thêm vì sao GICP làm Track02 xấu đi.
+
+**2. Chỉ số nào dự báo frame xấu?** Spearman(chỉ số, |nhiễu|), Track01 / Track02:
+
+| Chỉ số | ρ | Nhiễu theo phần tư thấp → cao (Track01) |
+|---|---|---|
+| tốc độ | +0.13 / **+0.30** | 0.85 0.70 0.88 0.96 |
+| tốc độ quay | −0.02 / +0.19 | 0.88 0.85 0.83 0.85 |
+| tỉ lệ inlier | −0.09 / +0.09 | 0.90 0.90 0.81 0.80 |
+| lỗi GICP / inlier | +0.16 / +0.24 | 0.75 0.84 0.89 0.92 |
+| số điểm đầu vào | +0.17 / +0.19 | 0.75 0.86 0.87 0.92 |
+| \|độ sửa yaw\| | +0.11 / +0.20 | 0.82 0.81 0.86 0.92 |
+| **\|độ sửa vị trí\|** | **+0.71 / +0.72** | 0.47 0.63 0.86 **1.25** |
+| (Hessian, §13.6) | ≈ 0 | – |
+
+- **H2 bác bỏ phần lớn:** không chỉ số chất lượng nào của GICP dự báo tốt (|ρ| ≤ 0.3). Duy nhất **độ lớn của chính độ sửa**
+  dự báo mạnh: phần tư độ sửa lớn nhất nhiễu 1.25 m, gấp 2.7 lần phần tư nhỏ nhất → các frame "kéo xa" phần lớn là sai.
+  ⇒ Hướng cải thiện độ tin cậy có cơ sở: **hàm trọng số bền vững (robust kernel, vd. Cauchy/Huber) theo độ lớn độ sửa** thay cho
+  cổng cứng 2 m hiện tại, và giảm trọng số khi tốc độ cao (Track02 ρ 0.30). Lỗi GICP / inlier dùng phụ được (ρ 0.16–0.24).
+
+**3. T3b – cùng prior, cùng GICP, hai point cloud khác nhau** (Track01, 826 frame cả hai đều hợp lệ):
+
+| | `3cameras_ply` (MapAnything) | `raw_ply` ×9.27 (LoGeR) |
+|---|---|---|
+| % frame hợp lệ | 53 % | 52 % |
+| Độ sửa TB dọc / ngang | **+0.27 / −0.17 m** | **−0.59 / +0.35 m** |
+| RMS độ sửa (đã trừ TB) dọc / ngang | 0.72 / 0.68 m | 0.74 / 0.66 m |
+| Tương quan từng frame dọc / ngang | +0.05 / +0.03 | |
+| Tương quan sau làm mượt 2 s dọc / ngang | −0.18 / −0.41 | |
+
+- **H3 bác bỏ:** nếu lỗi chủ yếu là lỗi GNSS (chung cho cả hai), hai point cloud phải cho độ sửa giống nhau. Thực tế chúng lệch
+  TB **ngược chiều nhau** (+0.27 so với −0.59 m dọc) và gần như không tương quan → **méo riêng của mỗi mô hình AI lớn hơn tín hiệu
+  lỗi GNSS ở từng frame**. GICP chỉ có ích ở Track01 nhờ lấy trung bình nhiều frame + demean (lỗi GNSS ~0.9 m đủ lớn để lộ ra).
+- Cùng kết luận với T2: **nguồn sai số chính là point cloud do AI dựng**.
+
+**Đề xuất cải thiện (cho T4 / T6):** (1) robust kernel theo độ lớn độ sửa; (2) giảm trọng số frame tốc độ cao / đang cua;
+(3) sửa phần có hệ thống ở đầu vào (tỉ lệ, gốc camera, tầm – T4, T7). Chưa chọn được cái nào chỉ bằng offline vì không có
+thước đo offline đáng tin cho biến thể GICP (§13.5) → cần lượt nộp có kiểm soát.
