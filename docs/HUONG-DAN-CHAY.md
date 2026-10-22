@@ -39,6 +39,10 @@ colcon build --build-base build_dev --install-base install_dev
 source install_dev/setup.bash
 ```
 
+**Các thư mục build** (đều nằm trong `.gitignore`): `build_dev/install_dev` = bản dùng hằng ngày (`run_fusion.sh`, `run_image_only.sh`,
+lệnh build ở trên); `build_par/install_par` = bản build riêng cho các khúc chạy song song (`run_chunk.sh`); `build/install` = bản gốc
+cho `run_baseline.sh`. Khi sửa `localization.cpp`, build lại cả bản bạn định chạy (thường chỉ cần `install_dev`).
+
 ## Bước 2 (tuỳ chọn) – Xem bằng RViz
 
 Chạy node NDT của TA cùng RViz, 100 frame đầu Track01, tỉ lệ point cloud đã sửa (9 thay cho 3):

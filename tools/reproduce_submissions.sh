@@ -118,15 +118,19 @@ python3 fuse_to_csv.py "$OUT/startfix_on_v3_2.csv" "$DBG/c3s10_Track2_debug.csv"
   --yaw-weight 0 --sigma-s 2 --max-xy 2 --max-yaw-deg 3 > /dev/null
 cd "$T"
 
-# Compare with what was submitted.
-status=0
+# Compare with what was submitted - only the files this script rebuilds (the early GNSS / Kalman / NDT ones).
+# Later files: GICP + gyro yaw pipeline -> tools/run_clean_pipeline.sh (graded files, docs/HUONG-DAN-CHAY.md);
+# probes / leaderboard combinations are documented in docs/nhat-ky/05 and 08 and are not rebuilt on purpose.
+status=0; same=0; diff=0; skipped=0
 for f in "$DOC"/submissions/track*/*.csv; do
   name=$(basename "$f")
-  if cmp -s "$f" "$OUT/$name"; then
-    echo "identical  $name"
+  if [ ! -f "$OUT/$name" ]; then
+    skipped=$((skipped + 1))
+  elif cmp -s "$f" "$OUT/$name"; then
+    echo "identical  $name"; same=$((same + 1))
   else
-    echo "DIFFERENT  $name"
-    status=1
+    echo "DIFFERENT  $name"; diff=$((diff + 1)); status=1
   fi
 done
+echo "rebuilt and identical: $same, different: $diff, not rebuilt by this script: $skipped"
 exit $status

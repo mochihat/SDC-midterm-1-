@@ -7,8 +7,10 @@ SDC 2026 Midterm 01 – image point cloud localization (Kaggle Track01 / Track02
 
 **Process log (Vietnamese): [docs/nhat-ky/](docs/nhat-ky/README.md)** – data analysis, NDT experiments, every Kaggle
 submission (how it was made, what changed, why, score, conclusion), error analysis and lessons learned.
-Best so far: Track01 `phys_yawb_1.csv` 1.25338, Track02 `rts_heading_2.csv` 0.40778
-(`bash /root/midterm/tools/reproduce_submissions.sh` rebuilds every submitted file).
+Graded (pipeline-only) results, 22/10/2026: Track01 `clean_cfz1_tau7.csv` **0.80**, Track02 `clean_cfz2_tau15.csv` **0.28**
+(TA baseline 1.79 / 1.93), rebuilt exactly by `bash midterm01/tools/run_clean_pipeline.sh`. Leaderboard-probing files (0.46 / 0.19)
+are analysis only and not used for grading (TA ruling 20/10). Early GNSS / Kalman / NDT files:
+`bash /root/midterm/tools/reproduce_submissions.sh`. Answers to the brief (T0–T13): `docs/nhat-ky/10-tra-loi-cau-hoi.md`.
 
 ## Layout
 - `src/localization/` – ROS 2 package (TA template, extended with a GNSS-prior guided NDT)

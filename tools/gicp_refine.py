@@ -30,6 +30,7 @@ Run inside the sdc-reg image (docker/reg/Dockerfile), e.g.
 import argparse
 import csv
 import os
+import sys
 import time
 from multiprocessing import Pool
 
@@ -334,8 +335,21 @@ def main():
             jobs.append((i, frames[i][1], frames[i][2], poses[i], guess,
                          (float(r["prior_x"]), float(r["prior_y"]), float(r["prior_yaw"]))))
     else:
+        if not a.prior or not os.path.exists(a.prior):
+            sys.exit(f"--prior missing or not found: {a.prior}")
+        if not a.pose_source:
+            sys.exit("--pose-source is required with --prior (C++ run tag such as c3s08 / c3s10T2, or a *_result.txt)")
         prior = np.loadtxt(a.prior, delimiter=",", skiprows=1)[:, 1:4]
-        ref = load_result_txt(a.pose_source) if a.pose_source.endswith(".txt") else load_run_poses(a.pose_source, a.track)
+        if len(prior) != len(frames):
+            sys.exit(f"--prior has {len(prior)} rows but Track{a.track} has {len(frames)} frames (wrong track?)")
+        if a.pose_source.endswith(".txt"):
+            if not os.path.exists(a.pose_source):
+                sys.exit(f"--pose-source file not found: {a.pose_source}")
+            ref = load_result_txt(a.pose_source)
+        else:
+            ref = load_run_poses(a.pose_source, a.track)
+            if not ref:
+                sys.exit(f"--pose-source {a.pose_source}: no {a.pose_source}_Track{a.track}_result.txt or chunks in {RESULT}")
         keys = np.array(sorted(ref.keys())) if isinstance(ref, dict) else np.arange(len(ref))
         for i in range(a.start, len(frames), a.stride):
             near = int(keys[np.argmin(np.abs(keys - i))])  # a frame missing from the run: nearest one with a pose
@@ -356,7 +370,17 @@ def main():
         jobs = [j + (a.scale, float("nan")) for j in jobs]
 
     t0 = time.time()
-    map_xyz = read_pcd_binary(os.path.join(track_dir, a.map))
+    map_path = os.path.join(track_dir, a.map)
+    if not os.path.exists(map_path):
+        sys.exit(f"map not found: {map_path} (build it with tools/map_voxel.py)")
+    map_xyz = read_pcd_binary(map_path)
+    # The start height must lie near this map's ground: a pose source of the other track (e.g. c3s10 instead of
+    # c3s10T2 on Track02) gives a z ~90 m off and GICP then silently returns the prior unchanged.
+    z0 = jobs[0][4][2, 3]
+    near = map_xyz[np.linalg.norm(map_xyz[:, :2] - jobs[0][4][:2, 3], axis=1) < 30]
+    if len(near) and abs(z0 - np.median(near[:, 2])) > 20:
+        sys.exit(f"start height z = {z0:.1f} m but the map around the first pose is at ~{np.median(near[:, 2]):.1f} m: "
+                 f"the pose source belongs to another track?")
     origin = np.round(map_xyz.mean(axis=0))
     target, tree, vmap = build_target(map_xyz - origin, a.method, a.map_res, a.workers)
     opts = {"hood": load_hood(track_dir, a.track) if a.hood_mask else None,
