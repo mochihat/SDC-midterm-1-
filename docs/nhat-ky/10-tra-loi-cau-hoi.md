@@ -475,3 +475,18 @@ docker run ... sdc-reg python3 tools/rts_smoother.py /w/data/Track2 Track2 $R/re
 | `tools/gicp_refine.py` | kiểm tra đầu vào: thiếu / sai `--prior`, số dòng prior khác số frame, thiếu `--pose-source` hoặc không tìm thấy lượt chạy, thiếu bản đồ, và **độ cao khởi đầu lệch > 20 m so với bản đồ** (lỗi `c3s10` thay cho `c3s10T2` ngày 21/10 giờ báo ngay: "start height z = 109.9 m but the map around the first pose is at ~17.4 m") |
 | `gnss_to_csv.read_gnss` | mở bag theo thư mục khi nhận `.db3` (rosbags mới) – `rts_smoother.py` chạy được trong `sdc-reg` |
 | Kiểm chứng | `run_clean_pipeline.sh` chạy lại sau mọi thay đổi → `result_1.csv`, `result_2.csv` **trùng từng byte** với `clean_cfz1_tau7.csv`, `clean_cfz2_tau15.csv` |
+
+### T6 – Kết quả đợt 1 (người dùng duyệt, nộp 23/10 03:21 giờ máy; còn 12 lượt mỗi track)
+
+| File | Thay đổi so với bài chấm (0.80) | Dự đoán | **Kaggle** |
+|---|---|---|---|
+| `t6_range20_1.csv` | GICP `--max-range 20` | ~0.80 (0.72–0.91) | **0.63** ✅ (−0.17) |
+| `t6_turn0_1.csv` | `--turn-weight 0` | 0.79–0.80 | **0.78** ✅ (−0.02) |
+| `t6_mapground_1.csv` | z/roll/pitch từ bản đồ | ~0.80 | **0.81** (≈ bằng, +0.01) |
+
+- **Tầm 20 m – xác nhận mạnh giả thuyết T2/T4:** phần point cloud xa > 20 m (méo nhiều nhất) là nguồn lỗi lớn; bỏ đi thì GICP sửa đúng hơn
+  hẳn. Thực tế vượt cả kịch bản tốt mình dự đoán (0.72) → mô hình dự đoán đã đánh giá thấp mức "sửa đúng" của GICP khi đầu vào sạch hơn.
+- **Bỏ GICP khi cua:** tốt hơn một chút (0.78) – đúng hướng đề xuất của người dùng; nhỏ vì cua chỉ ~5–7 % frame.
+- **Z/roll/pitch từ bản đồ:** ngang bài chấm → pipeline sạch hơn không mất điểm.
+- **Bài chấm Track01 mới: `t6_range20_1.csv` (0.63)** – nhớ chọn "Use for Final Score". Đợt 2 đang chuẩn bị: tầm 15 m; tầm 20 m + bỏ cua;
+  Track02 có GICP tầm 20 m.

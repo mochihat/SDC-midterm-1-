@@ -34,7 +34,7 @@ làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việ
 
 | | Track01 | Track02 |
 |---|---|---|
-| Bài chấm (chỉ pipeline) | `clean_cfz1_tau7.csv` – **0.80** (nộp 22/10) | `clean_cfz2_tau15.csv` – **0.28** (nộp 22/10) |
+| Bài chấm (chỉ pipeline) | **`t6_range20_1.csv` – 0.63** (23/10; GICP tầm 20 m; trước đó `clean_cfz1_tau7` 0.80) | `clean_cfz2_tau15.csv` – **0.28** (nộp 22/10) |
 | Cùng phương pháp, lượt cũ | 0.78914 (`cfz1_tau7`) | 0.27654 (`cfz2_tau15`, vị trí khi đó còn là tổ hợp) |
 | Điểm đang hiện trên bảng (từ file dò – KHÔNG dùng để chấm) | 0.46 (hạng 2) | 0.19 (hạng 2) |
 | Đội đang dẫn (21/10) | 0.40 | 0.17 |
@@ -65,7 +65,8 @@ Hàng đợi bot hiện trống; hôm nay đã dùng 3/15 lượt mỗi track.
 **Brief 22/10 (`docs/brief_claude_code.pdf`) – kết quả ở `docs/nhat-ky/10-tra-loi-cau-hoi.md`:**
 - Xong: T0 (sao lưu `~/SDC-midterm01/backup/2026-10-22`), T1, T2 (lỗi do point cloud AI, GICP ~5 mm trên point cloud hoàn hảo),
   T3, T11, T4 (tầm 20 m ổn định nhất), T7 (z/roll/pitch từ bản đồ, đổi 6 cm), T8, T10, T5, T9, T12 (robust GNSS: chỉ 1.9 cm), T13.
-- **CHỜ NGƯỜI DÙNG DUYỆT T6** (KHÔNG tự nộp, không đưa vào hàng đợi bot): `src/localization/result/candidates_T6/`
+- T6 đợt 1 ĐÃ NỘP (người dùng duyệt 23/10): range20 **0.63**, turn0 0.78, mapground 0.81. Đợt 2 (chờ duyệt): tầm 15 m, tầm 20 + bỏ cua,
+  Track02 GICP tầm 20 m (`tools/run_track2_gicp.sh`). File ở `src/localization/result/candidates_T6/`:
   `t6_range20_1.csv` (tầm 20 m, dự đoán 0.74–0.84), `t6_turn0_1.csv` (bỏ GICP khi cua, 0.79–0.81),
   `t6_mapground_1.csv` (z/roll/pitch từ bản đồ, 0.79–0.81). Track02 giữ `clean_cfz2_tau15` (không dùng GICP).
 - Công tắc thí nghiệm của `tools/run_clean_pipeline.sh`: `TURN_WEIGHT`, `MAX_RANGE`, `GROUND_H`, `POSE_SOURCE1` (mặc định = pipeline).
