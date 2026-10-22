@@ -11,7 +11,8 @@ R=src/localization/result
 OUT=${1:-$R/reg/rerun}
 mkdir -p "midterm01/$OUT"
 run() { docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/w" -w /w/midterm01 sdc-reg:latest "$@"; }
-# TURN_WEIGHT (default 1 = pipeline): weight of turning frames in the smoothing (fuse_to_csv.py --turn-weight).
+# Experiment switches (defaults = the pipeline): TURN_WEIGHT (fuse_to_csv.py --turn-weight), MAX_RANGE (m, 40),
+# GROUND_H (m, 1.646 -> scale = GROUND_H / road height), POSE_SOURCE1 (z/roll/pitch source for Track01, c3s08).
 fuse() { docker run --rm -u "$(id -u):$(id -g)" -v "$PWD/midterm01:/w" -w /w sdc-reg:latest \
   python3 src/localization/processing_codes/fuse_to_csv.py "$@" --yaw-weight 0 --sigma-s 2 --max-xy 2 --max-yaw-deg 3 --demean \
   --turn-weight "${TURN_WEIGHT:-1}"; }
@@ -23,7 +24,8 @@ prev=$OUT/prior_1.csv
 for k in 1 2; do
   echo "== Track01: GICP pass $k (3cameras_ply, scale from road height, map 0.3 m)"
   run python3 tools/gicp_refine.py 1 --data /w/data --map map_voxel_0.3m.pcd --map-res 0.3 --prior $prev \
-    --pose-source c3s08 --stride 1 --ground-height 1.646 --ground-window 57 --method GICP \
+    --pose-source "${POSE_SOURCE1:-c3s08}" --stride 1 --ground-height "${GROUND_H:-1.646}" --ground-window 57 \
+    --max-range "${MAX_RANGE:-40}" --method GICP \
     --out $OUT/gicp_p${k}_Track1_debug.csv
   echo "== Track01: fuse pass $k (gate, de-mean, smooth 2 s)"
   fuse $prev $OUT/gicp_p${k}_Track1_debug.csv $OUT/p${k}dm_pos_1.csv

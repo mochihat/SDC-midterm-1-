@@ -227,3 +227,40 @@ Hình: `fig/t11_gnss_jitter.png`. Số liệu: `data/t11_gnss_jitter.csv` (cửa
 **Hệ quả & cải tiến đề xuất:** GNSS Track01 kém (nhiều bước nhảy) nên scan matching có chỗ để sửa – khớp với việc GICP chỉ giúp Track01.
 Cải tiến trực tiếp cho "sai số lớn bất thường": **phát hiện bước nhảy GNSS (sai phân > 5× trung vị hoặc innovation lớn) và giảm
 trọng số các mẫu đó trong Kalman/RTS** (robust measurement update) – đưa vào T12 / ứng viên T6.
+
+## T4 – Quét tham số offline (mỗi lần đổi 1 tham số)
+
+**Câu hỏi (tr. 13 "voxel gây sai bao nhiêu", tr. 14 "scale gây sai gì / có tỉ lệ tốt hơn 0.8 không", tr. 42 "chỉnh thông số nào
+ít sai nhất", tr. 45 "hướng giảm điểm").** **Giả thuyết (từ T2):** méo độ sâu tăng theo khoảng cách → **giới hạn tầm** giảm nhiễu /
+độ lệch; voxel bản đồ ít ảnh hưởng; tỉ lệ sai làm lệch dọc có hệ thống.
+
+**Cách làm:** GICP lượt 1 Track01 từ cùng prior sạch, chỉ đổi đúng một tham số so với `ref` (= pipeline: bản đồ 0.3 m, tầm 40 m,
+tỉ lệ 1.646 / h). Bản đồ 0.2 m dựng mới từ `map.pcd` (`data/Track1/map_voxel_0.2m.pcd`, file mới). Thống kê bằng `tools/t4_summary.py`
+(không có đáp án → các chỉ số chỉ là độ ổn định / độ lệch của phép khớp, không phải sai số thật).
+
+```bash
+bash midterm01/tools/t4_sweep.sh          # 7 lượt, 34 phút
+docker run --rm -v ~/SDC-midterm01/midterm01:/w -w /w sdc-reg python3 tools/t4_summary.py
+```
+
+| Cấu hình | % hợp lệ | Lệch TB dọc | Lệch TB ngang | Nhiễu dọc | Nhiễu ngang | Độ sửa yaw RMS | Thời gian |
+|---|---|---|---|---|---|---|---|
+| `ref` (40 m, map 0.3, ×1) | 53.1 | +0.166 | −0.136 | 0.665 | 0.532 | 1.54° | ~3.5 phút |
+| **tầm 20 m** | **58.0** | −0.104 | −0.294 | **0.563** | **0.403** | 1.51° | 1.4 phút |
+| tầm 30 m | 53.6 | +0.086 | −0.137 | 0.617 | 0.517 | 1.54° | 2.4 phút |
+| map 0.2 m | 52.5 | +0.185 | −0.089 | 0.628 | 0.535 | 1.50° | 9.2 phút |
+| map 0.5 m | 52.8 | +0.159 | −0.176 | 0.675 | 0.511 | 1.52° | 2.8 phút |
+| tỉ lệ ×0.95 (0.76) | 49.7 | +0.209 | −0.252 | 0.665 | 0.512 | 1.53° | 3.4 phút |
+| tỉ lệ ×1.05 (0.84) | 53.8 | **+0.107** | **−0.031** | 0.688 | 0.530 | 1.50° | 3.2 phút |
+
+Số liệu: `data/t4_sweep.csv`.
+
+**Kết luận:**
+- **Tầm 20 m – xác nhận giả thuyết:** nhiều frame hợp lệ nhất (58 %), nhiễu dọc / ngang giảm 15 % / 24 %, nhanh gấp 2.5 lần.
+  Độ lệch TB đổi dấu theo phương dọc (+0.17 → −0.10) → phần điểm xa (> 20 m) đóng góp phần lớn độ lệch dọc dương. Ứng viên số 1.
+- **Voxel bản đồ:** 0.2 / 0.3 / 0.5 m khác nhau rất ít (0.2 m nhiễu dọc thấp hơn 0.04 m nhưng chậm 3×) → voxel không phải nguồn sai.
+- **Tỉ lệ:** ×0.95 kém rõ (ít frame hợp lệ, lệch lớn hơn); ×1.05 lệch TB gần 0 nhất nhưng nhiễu hơi tăng. Độ nhạy thật nhỏ hơn
+  giả lập nhiều (T2: 3 % tỉ lệ → 0.3 m; thật: 5 % → chỉ −0.06 m dọc) → độ lệch thật **không chủ yếu do tỉ lệ**. Chưa kết luận tỉ lệ
+  tốt nhất chỉ bằng offline.
+- **Ứng viên cho T6 (≤ 3):** (1) tầm 20 m (2 lượt + demean + yaw gyro như pipeline); (2) giảm trọng số khúc cua `TURN_WEIGHT=0`
+  (yêu cầu của người dùng, xem T3); (3) tỉ lệ ×1.05 hoặc tầm 30 m. Thứ tự đề xuất khi báo người dùng ở bước T6.
