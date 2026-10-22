@@ -11,6 +11,11 @@ Usage:
 --demean removes the mean along-track / lateral correction (vehicle frame) before smoothing: the prior keeps the
 long-run average position, scan matching only adds the local deviations (complementary filter). Use it when the
 matcher has a constant offset (e.g. camera mounting) that the prior does not have.
+
+--turn-weight W gives the frames where the car turns (|yaw rate of the prior| >= --turn-threshold deg/s, smoothed
+0.5 s) the weight W in the Gaussian smoothing (weighted average); W = 1 is the plain smoothing. Reason (T3 in
+docs/nhat-ky/10): while turning only ~35 % of the Track01 matches are usable and their noise is ~1.07 m against
+~0.82 m on straight road, so there the prior and the neighbouring straight-road matches should carry the position.
   python3 fuse_to_csv.py PRIOR_CSV DEBUG_CSV --stats     # print correction statistics only
 """
 import argparse
@@ -60,7 +65,8 @@ def print_stats(dbg):
     print(f"  score median {np.median(dbg['score'][ok]):.4f}")
 
 
-def fuse(prior, dbg, weight, yaw_weight, sigma_s, max_xy, max_yaw_deg, demean=False, need_converged=True):
+def fuse(prior, dbg, weight, yaw_weight, sigma_s, max_xy, max_yaw_deg, demean=False, need_converged=True,
+         turn_weight=1.0, turn_threshold=1.0):
     dx, dy, dyaw, along, lat = corrections(dbg)
     good = (np.hypot(dx, dy) <= max_xy) & (np.abs(np.degrees(dyaw)) <= max_yaw_deg)
     if need_converged:
@@ -82,10 +88,20 @@ def fuse(prior, dbg, weight, yaw_weight, sigma_s, max_xy, max_yaw_deg, demean=Fa
 
     out = prior.copy()
     step = np.median(np.diff(t)) if len(t) > 1 else 1.0
+    fw = None
+    if turn_weight != 1.0:
+        fstep = np.median(np.diff(all_t))
+        rate = np.degrees(np.abs(np.gradient(gaussian_filter1d(np.unwrap(prior[:, 2]), 0.5 / fstep), all_t)))
+        turning = rate[idx] >= turn_threshold
+        fw = np.where(turning, turn_weight, 1.0)
+        print(f"turning frames (>= {turn_threshold} deg/s): {turning.sum()}/{len(idx)} matched, weight {turn_weight}")
     for col, values, w in ((0, dx, weight), (1, dy, weight), (2, dyaw, yaw_weight)):
         v = values[good]
         v = median_filter(v, size=5, mode="nearest")
-        if sigma_s > 0:
+        if sigma_s > 0 and fw is not None:
+            v = gaussian_filter1d(v * fw, sigma_s / step, mode="nearest") / \
+                np.maximum(gaussian_filter1d(fw, sigma_s / step, mode="nearest"), 1e-9)
+        elif sigma_s > 0:
             v = gaussian_filter1d(v, sigma_s / step, mode="nearest")
         out[:, col] += w * np.interp(all_t, t, v)
     out[:, 2] = wrap(out[:, 2])
@@ -105,13 +121,16 @@ def main():
     p.add_argument("--max-yaw-deg", type=float, default=5.0)
     p.add_argument("--demean", action="store_true")
     p.add_argument("--any", action="store_true", help="also use frames the matcher did not mark converged")
+    p.add_argument("--turn-weight", type=float, default=1.0, help="weight of turning frames in the smoothing (1 = off)")
+    p.add_argument("--turn-threshold", type=float, default=1.0, help="deg/s")
     a = p.parse_args()
 
     prior, dbg = load_prior(a.prior), load_debug(a.debug)
     if a.stats or not a.out:
         print_stats(dbg)
         return
-    out = fuse(prior, dbg, a.weight, a.yaw_weight, a.sigma_s, a.max_xy, a.max_yaw_deg, a.demean, not a.any)
+    out = fuse(prior, dbg, a.weight, a.yaw_weight, a.sigma_s, a.max_xy, a.max_yaw_deg, a.demean, not a.any,
+               a.turn_weight, a.turn_threshold)
     with open(a.out, "w") as f:
         f.write("idx,x,y,yaw\n")
         for i, (x, y, yaw) in enumerate(out):

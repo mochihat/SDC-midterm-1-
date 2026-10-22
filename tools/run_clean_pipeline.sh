@@ -11,8 +11,10 @@ R=src/localization/result
 OUT=${1:-$R/reg/rerun}
 mkdir -p "midterm01/$OUT"
 run() { docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/w" -w /w/midterm01 sdc-reg:latest "$@"; }
+# TURN_WEIGHT (default 1 = pipeline): weight of turning frames in the smoothing (fuse_to_csv.py --turn-weight).
 fuse() { docker run --rm -u "$(id -u):$(id -g)" -v "$PWD/midterm01:/w" -w /w sdc-reg:latest \
-  python3 src/localization/processing_codes/fuse_to_csv.py "$@" --yaw-weight 0 --sigma-s 2 --max-xy 2 --max-yaw-deg 3 --demean; }
+  python3 src/localization/processing_codes/fuse_to_csv.py "$@" --yaw-weight 0 --sigma-s 2 --max-xy 2 --max-yaw-deg 3 --demean \
+  --turn-weight "${TURN_WEIGHT:-1}"; }
 
 echo "== Track01: yaw prior from the gyro (complementary filter, tau 7 s)"
 run python3 tools/yaw_fusion.py 1 --data /w/data --positions $R/phys_yawb_1.csv --gyro-axis z --tau 7 \
