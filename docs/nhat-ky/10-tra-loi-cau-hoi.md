@@ -364,3 +364,20 @@ giả thuyết của brief; cấu hình thật **chưa kết luận được** (
 500–800 frames on our machine, and the full output scored 602 on Kaggle, while the published baseline is 1.79 / 1.93. Which
 configuration (ply_scale, initial pose, GNSS use) produced the baseline submission? We would like to describe the baseline correctly in
 our report."*
+
+## T5 – Giải thích lỗi tỉ lệ ×3 cho báo cáo
+
+**Câu hỏi (tr. 6 "tỉ lệ ×3 thay vì ×9, trôi ~100 m – vì sao sai tỉ lệ gây trôi lớn").** Hình: `fig/t5_scale_x3.png` (trái: frame 40
+Track01 đặt tại pose GNSS, point cloud `raw_ply` ×3 so với ×9.27 – chỉ minh hoạ kích thước, chưa khớp; phải: sai số so với GNSS của
+lượt chạy code mẫu, `data/baseline_partial/`).
+
+> **Point-cloud scale.** The image point clouds have no metric scale, and the template multiplies the `raw_ply` clouds by
+> 3. Measuring the road height under the camera in every cloud (0.177 units on Track01) and comparing it with the camera
+> height gives a scale of about 9.3, so with ×3 every structure appears three times closer than it is: walls 30 m away look
+> 10 m away and the whole cloud fits inside a ~13 m radius around the car (left figure). NDT then has no correct pose to find:
+> it pulls the scan towards the nearest map structures that roughly match the shrunken shape, and because each frame starts
+> from the previous estimate, every wrong match becomes the next starting point. The error exceeded 5 m after 18 frames on
+> Track01 (at the first frame on Track02) and grew to 91 m and 110 m before we stopped the runs (right figure); the full
+> template output scored 602 on Kaggle. With the measured scale (×9 for `raw_ply`, ×0.8 or 1.646 m / road height for
+> `3cameras_ply`) NDT and GICP converge – the remaining problem is that the reconstructed clouds are distorted, not scaled
+> wrongly (T2).
