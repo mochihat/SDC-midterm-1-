@@ -187,3 +187,43 @@ docker run --rm -u $(id -u):$(id -g) -v $PWD:/w -w /w sdc-reg python3 tools/erro
 **Đề xuất cải thiện (cho T4 / T6):** (1) robust kernel theo độ lớn độ sửa; (2) giảm trọng số frame tốc độ cao / đang cua;
 (3) sửa phần có hệ thống ở đầu vào (tỉ lệ, gốc camera, tầm – T4, T7). Chưa chọn được cái nào chỉ bằng offline vì không có
 thước đo offline đáng tin cho biến thể GICP (§13.5) → cần lượt nộp có kiểm soát.
+
+## T11 – Vì sao GNSS Track01 giật hơn Track02 (0.142 m so với 0.052 m)?
+
+**Câu hỏi (chat, brief 6.2).** **Giả thuyết theo thứ tự (brief):** (1) che chắn / multipath; (2) máy thu đổi chế độ (bước nhảy);
+(3) cách lái (chậm hơn, dừng / rẽ nhiều hơn).
+
+**Cách làm (`tools/gnss_jitter.py`):** độ giật = sai phân bậc 2 của vị trí GNSS (4 Hz), tách dọc / ngang hướng chạy, gom cửa sổ 2 s;
+bước nhảy = sai phân > 5× trung vị; che chắn = tỉ lệ điểm bản đồ cao hơn mặt đường > 3 m trong bán kính 25 m; tốc độ quay lấy từ
+**gyro IMU** (lần chạy đầu dùng hướng tính từ chính GNSS → tương quan 0.86 là vòng tròn, đã loại).
+
+```bash
+docker run --rm -u $(id -u):$(id -g) -v ~/SDC-midterm01:/w -w /w/midterm01 sdc-reg python3 tools/gnss_jitter.py --data /w/data
+```
+
+| | Track01 | Track02 |
+|---|---|---|
+| Độ giật RMS (dọc / ngang) | **0.142 m** (0.057 / **0.130**) | 0.052 m (0.032 / 0.040) |
+| Bước nhảy > 5× trung vị | **11** (cụm ở 27–40 s và 80–83 s) | 1 |
+| Tỉ lệ công trình cao quanh đường (≤ 25 m) | **74 %** | 29 % |
+| Tốc độ TB / tỉ lệ thời gian dừng | 9.6 m/s / 2 % | 10.5 m/s / 8 % |
+| Tốc độ quay TB (gyro) | 0.40 °/s | 0.80 °/s |
+| Spearman(giật cửa sổ, tốc độ / quay / gia tốc) | −0.11 / −0.12 / +0.23 | +0.01 / +0.24 / +0.62 |
+| Spearman(giật cửa sổ, che chắn) | −0.00 | −0.02 |
+| Spearman(giật cửa sổ, số bước nhảy) | +0.59 | +0.22 |
+
+Hình: `fig/t11_gnss_jitter.png`. Số liệu: `data/t11_gnss_jitter.csv` (cửa sổ 2 s), `data/t11_gnss_jitter_messages.csv`.
+
+**Xếp hạng giả thuyết:**
+1. **Che chắn / multipath – được ủng hộ ở mức cả track:** Track01 có công trình cao quanh 74 % quãng đường (Track02 29 %), độ giật
+   chủ yếu **theo phương ngang** (0.130 m) – đúng kiểu phản xạ từ nhà / cây hai bên đường. Trong cùng một track tương quan với tỉ lệ
+   che chắn ≈ 0 → thước đo che chắn thô (Track01 gần như chỗ nào cũng bị che) hoặc phụ thuộc vào vệ tinh cụ thể – **chưa kết luận
+   được** ở mức từng đoạn.
+2. **Bước nhảy rời rạc – đóng góp đáng kể:** 11 bước nhảy ở Track01 (1 ở Track02), cửa sổ có bước nhảy giật hơn rõ (ρ = 0.59).
+   Không tách được "đổi chế độ máy thu" với "đỉnh multipath" vì topic chỉ là pose đã xử lý (không có trạng thái fix / số vệ tinh).
+3. **Cách lái – bác bỏ:** Track01 quay ít hơn (0.40 so với 0.80 °/s) và ít dừng hơn mà vẫn giật gấp 3; không tương quan với tốc độ
+   hay tốc độ quay. (Gia tốc chỉ liên quan ở Track02, nơi độ giật vốn nhỏ.)
+
+**Hệ quả & cải tiến đề xuất:** GNSS Track01 kém (nhiều bước nhảy) nên scan matching có chỗ để sửa – khớp với việc GICP chỉ giúp Track01.
+Cải tiến trực tiếp cho "sai số lớn bất thường": **phát hiện bước nhảy GNSS (sai phân > 5× trung vị hoặc innovation lớn) và giảm
+trọng số các mẫu đó trong Kalman/RTS** (robust measurement update) – đưa vào T12 / ứng viên T6.
