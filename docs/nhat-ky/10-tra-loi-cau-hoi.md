@@ -264,3 +264,51 @@ Số liệu: `data/t4_sweep.csv`.
   tốt nhất chỉ bằng offline.
 - **Ứng viên cho T6 (≤ 3):** (1) tầm 20 m (2 lượt + demean + yaw gyro như pipeline); (2) giảm trọng số khúc cua `TURN_WEIGHT=0`
   (yêu cầu của người dùng, xem T3); (3) tỉ lệ ×1.05 hoặc tầm 30 m. Thứ tự đề xuất khi báo người dùng ở bước T6.
+
+## T7 – Làm sạch z / roll / pitch và đo chiều cao camera
+
+**Câu hỏi (tr. 27 "lượt NDT cũ c3s08 → z, roll, pitch là sao"; tr. 14 "h ≈ 2.06 m nhưng camera 1.65 m – tại sao").**
+**Vấn đề:** GICP cần pose 3D; x, y, yaw lấy từ prior Kalman nhưng z / roll / pitch lấy từ lượt NDT C++ `c3s08`, vốn chạy với
+prior `yawproj_v1_1` (yaw chọn theo bảng điểm) → pipeline chưa sạch tuyệt đối. **Giả thuyết:** thay bằng mặt đường bản đồ +
+chiều cao camera thì kết quả gần như không đổi (z / roll / pitch ít ảnh hưởng tới x, y).
+
+**Cách làm (`tools/t7_pose_source.py`):** mỗi frame, mặt phẳng mặt đường bản đồ quanh (x, y) prior (bán kính 6 m, dải 0.4 m trên
+phân vị 5 %, khớp lại bỏ 20 % xấu nhất) → độ cao mặt đường z_g và pháp tuyến → roll, pitch theo hướng xe. z = z_g + H. Lượt NDT cũ
+chỉ còn dùng để **đo 3 hằng số mỗi track** (trung vị): chiều cao H, góc lắp roll, pitch – thay vì cho pose từng frame.
+
+```bash
+docker run ... sdc-reg python3 tools/t7_pose_source.py 1 --prior $R/clean/clean_prior_1.csv --old-run c3s08 \
+  --out $R/t7/mapground_Track1_result.txt      # Track02: --old-run c3s10T2
+POSE_SOURCE1=$R/t7/mapground_Track1_result.txt bash midterm01/tools/run_clean_pipeline.sh $R/t7/pipeline
+```
+
+| | Track01 | Track02 |
+|---|---|---|
+| H = z(NDT cũ) − mặt đường bản đồ (trung vị, IQR) | 1.952 m (1.76–2.17) | 2.327 m (2.18–2.52) |
+| H ngầm định bởi hằng số tỉ lệ | 1.646 m | 1.646 m |
+| Góc lắp pitch (cũ − bản đồ) | **+2.47°** | **+2.30°** |
+| Góc lắp roll | −2.87° | −0.05° |
+| Sau hiệu chỉnh, lệch so với NDT cũ: z / roll / pitch RMS | 0.47 m / 3.85° / 1.27° | 0.26 m / 1.24° / 0.63° |
+| **Kết quả cuối (2 lượt GICP + yaw) so với bài chấm `clean_cfz1_tau7`** | **0.060 m RMS** (max 0.29 m) | – (Track02 không dùng GICP) |
+
+**Kết luận:**
+- **Giả thuyết xác nhận:** bỏ pose từng frame của `c3s08` chỉ đổi vị trí cuối 6 cm RMS → pipeline không còn phụ thuộc vào lượt NDT
+  chạy với prior chọn theo điểm (chỉ còn 3 hằng số hiệu chuẩn). Ứng viên `t6_mapground_1.csv` (nếu điểm bằng bài chấm thì nên dùng
+  bản này cho sạch).
+- **Góc lắp pitch +2.3…+2.5° nhất quán giữa hai track** → camera (khung point cloud) chúc ~2.4° so với mặt đường – một thông số hiệu
+  chuẩn thật. Roll không nhất quán (Track01 −2.9°) → nhiều khả năng bản đồ đoạn Track01 hơi nghiêng; chưa kết luận được.
+- **Chiều cao camera:** H đo theo NDT = 1.95 / 2.33 m, khác nhau giữa hai track và khác 1.646 m → **không phải chiều cao vật lý độc
+  lập**: z của NDT chỉ khớp theo point cloud đã nhân tỉ lệ (0.8 ở Track01, 1.0 ở Track02), nên H đo được là "độ cao mặt đường trong
+  point cloud × tỉ lệ" + sai số mặt đường bản đồ. Tỉ lệ và chiều cao camera **không tách được** chỉ từ point cloud ảnh (chúng nhân với
+  nhau) → câu hỏi "h 2.06 m vs camera 1.65 m" **chưa kết luận được**; T4 cho thấy tỉ lệ ±5 % đổi độ lệch rất ít nên ảnh hưởng tới điểm nhỏ.
+
+## T6 – Ứng viên Kaggle (chờ người dùng duyệt, KHÔNG tự nộp)
+
+File ở `src/localization/result/candidates_T6/` (đã kiểm tra định dạng bằng `bot.validate`). Track02 không đổi (không dùng GICP) →
+cả 3 ứng viên là Track01; mỗi file khác bài chấm `clean_cfz1_tau7` (0.80) đúng một thay đổi, yaw giống hệt.
+
+| File | Thay đổi | Giả thuyết | Lệch so với bài chấm | Dự đoán |
+|---|---|---|---|---|
+| `t6_range20_1.csv` | GICP `--max-range 20` (thay 40) | điểm xa méo nhất (T2, T4: nhiễu −15/−24 %, hợp lệ +5 %) | 0.375 m RMS | 0.74–0.84 (không chắc chiều) |
+| `t6_turn0_1.csv` | `--turn-weight 0` (bỏ GICP khi cua) | frame cua nhiễu 1.07 m, chỉ 35 % hợp lệ (T3) | 0.090 m | 0.79–0.81 |
+| `t6_mapground_1.csv` | z / roll / pitch từ bản đồ (T7) | pipeline sạch hơn, kết quả gần như không đổi | 0.060 m | 0.79–0.81 |
