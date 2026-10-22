@@ -1,4 +1,4 @@
-# Trạng thái dự án – đọc file này trước (cập nhật 22/10/2026 sáng)
+# Trạng thái dự án – đọc file này trước (cập nhật 22/10/2026 chiều)
 
 File này dành cho bất kỳ phiên Claude nào (hoặc người) tiếp nhận dự án: đọc xong là biết đang ở đâu, luật là gì,
 làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việt). Cách chạy: `docs/HUONG-DAN-CHAY.md`.
@@ -61,6 +61,18 @@ Track02: vị trí Kalman ─► yaw gyro (τ 15 s) ─► result_2   (scan matc
 **Kết quả 22/10 (§13.7):** Track01 `clean_cfz1_tau7` 0.80, `if_iso_1` 0.84, `if_aniso_1` 0.87; Track02 `clean_cfz2_tau15` 0.28,
 `if_iso_2` 0.30, `if_aniso_2` 0.30 → bộ ghép mới (`info_fuse.py`) KÉM hơn; giữ pipeline cũ (2 lượt GICP, làm mượt 2 s).
 Hàng đợi bot hiện trống; hôm nay đã dùng 3/15 lượt mỗi track.
+
+**ĐANG LÀM DỞ (22/10 chiều) – brief `docs/brief_claude_code.pdf`, kết quả ghi ở `docs/nhat-ky/10-tra-loi-cau-hoi.md`:**
+- Xong: T0 (sao lưu `~/SDC-midterm01/backup/2026-10-22`), T1, T2 (lỗi do point cloud AI, GICP ~5 mm), T3, T11, T4 (tầm 20 m ổn định nhất).
+- Đang chạy khi tắt máy (chạy lại nếu chưa có file `result_1.csv` trong các thư mục dưới):
+  `cd ~/SDC-midterm01 && R=src/localization/result/reg`
+  `POSE_SOURCE1=$R/t7/mapground_Track1_result.txt bash midterm01/tools/run_clean_pipeline.sh $R/t7/pipeline` (T7)
+  `MAX_RANGE=20 bash midterm01/tools/run_clean_pipeline.sh $R/cand/range20` (ứng viên T6)
+  `TURN_WEIGHT=0 bash midterm01/tools/run_clean_pipeline.sh $R/cand/turn0` (ứng viên T6, người dùng yêu cầu xử lý khúc cua)
+- Sau đó: so với `reg/clean/clean_cfz1_tau7.csv` (compare_csv / RMS), ghi T7, rồi **DỪNG, báo người dùng ≤ 3 ứng viên T6**
+  (tên file, giả thuyết, điểm dự đoán) – KHÔNG tự nộp. Tiếp theo theo brief: T8 → T10 → T5 → T9 → (T12) → T13.
+- Hướng độ tin cậy đã có số liệu (T3/T11): trọng số bền vững theo độ lớn độ sửa GICP (ρ 0.71 với nhiễu); phát hiện bước nhảy
+  GNSS (11 bước ở Track01) và giảm trọng số trong Kalman (T12).
 
 **Hướng tiếp theo đã có cơ sở (§13.6):** lỗi còn lại là **độ lệch có hệ thống** của GICP do point cloud ảnh bị méo, không phải
 nhiễu (Hessian không dự báo được nhiễu từng frame; nhiễu sau lọc gần đẳng hướng 0.505 / 0.494 m). Đề xuất kế tiếp:
