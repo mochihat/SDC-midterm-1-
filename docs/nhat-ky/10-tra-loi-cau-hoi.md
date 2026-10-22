@@ -312,3 +312,27 @@ cả 3 ứng viên là Track01; mỗi file khác bài chấm `clean_cfz1_tau7` (
 | `t6_range20_1.csv` | GICP `--max-range 20` (thay 40) | điểm xa méo nhất (T2, T4: nhiễu −15/−24 %, hợp lệ +5 %) | 0.375 m RMS | 0.74–0.84 (không chắc chiều) |
 | `t6_turn0_1.csv` | `--turn-weight 0` (bỏ GICP khi cua) | frame cua nhiễu 1.07 m, chỉ 35 % hợp lệ (T3) | 0.090 m | 0.79–0.81 |
 | `t6_mapground_1.csv` | z / roll / pitch từ bản đồ (T7) | pipeline sạch hơn, kết quả gần như không đổi | 0.060 m | 0.79–0.81 |
+
+## T8 – Mục "Leaderboard analysis" cho báo cáo (tiếng Anh, dán vào Problems and Solutions)
+
+**Câu hỏi (tr. 9 "chỉ trình bày như phân tích – viết vào report thế nào"; tr. 43; tr. 48 "đọc Hình 21").** Số liệu từ
+`09-thong-ke-nop-bai.md` (152 lần nộp, 85 là file dò / tổ hợp: Track01 37, Track02 48). Hình 21 = `fig/submission_progress.png`.
+
+> **Leaderboard analysis (not used for grading).** Kaggle returns only one number per submission, the total
+> score E = P + 0.2·Y (P = position RMSE in metres, Y = yaw RMSE in degrees), so the leaderboard alone cannot tell
+> which part of the pipeline is wrong. We therefore submitted a few controlled pairs early on: shifting every pose by
+> ±L along one axis gives P₊² + P₋² − 2P² = 2L², so each pair isolates P exactly, and a ±1° yaw pair isolates Y in
+> the same way. Three independent pairs agreed to 0.0014 and gave Track01 = 0.905 m + 1.77° and
+> Track02 = 0.23 m + 0.88°. This analysis produced four findings that we then turned into real algorithm changes:
+> (1) yaw was the largest share of the score, (2) the answer yaw is the vehicle body yaw, not the motion heading,
+> which led to the gyro complementary filter (−0.14 on Track01); (3) the GNSS has no lateral bias and no time offset
+> (+0.025 m, −3.6 ms), so de-meaning the GICP correction is safe; (4) the Track01 error is slow and mostly along the
+> road. We later extended the idea into score-weighted combinations and cosine-mode probes, which reached 0.46 /
+> 0.19 but only re-estimate the hidden answer: their weights have no physical meaning (e.g. −4.58) and would not
+> transfer to new data. After the TA's clarification on 20/10 we stopped on 21/10 (85 of our 152 submissions were
+> probes or combinations) and rebuilt every graded file from the localization pipeline alone. Figure 21 shows the
+> difference: the pipeline-only curve falls from 1.253 to 0.789 through algorithm changes and then stays flat, while
+> the leaderboard-fitted curve drops in steps exactly on the two probing days. **All graded submissions come directly
+> from the localization pipeline.**
+
+(≈ 270 từ. Ghi chú: 0.789 là bản cùng phương pháp; bài chấm sạch hiện tại 0.80 / 0.28.)
