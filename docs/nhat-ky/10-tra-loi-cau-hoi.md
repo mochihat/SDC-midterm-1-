@@ -381,3 +381,55 @@ lượt chạy code mẫu, `data/baseline_partial/`).
 > template output scored 602 on Kaggle. With the measured scale (×9 for `raw_ply`, ×0.8 or 1.646 m / road height for
 > `3cameras_ply`) NDT and GICP converge – the remaining problem is that the reconstructed clouds are distorted, not scaled
 > wrongly (T2).
+
+## T9 – Tài liệu cho thuyết trình (4–6 phút, 29/10)
+
+**Câu hỏi (tr. 6 "ba phát hiện chính – nói rõ khi thuyết trình"; tr. 8 "LoGeR, MapAnything là gì"; tr. 16 "GICP vs NDT";
+tr. 17 "tại sao cần Kalman"; tr. 40 "bài toán tương tự").** Dùng điểm sạch (0.80 / 0.28), không dùng 0.46 / 0.19.
+
+### Dàn 7 slide (~45 s / slide)
+
+| # | Tiêu đề (câu kết luận) | Nội dung / hình | Câu nói chính |
+|---|---|---|---|
+| 1 | Localizing a car on a LiDAR map with camera point clouds | tên, đội 11, 0.80 / 0.28 (baseline 1.79 / 1.93) | "Giảm hơn một nửa sai số baseline ở cả hai track." |
+| 2 | Four stages: GNSS smoother → GICP → fusion → gyro yaw | sơ đồ pipeline; Track02 bỏ bước 2–3 | "Mỗi nguồn chỉ được dùng khi nó chính xác hơn cái nó sửa." |
+| 3 | Finding 1 – the template ran NDT at the wrong scale | `fig/t5_scale_x3.png` | "×3 thay vì ×9: point cloud nhỏ hơn thật 3 lần, NDT trôi tới 100 m." |
+| 4 | Finding 2 – the answer yaw is the body yaw: use the gyro | bảng yaw 1.56° → 0.87°, 0.33° → 0.25° | "Yaw GNSS là hướng chạy, trễ 1.1–1.4 s; gyro đo trực tiếp." |
+| 5 | Finding 3 – the error comes from the AI point clouds, not the matcher | `fig/t2_synthetic.png` | "GICP trên point cloud hoàn hảo sai 5 mm; méo có hệ thống của point cloud mới gây ~0.7 m." |
+| 6 | Track01 vs Track02: scan matching helps only where GNSS is worse | waterfall Track01 + bảng Track02; `fig/t11_gnss_jitter.png` | "GNSS Track01 bị che chắn, 11 bước nhảy → GICP có chỗ để sửa; Track02 GNSS 0.23 m tốt hơn GICP." |
+| 7 | Lessons & honesty | 3 bài học; dò bảng điểm chỉ là phân tích, mọi bài chấm từ pipeline; dùng AI làm trợ lý | "All graded submissions come directly from the localization pipeline." |
+
+### Câu trả lời dự phòng
+
+- **Vì sao demean?** GICP lệch cố định ~+0.17 m dọc / −0.14 m ngang so với GNSS (gốc camera / méo của point cloud); GNSS không lệch ngang.
+  Prior giữ phần trung bình, GICP chỉ thêm dao động cục bộ (bộ lọc bù). Điểm: 0.99060 → 0.92775.
+- **Vì sao tỉ lệ 0.8 / 1.646 m?** Độ cao mặt đường trong point cloud 3 camera trung vị 2.058 đơn vị; 0.8 × 2.058 = 1.646 m. Đo mỗi frame vì
+  độ cao này đổi 1.73–2.27 giữa các đoạn. T4: ±5 % tỉ lệ đổi kết quả rất ít; tỉ lệ và chiều cao camera không tách được từ point cloud ảnh.
+- **Vì sao 2 lượt GICP?** Point cloud méo → cực tiểu GICP lệch khỏi vị trí thật; đi một phần đường thì có lợi (2 lượt 0.993), đi hết
+  thì hại (5 lượt 1.115). T2 xác nhận lỗi đến từ point cloud.
+- **Vì sao Track02 không dùng GICP?** GNSS Track02 sai ~0.23 m, GICP trên point cloud ảnh nhiễu ~0.75 m mỗi frame → mọi lần thêm GICP
+  đều xấu đi (0.28 → 0.30–0.37).
+- **GICP vs NDT?** NDT so điểm với phân bố chuẩn của từng ô lưới (4–8 m), không ghép cặp, nhạy kích thước ô, ~14 s/frame (C++ mẫu);
+  GICP ghép cặp điểm gần nhất, mỗi điểm hai phía có hiệp phương sai từ 20 điểm lân cận (plane-to-plane), ~0.06 s/frame; trên cùng dữ liệu
+  GICP 0.803 m so với NDT 0.836 m.
+- **Vì sao Kalman?** GNSS 4 Hz, camera 28 Hz → cần nội suy theo mô hình chuyển động; GNSS Track01 giật (0.142 m) → RTS smoother dùng cả dữ
+  liệu tương lai để làm mượt; Track02 0.473 → 0.408.
+- **LoGeR / MapAnything là gì?** Hai mô hình AI dựng 3D từ ảnh (point cloud do TA chạy sẵn): MapAnything (Meta + CMU, 2025) – transformer
+  feed-forward dự đoán độ sâu, tia camera, pose và hệ số tỉ lệ mét (→ `3cameras_ply`, tỉ lệ gần mét); LoGeR (Google DeepMind + UC Berkeley,
+  2026) – dựng hình học cho video dài bằng bộ nhớ lai (→ `raw_ply`, đơn vị tuỳ ý, cần ×9).
+- **Có dò bảng điểm không?** Có, như phân tích (T8); TA làm rõ 20/10, dừng 21/10, mọi bài chấm từ pipeline.
+
+### Tài liệu tham khảo (đã tra, 23/10)
+
+| Tài liệu | Đã xác minh | Ghi chú |
+|---|---|---|
+| T. Caselitz et al., "Monocular camera localization in 3D LiDAR maps", IROS 2016, pp. 1926–1931 | tên / hội nghị / trang qua trích dẫn ([computeroptics.ru](https://www.computeroptics.ru/KO/Annot/KO48-3/480311.html)); "Caselitz et al." qua [CMRNext](https://arxiv.org/html/2402.00129v5); chưa mở được bản gốc | dựng 3D từ camera (visual odometry) rồi khớp vào bản đồ LiDAR – gần nhất với bài này |
+| D. Cattaneo et al., "CMRNet: Camera to LiDAR-Map Registration", ITSC 2019, pp. 1283–1289, DOI 10.1109/ITSC.2019.8917470 | ✅ [arXiv 1906.10109](https://web3.arxiv.org/abs/1906.10109), [UAH](https://ebuah.uah.es/dspace/handle/10017/60404) | CNN khớp ảnh vào bản đồ LiDAR, KITTI ~0.27 m / 1.07° |
+| K. Koide, `hdl_localization` (UKF + IMU + NDT) | ✅ [GitHub](https://github.com/koide3/hdl_localization/blob/master/README.md) | UKF dự đoán bằng IMU, NDT sửa – cùng ý "scan matching là phép đo trong bộ lọc" |
+| Autoware `ndt_scan_matcher` + `ekf_localizer` | ✅ [index.ros.org](https://index.ros.org/p/autoware_ndt_scan_matcher/), [pose_initializer](https://index.ros.org/p/autoware_pose_initializer/) | GNSS cho pose thô → NDT tinh chỉnh → EKF |
+| A. Segal, D. Haehnel, S. Thrun, "Generalized-ICP", RSS 2009, DOI 10.15607/RSS.2009.V.021 | ✅ [roboticsproceedings.org](https://roboticsproceedings.org/rss05/p21.html) | thuật toán GICP |
+| P. Biber, W. Straßer, "The normal distributions transform", IROS 2003, pp. 2743–2748 | ✅ [IEEE Xplore](https://ieeexplore.ieee.org/document/1249285) | NDT của code mẫu |
+| K. Koide, "small_gicp", JOSS 9(100) 6948, 2024, DOI 10.21105/joss.06948 | ✅ [JOSS](https://joss.theoj.org/papers/10.21105/joss.06948) | thư viện GICP dùng trong bài |
+| N. Keetha et al., "MapAnything: Universal Feed-Forward Metric 3D Reconstruction", arXiv 2509.13414 (3DV 2026) | ✅ [arXiv](https://arxiv.org/abs/2509.13414v3) | mô hình dựng `3cameras_ply` |
+| J. Zhang et al., "LoGeR: Long-Context Geometric Reconstruction with Hybrid Memory", arXiv 2603.03269 | ✅ [arXiv](https://arxiv.org/pdf/2603.03269.pdf) | mô hình dựng `raw_ply` (theo slide TA – chưa đối chiếu slide gốc) |
+| S. Thrun, W. Burgard, D. Fox, *Probabilistic Robotics*, MIT Press 2005 (giáo trình môn học) | slide môn học | Ch. 3 (Kalman), Ch. 7 (localization); slide Localization tr. 61: bộ lọc chỉ chịu nhiễu độc lập theo thời gian – lỗi có hệ thống của point cloud thì không |
