@@ -10,6 +10,10 @@ Rule 10/22: only the current and past frames are used. Per frame k, in time orde
      --bias-lat, vehicle frame, measured on Track01/02 against GNSS) and camera yaw offset (--yaw-offset)
   4. update: Kalman update with R = --sigma-match^2 when the match converged and the innovation is < --gate sigma;
      yaw += (1 - exp(-dt / --tau-yaw)) * wrap(match yaw - prediction)
+--odometry G: the motion between frames comes from scan-to-scan GICP of the current cloud against the cloud G frames
+earlier (forward / lateral displacement, divided by G; yaw stays the gyro's) instead of the constant-velocity model.
+Validated on Track01: within ~5 % of the true speed at >= 10 m/s, about half of it below 5 m/s. Process noise then
+--odo-noise (fraction of the step) + 0.02 m per frame.
 Start: --init (4x4 init_guess.txt, may be noisy: Track02's yaw is ~19 deg off, Track03's roll / pitch ~15 deg).
 --level-init keeps x, y, yaw of the init and rebuilds z, roll, pitch from the map ground plane under (x, y) plus the
 camera mounting (pitch --mount-pitch, height --ground-height), as in tools/t7_pose_source.py. Multi-hypothesis start (MHT, Thrun ch. 7):
@@ -49,6 +53,7 @@ class Hypothesis:
         self.yaw = yaw_of(self.T)
         self.score = []
         self.rows = []
+        self.dist = 0.0
 
 
 def main():
@@ -71,10 +76,18 @@ def main():
     p.add_argument("--yaw-offset", type=float, default=1.1, help="deg, GICP yaw - body yaw (calibration)")
     p.add_argument("--hyp-yaw", default="-24,-18,-12,-6,0,6,12,18,24", help="deg offsets around the init yaw")
     p.add_argument("--hyp-frames", type=int, default=60)
+    p.add_argument("--hyp-distance", type=float, default=25.0, help="m travelled before the hypotheses are pruned")
     p.add_argument("--threads", type=int, default=8)
+    p.add_argument("--iterations", type=int, default=100)
     p.add_argument("--pose-check", help="reference CSV (validation only)")
     p.add_argument("--count", type=int, default=0)
     p.add_argument("--level-init", action="store_true")
+    p.add_argument("--debug", type=int, default=0, help="print match details every N frames (0 = off)")
+    p.add_argument("--odometry", type=int, default=0, help="scan-to-scan odometry gap in frames (0 = constant velocity)")
+    p.add_argument("--odo-noise", type=float, default=0.15)
+    p.add_argument("--gyro-bias", type=float, default=-0.26, help="deg/s, IMU z-gyro bias (calibration)")
+    p.add_argument("--odo-target", type=float, default=0.0,
+                   help="m; if > 0 the gap adapts so the displacement is about this (gap between 6 and --odometry)")
     p.add_argument("--mount-pitch", type=float, default=2.4, help="deg (T7: +2.47 Track01, +2.30 Track02)")
     a = p.parse_args()
 
@@ -114,9 +127,12 @@ def main():
     print(f"Track{a.track}: {len(frames)} frames ({a.ply}), map {len(m)} pts", flush=True)
 
     hyps = [Hypothesis(T0, np.radians(float(v))) for v in a.hyp_yaw.split(",")]
+    clouds = []          # recent preprocessed clouds for the odometry
+    odo_step = np.zeros(2)
     hist_h = []
-    still = gt < ft[0] + 1.0
-    bias = float(gw[still].mean()) if still.sum() > 50 else 0.0
+    # gyro bias: a calibration constant of this IMU (same car on every track: -0.22 deg/s on Track01, -0.30 on
+    # Track02, measured while standing / fitted to the heading); the first second is NOT assumed to be standing
+    bias = np.radians(a.gyro_bias)
     yaw_off = np.radians(a.yaw_offset)
     t_start = time.time()
     gi = int(np.searchsorted(gt, ft[0]))
@@ -128,6 +144,23 @@ def main():
         xyz = xyz[np.linalg.norm(xyz, axis=1) <= a.max_range / s] * s
         src, _ = small_gicp.preprocess_points(xyz, downsampling_resolution=0.5, num_neighbors=20, num_threads=a.threads)
         dt = ft[k] - ft[k - 1] if k else 0.0
+        if a.odometry:
+            clouds.append((src, _))
+            if len(clouds) > a.odometry + 1:
+                clouds.pop(0)
+            gap = a.odometry
+            if a.odo_target > 0:
+                gap = int(np.clip(round(a.odo_target / max(abs(odo_step[0]), 1e-3)), 6, a.odometry))
+            if len(clouds) >= gap + 1:
+                tgt, ttree = clouds[-1 - gap]
+                g0 = np.eye(4)
+                g0[0, 3] = odo_step[0] * gap
+                r = small_gicp.align(tgt, src, ttree, g0, registration_type="GICP", max_correspondence_distance=1.0,
+                                     max_iterations=30, num_threads=a.threads)
+                Tr = np.array(r.T_target_source)
+                if r.num_inliers > 50 and abs(Tr[0, 3]) < 2.0 * gap:
+                    odo_step = Tr[:2, 3] / gap   # forward / left per frame, cloud frame
+                
         # gyro increment since the previous frame (shared by all hypotheses)
         dyaw = 0.0
         if k:
@@ -143,8 +176,18 @@ def main():
         H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
         R = np.eye(2) * a.sigma_match ** 2
         for hy in hyps:
-            hy.x = F @ hy.x
-            hy.P = F @ hy.P @ F.T + Q
+            if a.odometry:
+                c_, s2 = np.cos(hy.yaw), np.sin(hy.yaw)
+                step = np.array([odo_step[0] * c_ - odo_step[1] * s2, odo_step[0] * s2 + odo_step[1] * c_])
+                hy.x = hy.x.copy()
+                hy.x[:2] += step
+                hy.x[2:] = step / max(dt, 1e-3)
+                qn = (a.odo_noise * np.hypot(*step) + 0.02) ** 2
+                hy.P = hy.P.copy()
+                hy.P[:2, :2] += np.eye(2) * qn
+            else:
+                hy.x = F @ hy.x
+                hy.P = F @ hy.P @ F.T + Q
             hy.yaw = wrap(hy.yaw + dyaw)
             Tp = hy.T.copy()
             Tp[:3, :3] = rot_z(hy.yaw - yaw_of(hy.T)) @ hy.T[:3, :3]
@@ -152,7 +195,7 @@ def main():
             init = Tp.copy()
             init[:3, 3] -= origin
             res = small_gicp.align(target, src, tree, init, registration_type="GICP", max_correspondence_distance=1.0,
-                                   max_iterations=30, num_threads=a.threads)
+                                   max_iterations=a.iterations, num_threads=a.threads)
             T = np.array(res.T_target_source)
             T[:3, 3] += origin
             gy = yaw_of(T) - yaw_off
@@ -161,7 +204,8 @@ def main():
             innov = meas - H @ hy.x
             S = H @ hy.P @ H.T + R
             d = float(np.sqrt(innov @ np.linalg.solve(S, innov)))
-            ok = res.converged and res.num_inliers > 50 and d < a.gate and abs(wrap(gy - hy.yaw)) < np.radians(10)
+            # the converged flag is rarely set on these clouds; the innovation gate decides
+            ok = res.num_inliers > 50 and d < a.gate and abs(wrap(gy - hy.yaw)) < np.radians(10)
             if ok:
                 K = hy.P @ H.T @ np.linalg.inv(S)
                 hy.x = hy.x + K @ innov
@@ -169,12 +213,18 @@ def main():
                 hy.yaw = wrap(hy.yaw + (1 - np.exp(-dt / a.tau_yaw)) * wrap(gy - hy.yaw)) if dt else hy.yaw
                 hy.T[:3, :3] = T[:3, :3]
                 hy.T[2, 3] = T[2, 3]
-            hy.score.append(res.error / max(res.num_inliers, 1) if res.converged else 1e3)
+            if a.debug and len(hyps) == 1 and k % a.debug == 0:
+                print(f"  k {k}: conv {int(res.converged)} inl {res.num_inliers} d {d:.1f} dxy "
+                      f"{np.hypot(*(meas - hy.x[:2] if not ok else innov)):.2f} dyaw {np.degrees(wrap(gy - hy.yaw)):+.1f} "
+                      f"v {np.hypot(hy.x[2], hy.x[3]):.1f} ok {int(ok)}", flush=True)
+            # MHT score: capped squared innovation (a wrong start yaw sends the prediction off once the car moves)
+            hy.score.append(min(d, 2 * a.gate) ** 2)
+            hy.dist += np.hypot(*(hy.x[2:] * dt))
             hy.rows.append((k, hy.x[0], hy.x[1], hy.yaw, int(ok)))
-        if len(hyps) > 1 and k + 1 == a.hyp_frames:
+        if len(hyps) > 1 and k + 1 >= a.hyp_frames and min(h_.dist for h_ in hyps) >= a.hyp_distance:
             best = min(hyps, key=lambda h_: np.mean(h_.score))
-            print(f"MHT at frame {k}: kept yaw offset {np.degrees(yaw_of(best.T) - yaw_of(T0)):+.1f} deg "
-                  f"(mean error/inlier {np.mean(best.score):.4f}; others "
+            print(f"MHT at frame {k}: kept yaw offset {np.degrees(wrap(best.yaw - yaw_of(T0))):+.1f} deg "
+                  f"(mean capped innovation^2 {np.mean(best.score):.2f}; all "
                   + ", ".join(f"{np.mean(h_.score):.4f}" for h_ in hyps) + ")", flush=True)
             hyps = [best]
         if (k + 1) % 500 == 0:
