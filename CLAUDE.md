@@ -1,4 +1,4 @@
-# Trạng thái dự án – đọc file này trước (cập nhật 23/10/2026)
+# Trạng thái dự án – đọc file này trước (cập nhật 23/10/2026 05:30)
 
 File này dành cho bất kỳ phiên Claude nào (hoặc người) tiếp nhận dự án: đọc xong là biết đang ở đâu, luật là gì,
 làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việt). Cách chạy: `docs/HUONG-DAN-CHAY.md`.
@@ -30,17 +30,16 @@ phép** để lên hạng, và người dùng được trình bày chiến thu�
 4. Không commit token Kaggle / dữ liệu; không ghi tên thành viên đội khác; không dùng nhiều tài khoản.
 5. Trả lời tiếng Việt; báo cáo / slide nộp thật bằng tiếng Anh.
 
-## 3. Kết quả hiện tại
+## 3. Kết quả hiện tại (23/10 05:30)
 
-| | Track01 | Track02 |
-|---|---|---|
-| Bài chấm (chỉ pipeline) | **`t6_range20_1.csv` – 0.63** (23/10; GICP tầm 20 m; trước đó `clean_cfz1_tau7` 0.80) | `clean_cfz2_tau15.csv` – **0.28** (nộp 22/10) |
-| Cùng phương pháp, lượt cũ | 0.78914 (`cfz1_tau7`) | 0.27654 (`cfz2_tau15`, vị trí khi đó còn là tổ hợp) |
-| Điểm đang hiện trên bảng (từ file dò – KHÔNG dùng để chấm) | 0.46 (hạng 2) | 0.19 (hạng 2) |
-| Đội đang dẫn (21/10) | 0.40 | 0.17 |
+| | Track01 | Track02 | Track03 |
+|---|---|---|---|
+| Bảng điểm (tốt nhất) | **0.40** (`lb_t1_r4`, dò – bằng hạng 1 đội 12) | **0.15** (`corr_r2_2`, dò – hạng 1) | **0.77** (`t3_vN`, nhân quả – hạng 2; D.KI 0.51) |
+| Clean (pipeline, không dò) | 0.62 (`t6_range20_turn0_1`: GICP tầm 20 m, bỏ khi cua) | 0.28 (`clean_cfz2_tau15`) | = cột trên (Track03 luôn clean) |
+| Chờ nộp 24/10 08:00 (bot) | – | `lb_t2_r3` (dự đoán ~0.11) | `t3_full_N` (bản đủ 3142 frame của N) |
 
-Kaggle từ 21/10 chỉ hiện **2 chữ số và cắt bớt** (0.789 → 0.78). Điểm 5 chữ số cũ: `docs/nhat-ky/data/kaggle_submissions.csv`.
-Thống kê mọi lần nộp (pipeline / lai / leaderboard): `docs/nhat-ky/09-thong-ke-nop-bai.md`.
+Kaggle chỉ hiện 2 chữ số **cắt bớt**. Điểm 5 chữ số cũ: `docs/nhat-ky/data/kaggle_submissions.csv`. Chi tiết đêm 22→23/10:
+`docs/nhat-ky/11-track3-va-do-diem-23-10.md`. Bot có track 3 (`queue/track3`).
 
 ## 4. Pipeline (bài chấm)
 
