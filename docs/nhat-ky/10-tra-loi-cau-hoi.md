@@ -433,3 +433,34 @@ tr. 17 "tại sao cần Kalman"; tr. 40 "bài toán tương tự").** Dùng đi�
 | N. Keetha et al., "MapAnything: Universal Feed-Forward Metric 3D Reconstruction", arXiv 2509.13414 (3DV 2026) | ✅ [arXiv](https://arxiv.org/abs/2509.13414v3) | mô hình dựng `3cameras_ply` |
 | J. Zhang et al., "LoGeR: Long-Context Geometric Reconstruction with Hybrid Memory", arXiv 2603.03269 | ✅ [arXiv](https://arxiv.org/pdf/2603.03269.pdf) | mô hình dựng `raw_ply` (theo slide TA – chưa đối chiếu slide gốc) |
 | S. Thrun, W. Burgard, D. Fox, *Probabilistic Robotics*, MIT Press 2005 (giáo trình môn học) | slide môn học | Ch. 3 (Kalman), Ch. 7 (localization); slide Localization tr. 61: bộ lọc chỉ chịu nhiễu độc lập theo thời gian – lỗi có hệ thống của point cloud thì không |
+
+## T12 – Kalman bền vững với bước nhảy GNSS (và vì sao không làm tiếp bản GICP + IMU)
+
+**Câu hỏi (tr. 41 "lọc không khử được lỗi trôi chậm → cần cách tính khác"; người dùng 22/10: xử lý sai số lớn bất thường).**
+**Giả thuyết:** 11 bước nhảy GNSS ở Track01 (T11) kéo quỹ đạo Kalman lệch; giảm trọng số các mẫu đó sẽ làm prior tốt hơn.
+
+**Cách làm:** `tools/rts_smoother.py --robust K` – cập nhật kiểu Huber: mẫu GNSS có khoảng cách Mahalanobis của phần vị trí d > K thì nhiễu
+đo được nhân d / K. Tham số nhiễu vẫn chọn bằng maximum likelihood như cũ (không bật robust thì kết quả trùng 100 % file cũ – đã kiểm
+tra, lệch 0.0). Sửa thêm `gnss_to_csv.read_gnss`: rosbags mới chỉ mở bag theo thư mục → tự dùng thư mục khi nhận đường dẫn `.db3`.
+
+```bash
+docker run ... sdc-reg python3 tools/rts_smoother.py /w/data/Track1 Track1 $R/reg/t12/rts_robust3_1.csv --yaw gnss --qa 1.0 --qw 0.1 --robust 3
+docker run ... sdc-reg python3 tools/rts_smoother.py /w/data/Track2 Track2 $R/reg/t12/rts_robust3_2.csv --yaw heading --robust 3
+```
+
+| | Track01 | Track02 |
+|---|---|---|
+| σ vị trí GNSS (ML) | 0.050 m | 0.006 m |
+| Mẫu bị giảm trọng số (K = 3) | 98 / 440 | 282 / 475 |
+| Lớn nhất (σ) và thời điểm | 11.3σ ở **27–39 s, 82.7 s** (đúng cụm bước nhảy của T11) | 23.6σ ở 81–84 s |
+| Đổi vị trí so với Kalman thường | **0.019 m RMS** (max 0.115 m, 136 frame > 5 cm) | 0.006 m RMS (max 0.037 m) |
+
+**Kết luận:**
+- Bộ lọc **tự phát hiện đúng** các bước nhảy (xác nhận T11), nhưng **giả thuyết bác bỏ về mức độ:** RTS smoother vốn đã làm phẳng phần lớn
+  bước nhảy, robust chỉ đổi 1.9 cm RMS → ảnh hưởng điểm < 0.01 (dưới mức Kaggle hiển thị) → **không đề xuất nộp**. Track02: σ ML rất nhỏ
+  (0.006 m) nên ngưỡng K = 3 đánh dấu tới 59 % mẫu – không có ý nghĩa; Track02 không có vấn đề bước nhảy.
+- **Kalman GNSS-bias Gauss–Markov + GICP làm phép đo:** về toán học là cùng bài toán bình phương tối thiểu tuyến tính mà `tools/info_fuse.py`
+  đã giải (RTS smoother của mô hình tuyến tính Gauss = nghiệm bình phương tối thiểu). Bản đó đã nộp 22/10 và **kém hơn** (0.84 / 0.87 so với
+  0.80) vì sửa ít hơn bản 2 lượt GICP cộng dồn. T2/T3 cho thấy lỗi còn lại là **méo có hệ thống, tương quan theo thời gian** của point cloud –
+  đúng loại lỗi mà bộ lọc Kalman (giả định nhiễu độc lập, slide Localization tr. 61) không khử được. → **Không làm tiếp**; nếu còn thời gian
+  thì đầu tư vào đầu vào (tầm 20 m, T4/T6) hơn là bộ lọc.

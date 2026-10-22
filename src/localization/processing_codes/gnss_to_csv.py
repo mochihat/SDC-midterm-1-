@@ -15,7 +15,10 @@ from rosbags.highlevel import AnyReader
 
 def read_gnss(bag_path):
     ts, xs, ys, yaws = [], [], [], []
-    with AnyReader([Path(bag_path)]) as reader:
+    bag = Path(bag_path)
+    if bag.suffix == ".db3" and (bag.parent / "metadata.yaml").exists():
+        bag = bag.parent  # newer rosbags versions open a bag by its directory only
+    with AnyReader([bag]) as reader:
         conns = [c for c in reader.connections if c.topic == "/localizer_node/gnss_pose"]
         for conn, t, raw in reader.messages(connections=conns):
             msg = reader.deserialize(raw, conn.msgtype)

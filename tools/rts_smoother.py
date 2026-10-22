@@ -10,6 +10,11 @@ All noise levels are chosen by maximising the GNSS innovation likelihood on the 
 (no ground truth / leaderboard involved). The output yaw is the motion heading theta, or
 theta + b with --yaw gnss.
 
+--robust K (T12 in docs/nhat-ky/10): Huber-type robust update for GNSS jumps. When the position innovation of a GNSS
+sample is more than K standard deviations away (Mahalanobis distance d with the predicted covariance), its position
+noise is inflated by d / K, so the sample pulls the track proportionally less. Track01 has 11 jumps > 5x the median
+second difference (tools/gnss_jitter.py). The noise levels are still fitted without it.
+
 Usage (inside container):
   python3 rts_smoother.py TRACK_DIR TRACK_NAME OUT_CSV [--yaw heading|gnss] [--grid small|full]
 """
@@ -53,7 +58,7 @@ H[0, 0] = H[1, 1] = 1.0
 H[2, 2] = H[2, 5] = 1.0
 
 
-def run(times, meas, is_meas, params, smooth=True):
+def run(times, meas, is_meas, params, smooth=True, robust=None, stats=None):
     """times: sorted seconds; meas: (n,3) GNSS rows (ignored where is_meas is False)."""
     sigma_p, sigma_yaw, q_a, q_w = params
     R = np.diag([sigma_p ** 2, sigma_p ** 2, sigma_yaw ** 2])
@@ -73,6 +78,14 @@ def run(times, meas, is_meas, params, smooth=True):
             innov = meas[i] - H @ s
             innov[2] = wrap(innov[2])
             S = H @ P @ H.T + R
+            if robust:
+                d = np.sqrt(innov[:2] @ np.linalg.inv(S[:2, :2]) @ innov[:2])
+                if d > robust:
+                    Rr = R.copy()
+                    Rr[:2, :2] *= d / robust
+                    S = H @ P @ H.T + Rr
+                    if stats is not None:
+                        stats.append((times[i], d))
             Sinv = np.linalg.inv(S)
             K = P @ H.T @ Sinv
             s = s + K @ innov
@@ -103,6 +116,7 @@ def main():
                     help="seconds added to frame timestamps before sampling the trajectory")
     ap.add_argument("--qa", type=float, help="fix longitudinal acceleration noise [m/s^2] (physical prior)")
     ap.add_argument("--qw", type=float, help="fix yaw acceleration noise [rad/s^2] (physical prior)")
+    ap.add_argument("--robust", type=float, help="Huber threshold K (innovation std devs) for GNSS jumps; off if unset")
     a = ap.parse_args()
 
     g_t, g_x, g_y, g_yaw = read_gnss(os.path.join(a.track_dir, f"{a.track_name}.db3"))
@@ -140,7 +154,12 @@ def main():
     order = np.argsort(times, kind="stable")
     is_meas = np.concatenate([np.ones(len(gs), bool), np.zeros(len(fs), bool)])[order]
     meas = np.concatenate([gnss, np.zeros((len(fs), 3))])[order]
-    _, xs = run(times[order], meas, is_meas, best, smooth=True)
+    stats = []
+    _, xs = run(times[order], meas, is_meas, best, smooth=True, robust=a.robust, stats=stats)
+    if a.robust:
+        print(f"robust update: {len(stats)} of {len(gs)} GNSS samples down-weighted (K = {a.robust}); "
+              f"largest innovation {max([d for _, d in stats], default=0):.1f} sigma at t = "
+              + ", ".join(f"{t:.1f}" for t, d in sorted(stats, key=lambda r: -r[1])[:8]) + " s")
     frame_rows = np.empty(len(fs), int)
     frame_rows[order[order >= len(gs)] - len(gs)] = np.nonzero(order >= len(gs))[0]
     out = xs[frame_rows]
