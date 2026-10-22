@@ -324,3 +324,19 @@ Nhiễu đo được = độ sửa GICP trừ chính nó sau làm mượt 2 s (l
 **Kết luận:** phần lỗi còn lại sau ghép không phải nhiễu (đã bị làm mượt) mà là **độ lệch có hệ thống, kéo dài theo thời gian** của
 GICP trên point cloud méo – làm mượt hay trọng số khác không sửa được. Hướng có cơ sở tiếp theo là giảm độ lệch đó ở đầu vào
 (chất lượng point cloud), không phải ở bộ ghép.
+
+### 13.7 Kết quả lần nộp 22/10 08:00 (điểm Kaggle bị cắt còn 2 chữ số)
+
+| Track | File | Điểm | Dự đoán (21/10) |
+|---|---|---|---|
+| 01 | `clean_cfz1_tau7` (đối chứng, pipeline sạch) | **0.80** (0.800–0.809) | 0.78–0.80 |
+| 01 | `if_iso_1` (bình phương tối thiểu toàn quỹ đạo, γ 0) | 0.84 | 0.79–0.82 |
+| 01 | `if_aniso_1` (+ trọng số Hessian, γ 1) | 0.87 | 0.80–0.83 |
+| 02 | `clean_cfz2_tau15` (đối chứng) | **0.28** | ~0.28 |
+| 02 | `if_iso_2` / `if_aniso_2` (+ GICP qua bộ ghép mới) | 0.30 / 0.30 | 0.28–0.30 |
+
+- Đối chứng tốt nhất ở cả hai track, đúng thứ tự dự đoán (clean < iso < aniso) nhưng bộ ghép mới kém hơn dự đoán.
+- Track01: bộ ghép mới sửa ít hơn (0.57 / 0.50 m so với 0.65 m của 2 lượt cộng dồn) → kém 0.04 / 0.07; trọng số Hessian
+  làm xấu thêm, khớp với §13.6 (Hessian không dự báo được nhiễu từng frame).
+- Track02: GICP lại làm xấu (+0.02) – như mọi lần trước.
+- Bài chấm sạch: Track01 0.80 (bản cũ cùng phương pháp 0.78914 – GICP khởi tạo từ yaw sạch kém hơn ~0.01), Track02 0.28.

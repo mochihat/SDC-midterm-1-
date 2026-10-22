@@ -1,4 +1,4 @@
-# Trạng thái dự án – đọc file này trước (cập nhật 21/10/2026 tối)
+# Trạng thái dự án – đọc file này trước (cập nhật 22/10/2026 sáng)
 
 File này dành cho bất kỳ phiên Claude nào (hoặc người) tiếp nhận dự án: đọc xong là biết đang ở đâu, luật là gì,
 làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việt). Cách chạy: `docs/HUONG-DAN-CHAY.md`.
@@ -34,7 +34,7 @@ làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việ
 
 | | Track01 | Track02 |
 |---|---|---|
-| Bài chấm dự kiến (chỉ pipeline) | `clean_cfz1_tau7.csv` – chưa có điểm, dự kiến ~0.79 | `clean_cfz2_tau15.csv` – chưa có điểm, dự kiến ~0.28 |
+| Bài chấm (chỉ pipeline) | `clean_cfz1_tau7.csv` – **0.80** (nộp 22/10) | `clean_cfz2_tau15.csv` – **0.28** (nộp 22/10) |
 | Cùng phương pháp, lượt cũ | 0.78914 (`cfz1_tau7`) | 0.27654 (`cfz2_tau15`, vị trí khi đó còn là tổ hợp) |
 | Điểm đang hiện trên bảng (từ file dò – KHÔNG dùng để chấm) | 0.46 (hạng 2) | 0.19 (hạng 2) |
 | Đội đang dẫn (21/10) | 0.40 | 0.17 |
@@ -58,20 +58,9 @@ Track02: vị trí Kalman ─► yaw gyro (τ 15 s) ─► result_2   (scan matc
 
 ## 5. Đang chờ / việc tiếp theo
 
-**Hàng đợi bot – nộp tự động 22/10 08:00 (giờ máy, UTC+8), tối đa 3 file mỗi lần chạy:**
-
-| Track | File | Khác file đối chứng ở | Dự đoán |
-|---|---|---|---|
-| 01 | `clean_cfz1_tau7` | (đối chứng) | 0.78–0.80 |
-| 01 | `if_iso_1` | ghép bằng bình phương tối thiểu toàn quỹ đạo (`tools/info_fuse.py`, γ = 0) | 0.79–0.82 |
-| 01 | `if_aniso_1` | + trọng số theo Hessian GICP (γ = 1) | 0.80–0.83 |
-| 02 | `clean_cfz2_tau15` | (đối chứng) | ~0.28 |
-| 02 | `if_iso_2` / `if_aniso_2` | + độ sửa GICP qua bộ ghép mới | 0.28–0.30 |
-
-Yaw giống hệt nhau trong 3 file của mỗi track → chênh điểm = chênh vị trí.
-
-**Khi có điểm (sáng 22/10):** đọc `tail -20 ~/kaggle-sdc-bot/bot.log`, ghi kết quả vào `docs/nhat-ky/08-gicp-va-scale.md` (§13.7),
-cập nhật bảng ở mục 3 file này, cập nhật số trong báo cáo / slide, push.
+**Kết quả 22/10 (§13.7):** Track01 `clean_cfz1_tau7` 0.80, `if_iso_1` 0.84, `if_aniso_1` 0.87; Track02 `clean_cfz2_tau15` 0.28,
+`if_iso_2` 0.30, `if_aniso_2` 0.30 → bộ ghép mới (`info_fuse.py`) KÉM hơn; giữ pipeline cũ (2 lượt GICP, làm mượt 2 s).
+Hàng đợi bot hiện trống; hôm nay đã dùng 3/15 lượt mỗi track.
 
 **Hướng tiếp theo đã có cơ sở (§13.6):** lỗi còn lại là **độ lệch có hệ thống** của GICP do point cloud ảnh bị méo, không phải
 nhiễu (Hessian không dự báo được nhiễu từng frame; nhiễu sau lọc gần đẳng hướng 0.505 / 0.494 m). Đề xuất kế tiếp:
