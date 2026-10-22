@@ -336,3 +336,31 @@ cả 3 ứng viên là Track01; mỗi file khác bài chấm `clean_cfz1_tau7` (
 > from the localization pipeline.**
 
 (≈ 270 từ. Ghi chú: 0.789 là bản cùng phương pháp; bài chấm sạch hiện tại 0.80 / 0.28.)
+
+## T10 – Baseline 1.79 trên Kaggle nhưng chạy trên máy trôi 91–110 m
+
+**Câu hỏi (tr. 26 "baseline thấp thì trông như nào"; brief 4: "file baseline TA nộp có lẽ không phải lượt trôi này – cần kiểm chứng").**
+
+**Cách làm:** lượt chạy code mẫu TA không sửa (`ply_scale = 3`, khởi đầu `init_guess`, frame sau bắt đầu từ frame trước) lưu ở
+`data/baseline_partial/` (dừng ở frame 504 / 782 vì đã trôi); đổi sang CSV rồi so với GNSS nội suy (`gnss_N.csv`, điểm Kaggle 1.31 / 0.57,
+đủ gần đáp án để làm thước đo cỡ chục mét) bằng `tools/track_error.py`.
+
+| | Track01 (505 / 3011 frame đầu) | Track02 (783 / 3299 frame đầu) |
+|---|---|---|
+| Lệch > 5 m từ frame | 18 | 0 |
+| Lệch > 20 m từ frame | 239 | 505 |
+| Lệch ở frame cuối đã chạy | 90.7 m, yaw +112° | 94–110 m, yaw −73° |
+| RMSE vị trí / yaw trên đoạn đã chạy | 42.2 m / 80.0° | 39.8 m / 81.0° |
+| "Điểm" tính trên đoạn đã chạy (so với GNSS) | **58.2** | **56.0** |
+| Điểm Kaggle của baseline TA | 1.79075 | 1.92587 |
+| Điểm Kaggle của chính file mình chạy code mẫu (16/10, `kaggle_track1_result.csv`) | **602.39** | – |
+
+**Kết luận:** lượt chạy code mẫu với cấu hình mặc định cho điểm hàng chục (chỉ 17–24 % đầu quỹ đạo: 56–58) tới hàng trăm (cả quỹ đạo:
+602 khi mình nộp thử) → **file baseline 1.79 / 1.93 TA đăng trên Kaggle không phải output của cấu hình mặc định trong code mẫu.**
+Điểm 1.79 nằm giữa "chỉ GNSS" (1.31) và lượt trôi (> 50) → nhiều khả năng TA dùng tỉ lệ đúng và / hoặc khởi đầu bằng GNSS. Đã xác nhận
+giả thuyết của brief; cấu hình thật **chưa kết luận được** (cần hỏi TA).
+
+**Câu hỏi soạn sẵn cho TA:** *"The provided template with its default settings (ply_scale = 3) drifts by ~90–110 m within the first
+500–800 frames on our machine, and the full output scored 602 on Kaggle, while the published baseline is 1.79 / 1.93. Which
+configuration (ply_scale, initial pose, GNSS use) produced the baseline submission? We would like to describe the baseline correctly in
+our report."*
