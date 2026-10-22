@@ -306,6 +306,7 @@ def main():
     p.add_argument("--scale", type=float, default=0.8)
     p.add_argument("--ground-height", type=float, help="per-frame scale = H / measured road height (see above)")
     p.add_argument("--ground-window", type=int, default=15)
+    p.add_argument("--ground-causal", action="store_true", help="trailing (causal) median of the road height")
     p.add_argument("--hood-mask", action="store_true")
     p.add_argument("--sor", help="K,STD statistical outlier removal")
     p.add_argument("--no-ground", type=float, default=0.0)
@@ -361,7 +362,10 @@ def main():
     if a.ground_height:
         with Pool(a.workers) as pool:
             h = np.array(pool.map(measure_ground, [j[2] for j in jobs], chunksize=8))
-        hs = median_filter(h, size=a.ground_window, mode="nearest")
+        if a.ground_causal:  # rule 10/22: trailing median over the current and past frames only
+            hs = np.array([np.median(h[max(0, k - a.ground_window + 1):k + 1]) for k in range(len(h))])
+        else:
+            hs = median_filter(h, size=a.ground_window, mode="nearest")
         scales = a.ground_height / hs
         print(f"ground h median {np.median(h):.3f} (smoothed range {hs.min():.3f}..{hs.max():.3f}); "
               f"scale median {np.median(scales):.3f} range {scales.min():.3f}..{scales.max():.3f}", flush=True)

@@ -18,17 +18,17 @@ làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việ
 
 ## 2. Luật bắt buộc (đừng vi phạm)
 
-1. **Không dò leaderboard.** TA trả lời 20/10 và slide "mid01 Updates & Adjustments" (21/10): chỉnh tham số / so sánh
-   pipeline bằng điểm Kaggle thì được; nộp file làm lệch có kiểm soát để suy ra lỗi của đáp án rồi sửa quỹ đạo
-   ("leaderboard-based fitting", kể cả theo từng đoạn) **không được dùng cho bài chấm**. Chỉ được trình bày như phân tích.
-   Không tạo / nộp `probe_*`, `corr_r*`, `lb_posyaw_*`, `posproj_*`, `yawproj_*`, `pp_*`, `bump*`, `*_bestyaw_*`.
-   Không dùng quỹ đạo suy ra từ dò điểm làm "đáp án offline" để chọn tham số.
-2. **Không làm Track03** (người dùng dặn 21/10) – chỉ Track01 và Track02.
-3. **Mỗi lần nộp ~3 file**, mỗi file kiểm tra một giả thuyết (thay đổi đúng một thứ so với file đối chứng).
-4. Mọi việc làm xong **commit + push lên GitHub** (`mochihat/SDC-midterm-1-`, private) và ghi vào `docs/nhat-ky/`.
-5. Không commit token Kaggle (`~/.kaggle/access_token`). Không ghi tên thành viên các đội khác (chỉ số đội).
-6. Không dùng nhiều tài khoản Kaggle.
-7. Người dùng nói tiếng Việt: trả lời tiếng Việt, ngắn gọn, giải thích dễ hiểu; báo cáo / slide nộp thật bằng tiếng Anh.
+**Cập nhật 23/10 (người dùng hỏi TA trực tiếp trên lớp):** Track01 và Track02 chấm theo điểm public toàn bộ → **dò bảng điểm được
+phép** để lên hạng, và người dùng được trình bày chiến thuật dò trước lớp. **Track03 tuyệt đối tuân thủ luật 10/22** (slide
+"Mid01 Updates Rules 10/22" trong `SDC 2026 Midterm01 Competition - Localization-3.pdf`): không hậu xử lý / không dò bảng điểm,
+**chỉ định vị nhân quả** (frame hiện tại và quá khứ, không làm mượt ngược / phi nhân quả), TA chạy lại code, vi phạm = 0 điểm track.
+(Văn bản 10/22 ghi chung cho Midterm01 – nên giữ bằng chứng lời cho phép của TA cho Track01/02.)
+
+1. Track03: chỉ thuật toán nhân quả (`tools/track_localize.py`, `tools/run_causal_pipeline.sh`), không dò, không chỉnh tay.
+2. Track01/02: dò được (`tools/lb_combine.py`, `tools/make_probes.py`); vẫn giữ bản pipeline (clean) để báo cáo.
+3. Mỗi thí nghiệm đổi một thứ, ghi giả thuyết trước; mọi việc commit + push (`mochihat/SDC-midterm-1-`, private).
+4. Không commit token Kaggle / dữ liệu; không ghi tên thành viên đội khác; không dùng nhiều tài khoản.
+5. Trả lời tiếng Việt; báo cáo / slide nộp thật bằng tiếng Anh.
 
 ## 3. Kết quả hiện tại
 

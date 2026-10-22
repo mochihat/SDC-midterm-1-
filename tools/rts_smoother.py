@@ -10,6 +10,10 @@ All noise levels are chosen by maximising the GNSS innovation likelihood on the 
 (no ground truth / leaderboard involved). The output yaw is the motion heading theta, or
 theta + b with --yaw gnss.
 
+--causal (rule 10/22 "causal localization only"): output the forward Kalman FILTER estimate at each frame time
+(GNSS samples up to that time only), no backward RTS pass. The noise levels are fixed configuration values when
+--sigma-p/--sigma-yaw/--qa/--qw are all given (no fit on the track itself).
+
 --robust K (T12 in docs/nhat-ky/10): Huber-type robust update for GNSS jumps. When the position innovation of a GNSS
 sample is more than K standard deviations away (Mahalanobis distance d with the predicted covariance), its position
 noise is inflated by d / K, so the sample pulls the track proportionally less. Track01 has 11 jumps > 5x the median
@@ -116,6 +120,9 @@ def main():
                     help="seconds added to frame timestamps before sampling the trajectory")
     ap.add_argument("--qa", type=float, help="fix longitudinal acceleration noise [m/s^2] (physical prior)")
     ap.add_argument("--qw", type=float, help="fix yaw acceleration noise [rad/s^2] (physical prior)")
+    ap.add_argument("--causal", action="store_true", help="forward filter only (no RTS backward pass)")
+    ap.add_argument("--sigma-p", type=float, help="fix GNSS position noise [m] (with --sigma-yaw, --qa, --qw: no ML fit)")
+    ap.add_argument("--sigma-yaw", type=float, help="fix GNSS yaw noise [deg]")
     ap.add_argument("--robust", type=float, help="Huber threshold K (innovation std devs) for GNSS jumps; off if unset")
     a = ap.parse_args()
 
@@ -134,7 +141,9 @@ def main():
                                  [0.3, 1.0, 3.0, 6.0, 10.0],
                                  [0.03, 0.1, 0.3, 1.0])
     scored = []
-    if a.qa is not None or a.qw is not None:
+    if None not in (a.sigma_p, a.sigma_yaw, a.qa, a.qw):
+        grid = [(a.sigma_p, np.radians(a.sigma_yaw), a.qa, a.qw)]
+    elif a.qa is not None or a.qw is not None:
         grid = [p for p in grid if (a.qa is None or p[2] == a.qa) and (a.qw is None or p[3] == a.qw)]
         if not grid:
             grid = itertools.product([0.003, 0.006, 0.01, 0.02, 0.05, 0.1, 0.2, 0.4],
@@ -155,7 +164,7 @@ def main():
     is_meas = np.concatenate([np.ones(len(gs), bool), np.zeros(len(fs), bool)])[order]
     meas = np.concatenate([gnss, np.zeros((len(fs), 3))])[order]
     stats = []
-    _, xs = run(times[order], meas, is_meas, best, smooth=True, robust=a.robust, stats=stats)
+    _, xs = run(times[order], meas, is_meas, best, smooth=not a.causal, robust=a.robust, stats=stats)
     if a.robust:
         print(f"robust update: {len(stats)} of {len(gs)} GNSS samples down-weighted (K = {a.robust}); "
               f"largest innovation {max([d for _, d in stats], default=0):.1f} sigma at t = "

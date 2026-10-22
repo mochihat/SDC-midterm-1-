@@ -108,6 +108,72 @@ def fuse(prior, dbg, weight, yaw_weight, sigma_s, max_xy, max_yaw_deg, demean=Fa
     return out
 
 
+def fuse_causal(prior, dbg, weight, sigma_s, max_xy, max_yaw_deg, demean=False, need_converged=True,
+                turn_weight=1.0, turn_threshold=1.0, n0=100):
+    """Causal version (rule 10/22: current and past frames only). Per matched frame in time order: gate, median of
+    the last 5 accepted corrections, subtract the running mean of the accepted along / lateral corrections so far
+    (--demean; prior pseudo-count n0 of zero offset), then a one-sided exponential average with time constant
+    sigma_s. Every frame takes the value of the latest accepted match at or before it (hold). Yaw stays the prior's."""
+    dx, dy, dyaw, along, lat = corrections(dbg)
+    good = (np.hypot(dx, dy) <= max_xy) & (np.abs(np.degrees(dyaw)) <= max_yaw_deg)
+    if need_converged:
+        good &= dbg["converged"] > 0
+    t_m = (dbg["timestamp_ns"] - dbg["timestamp_ns"][0]) / 1e9
+    all_t = np.interp(np.arange(len(prior)), dbg["idx"], t_m)
+    fstep = np.median(np.diff(all_t))
+    rate = None
+    if turn_weight != 1.0:  # causal turn rate: yaw change over the past 0.5 s
+        lag = max(int(round(0.5 / fstep)), 1)
+        y = np.unwrap(prior[:, 2])
+        rate = np.degrees(np.abs(y - np.r_[np.full(lag, y[0]), y[:-lag]])) / (lag * fstep)
+    order = np.argsort(dbg["idx"], kind="stable")
+    hist_a, hist_l = [], []
+    sum_a = sum_l = 0.0
+    n = 0
+    ema = np.zeros(2)
+    t_last = None
+    value = np.full((len(prior), 2), np.nan)
+    used = 0
+    for j in order:
+        i = int(dbg["idx"][j])
+        if not good[j]:
+            continue
+        if rate is not None and rate[i] >= turn_threshold and turn_weight == 0:
+            continue
+        hist_a.append(along[j])
+        hist_l.append(lat[j])
+        a_med, l_med = np.median(hist_a[-5:]), np.median(hist_l[-5:])
+        n += 1
+        sum_a += along[j]
+        sum_l += lat[j]
+        if demean:
+            a_med -= sum_a / (n + n0)
+            l_med -= sum_l / (n + n0)
+        c, s_ = np.cos(prior[i, 2]), np.sin(prior[i, 2])
+        d = np.array([a_med * c - l_med * s_, a_med * s_ + l_med * c])
+        w = turn_weight if (rate is not None and rate[i] >= turn_threshold) else 1.0
+        if t_last is None:
+            ema = d.copy()
+        else:
+            alpha = 1 - np.exp(-w * max(t_m[j] - t_last, 0) / sigma_s) if sigma_s > 0 else 1.0
+            ema = ema + alpha * (d - ema)
+        t_last = t_m[j]
+        value[i] = ema
+        used += 1
+    # hold the latest value forward in frame order (frames before the first match: no correction)
+    last = np.zeros(2)
+    for i in range(len(prior)):
+        if np.isnan(value[i, 0]):
+            value[i] = last
+        else:
+            last = value[i]
+    out = prior.copy()
+    out[:, :2] += weight * value
+    print(f"causal fusion: {used}/{len(good)} matches used, running-mean offset along {sum_a / (n + n0):+.3f} "
+          f"lateral {sum_l / (n + n0):+.3f} m, EMA tau {sigma_s} s")
+    return out
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("prior")
@@ -123,14 +189,19 @@ def main():
     p.add_argument("--any", action="store_true", help="also use frames the matcher did not mark converged")
     p.add_argument("--turn-weight", type=float, default=1.0, help="weight of turning frames in the smoothing (1 = off)")
     p.add_argument("--turn-threshold", type=float, default=1.0, help="deg/s")
+    p.add_argument("--causal", action="store_true", help="current and past frames only (rule 10/22): see fuse_causal")
     a = p.parse_args()
 
     prior, dbg = load_prior(a.prior), load_debug(a.debug)
     if a.stats or not a.out:
         print_stats(dbg)
         return
-    out = fuse(prior, dbg, a.weight, a.yaw_weight, a.sigma_s, a.max_xy, a.max_yaw_deg, a.demean, not a.any,
-               a.turn_weight, a.turn_threshold)
+    if a.causal:
+        out = fuse_causal(prior, dbg, a.weight, a.sigma_s, a.max_xy, a.max_yaw_deg, a.demean, not a.any,
+                          a.turn_weight, a.turn_threshold)
+    else:
+        out = fuse(prior, dbg, a.weight, a.yaw_weight, a.sigma_s, a.max_xy, a.max_yaw_deg, a.demean, not a.any,
+                   a.turn_weight, a.turn_threshold)
     with open(a.out, "w") as f:
         f.write("idx,x,y,yaw\n")
         for i, (x, y, yaw) in enumerate(out):
