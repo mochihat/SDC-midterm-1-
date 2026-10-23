@@ -310,3 +310,26 @@ trong scratchpad): sai số dọc X3f RMS 2.46 m (trễ tới 4.23 m), Z3a 0.72 
 (giả định sai số vị trí ở các đoạn khác 0.5–0.8 m, 2670–2985 frame private). Không tính khúc cua 2300–2650 (không có mốc).
 Các thay đổi private trước đó (W3h) không quy ra điểm được – chỉ có độ khớp bản đồ / tính nhất quán / Track01/02.
 **Nộp (người dùng duyệt, 23/10 21:01): `t3_Z3a` public 0.80** (= X3f, như dự kiến – phần public trùng X3f).
+
+## 12. Đêm 23/10 (23:45) – nộp nốt lượt trong ngày (người dùng duyệt)
+
+**Track02 clean – 13 biến thể của `clean_csm_2` (0.25), mỗi bản 1 tham số** (dự đoán offline = so với `lb_t2_r3`):
+
+| Biến thể | Kaggle | Offline (vị trí, m) |
+|---|---|---|
+| **trễ GNSS −10 ms (`tools/time_shift.py --dt -0.01`)** | **0.24** | 0.192 (clean 0.201) |
+| τ yaw 10 s | 0.25 | – |
+| tay đòn CSM 0 / không bỏ trung bình / τ yaw 25 s / gyro chiếu trọng lực | 0.26 | 0.205 / 0.204 / – / – |
+| σ CSM 6 / 1.5 s, κ 30, tỉ lệ 0.85 | 0.27 | 0.212 / 0.223 / 0.218 / 0.218 |
+| prior CSM 1.0 m | 0.28 | 0.232 |
+| trễ GNSS −20 ms | 0.29 | 0.242 |
+| tỉ lệ 0.95 | 0.33 | 0.275 |
+
+Thứ tự Kaggle khớp thứ tự offline. **Clean Track02 tốt nhất: `t2v_tsm10` = 0.24.** (Lưu ý: +20 / +40 ms làm kém
+hẳn offline – đã sửa dấu trước khi nộp.)
+
+**Track01 clean:** yaw theo bản đồ σ 6 s và σ 4 s: cả hai 0.51 (= σ 8 s) – không phân biệt được ở 2 chữ số.
+
+**Track03:** trên `t3_Z3a` (0.80): yaw offset 0.36° → 0.81; tay đòn ngang −0.08 m → 0.82 → giữ 0.66° / +0.12 m (tay
+đòn dọc: −0.5 → 0.95, −0.9 → 0.98 → giữ −0.7). Các biến thể tăng yaw offset / tay đòn ngang làm pha MHT đổi giả thuyết
+(yaw 84 frame đầu lệch RMS 2.4–5°) → không nộp (điểm sẽ phản ánh pha MHT, không phản ánh tham số). Còn 2 lượt Track03 để trống.
