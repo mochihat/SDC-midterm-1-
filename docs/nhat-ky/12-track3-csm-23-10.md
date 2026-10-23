@@ -304,3 +304,9 @@ lại sau 40 s đứng yên (frame 2200–2306). Chẩn đoán trên Track02 (c�
 giữ ~0.80), khác ở 2150–2650 (chạy lại + khúc cua). Độ khớp bản đồ: 2150–2300 −0.183 (X3f −0.149; độ tương phản CSM ở
 đoạn này chỉ 0.10–0.15 → dọc đường gần như không đo được), 2300–2450 **−0.480** (X3f −0.555), 2850–3142 tốt hơn nhẹ.
 Chưa nộp – chờ người dùng.
+
+**Ước lượng lợi ích private của `t3_Z3a`** (frame 2175–2300, mốc = tích phân gia tốc kế từ chỗ đứng yên; `private_gain.py`
+trong scratchpad): sai số dọc X3f RMS 2.46 m (trễ tới 4.23 m), Z3a 0.72 m → phần vị trí của điểm private giảm ~0.13–0.21
+(giả định sai số vị trí ở các đoạn khác 0.5–0.8 m, 2670–2985 frame private). Không tính khúc cua 2300–2650 (không có mốc).
+Các thay đổi private trước đó (W3h) không quy ra điểm được – chỉ có độ khớp bản đồ / tính nhất quán / Track01/02.
+**Nộp (người dùng duyệt, 23/10 21:01): `t3_Z3a` public 0.80** (= X3f, như dự kiến – phần public trùng X3f).
