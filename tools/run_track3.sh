@@ -19,10 +19,15 @@
 #    hypotheses are 6 deg apart) -> yaw RMS Track02 0.88 -> 0.40 deg, Track01 0.64 -> 0.55 deg; the speed filter's
 #    variance widens the along-track prior (turns); no GICP update while standing (one static view: Track02's
 #    230 standing frames drag the position 2 m off).
+#    "X3f" (public 0.80): + --gyro-up = Track02's standstill gravity in the IMU frame (calibrated mounting): the running
+#    mean of the accelerometer is 8 deg off in Track03's first second and leaked the x gyro's -0.45 deg/s bias.
+#    "Z3a": + --speed-odo-low 0.5 (LoGeR odometry fails LOW; Track02 resets 32 -> 15) + --zupt-ax 0.3 (a steady
+#    acceleration is not a standstill: the Track03 restart was frozen for 1 s at 1.2 m/s^2 and ran 4 m behind the
+#    accelerometer; Track01 position RMS 0.996 -> 0.964 m). Frames 0-2150 identical to X3f.
 # Same output for any --threads (checked 23/10).
 set -e
 cd "$(dirname "$0")/../.."                      # ~/SDC-midterm01
-OUT=${1:-src/localization/result/track3/t3_W3h.csv}
+OUT=${1:-src/localization/result/track3/t3_Z3a.csv}
 run() { docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/w" -w /w/midterm01 sdc-reg:latest "$@"; }
 mkdir -p cache
 run python3 tools/cache_ply.py 3 --data /w/data --cache /w/cache
@@ -35,5 +40,5 @@ run python3 tools/track_localize.py 3 --data /w/data --cache /w/cache --init /w/
   --csm-bias-along -0.7 --csm-bias-lat 0.12 \
   --speed-filter \
   --gyro-axis up --gyro-bias -0.24 --tau-yaw 30 --tau-yaw-start 10 --tau-yaw-start-time 10 --along-speed-noise 28 \
-  --hold-position-standing \
+  --hold-position-standing --gyro-up=-0.0985,-0.0036,0.9951 --speed-odo-low 0.5 --zupt-ax 0.3 \
   --out "$OUT" --diag "${OUT%.csv}_diag.csv"

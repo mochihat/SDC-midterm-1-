@@ -281,3 +281,26 @@ GNSS Track02 đã rất tốt → giữ nguyên. **Nộp: `clean_mapyaw_1` = 0.5
 **Track03 đợt 3:** `t3_Y3a` (X3f + lưới giả thuyết yaw 2°; chỉ đổi frame 0–83: yaw thấp hơn 1.4° do giả thuyết +14…+16°
 tạm dẫn đầu) = **0.82**; `t3_Y3c` (X3f + tay đòn −0.9; pha MHT cũng đổi: yaw frame 0–84 lệch RMS 2.7°) = **0.98**.
 → X3f (0.80) vẫn tốt nhất; điểm public rất nhạy với 84 frame đầu (pha MHT).
+
+## 11. Tối 23/10 (20:30–21:00) – phần private Track03: hai lỗi của bộ lọc tốc độ / ZUPT (`t3_Z3a`)
+
+Người dùng hỏi phần private có được cải thiện không → làm lỗi private lớn nhất còn mở: vị trí dọc trễ ~3–4 m khi xe chạy
+lại sau 40 s đứng yên (frame 2200–2306). Chẩn đoán trên Track02 (cũng bắt đầu bằng đứng yên, có tham chiếu) và Track03:
+
+1. **Odometry hỏng kéo tốc độ về 0** (Track02 frame 450–530: thật 5.7–6.5 m/s, bộ lọc 0.04–2.5 m/s): odometry LoGeR đọc
+   0.05–0.3 m/s ở vùng cây, mà nhiễu đo đặt tỉ lệ với số đọc (0.25·v_odo + 0.3) → số đọc hỏng trông "chính xác" và qua
+   cổng 3σ. Sửa `--speed-odo-low 0.5`: nhiễu theo max(số đọc, dự đoán), loại số đọc < 50 % tốc độ dự đoán (khi > 1.5 m/s).
+   Track02 có trợ giúp: số lần lạc 32 → **15**, frame bám 62 → 72 %, RMS vị trí 0.951 → 0.905 m; Track01: 11 → 7 lần.
+2. **ZUPT nhận nhầm tăng tốc đều là đứng yên**: điều kiện chỉ là độ lệch chuẩn gia tốc 0.5 s < 0.1, mà tăng tốc đều có độ
+   lệch chuẩn nhỏ. Track03: tích phân gia tốc kế từ chỗ đứng yên (b = trung bình a_x lúc đứng yên) → xe tăng tốc đều
+   ~1.2 m/s² từ frame 2175, đi 9.98 m tới frame 2300; ZUPT báo đứng yên ở frame 2220–2240 (xe đang 1.2 → 2.2 m/s) → tốc độ
+   về 0 → bộ bám mới đi 5.95 m (trễ 4 m, CSM chỉ sửa được ở 2306–2318). Track02: xe bò 0.3–0.7 m/s ở frame 200–235 cũng bị
+   coi là đứng yên. Sửa `--zupt-ax 0.3`: đứng yên còn cần |trung bình a_x − b| < 0.3 m/s² (b = trạng thái trọng lực / bias
+   của bộ lọc tốc độ). Sau sửa: tốc độ bộ bám ở Track03 bám tích phân gia tốc kế (1.08 / 1.62 / 2.20 m/s so với
+   1.19 / 1.67 / 2.20), quãng đường tới frame 2260 lệch < 0.4 m. Track01 RMS vị trí 0.996 → **0.964 m**, Track02 0.905 → 0.902.
+   (Hạ ngưỡng ZUPT 0.1 → 0.06 thay vì sửa logic: trái chiều trên Track01/02 → bỏ.)
+
+`t3_Z3a` (`bash tools/run_track3.sh`, = X3f + hai sửa đổi; tất định với 4 / 10 luồng): frame 0–2150 trùng X3f (phần public
+giữ ~0.80), khác ở 2150–2650 (chạy lại + khúc cua). Độ khớp bản đồ: 2150–2300 −0.183 (X3f −0.149; độ tương phản CSM ở
+đoạn này chỉ 0.10–0.15 → dọc đường gần như không đo được), 2300–2450 **−0.480** (X3f −0.555), 2850–3142 tốt hơn nhẹ.
+Chưa nộp – chờ người dùng.

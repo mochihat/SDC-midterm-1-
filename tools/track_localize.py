@@ -124,7 +124,8 @@ class SpeedFilter:
     (a_y - a_y0) / w; scan-to-scan odometry speed, gated at 3 sigma (it jumps 2 <-> 11 m/s in the Track03 turn).
     a_y0 (lateral gravity) is re-measured at every standstill. Uses only IMU samples up to the current frame."""
 
-    def __init__(self, b0=-0.85, ay0=0.2, v0=None):
+    def __init__(self, b0=-0.85, ay0=0.2, v0=None, odo_low=0.0):
+        self.odo_low = odo_low
         self.x = np.array([0.0 if v0 is None else v0, b0])
         self.P = np.diag([25.0 if v0 is None else 1.0, 0.1 ** 2])
         self.ay0 = ay0
@@ -147,8 +148,14 @@ class SpeedFilter:
                 if vc > 0:
                     meas.append((vc, (0.08 / abs(w) + 0.05 * vc) ** 2))
             if odo_ok:
-                sd = 0.25 * abs(v_odo) + 0.3
-                if abs(v_odo - self.x[0]) < 3 * np.sqrt(self.P[0, 0] + sd ** 2):
+                if self.odo_low > 0:
+                    # LoGeR scan-to-scan odometry fails LOW (Track02: 0.05-0.3 m/s at 6 m/s in the trees); with the noise
+                    # proportional to the reading, such failures looked precise and pulled the speed to zero
+                    sd = 0.25 * max(abs(v_odo), self.x[0]) + 0.3
+                    low = self.x[0] > 1.5 and v_odo < self.odo_low * self.x[0]
+                else:
+                    sd, low = 0.25 * abs(v_odo) + 0.3, False
+                if not low and abs(v_odo - self.x[0]) < 3 * np.sqrt(self.P[0, 0] + sd ** 2):
                     meas.append((v_odo, sd ** 2))
         for z, r in meas:
             S = self.P[0, 0] + r
@@ -261,6 +268,8 @@ def main():
     p.add_argument("--diag", help="per-frame diagnostics CSV")
     p.add_argument("--zupt-acc", type=float, default=0.0, help="m/s^2, standstill threshold (0 = off)")
     p.add_argument("--zupt-window", type=float, default=0.5, help="s")
+    p.add_argument("--zupt-ax", type=float, default=0.0,
+                   help="m/s^2: standing also needs |mean a_x - speed filter b| below this (0 = off)")
     p.add_argument("--bias-online", type=float, default=0.0, help="prior weight in samples (0 = fixed bias)")
     p.add_argument("--yaw-gate", type=float, default=10.0, help="deg")
     p.add_argument("--turn-rate", type=float, default=0.0, help="deg/s (0 = off)")
@@ -293,6 +302,9 @@ def main():
     p.add_argument("--speed-filter", action="store_true",
                    help="motion from an IMU speed filter (SpeedFilter) along the yaw instead of the raw odometry step")
     p.add_argument("--speed-b0", type=float, default=-0.85, help="m/s^2, start value of the x-axis gravity / bias")
+    p.add_argument("--speed-odo-low", type=float, default=0.0,
+                   help="speed filter: odometry noise from max(reading, prediction) and readings below this fraction of "
+                        "the predicted speed rejected (0 = off; LoGeR odometry fails low)")
     p.add_argument("--along-speed-noise", type=float, default=0.0,
                    help="factor: speed-filter variance x dt^2 added to the along-track process noise (0 = off)")
     p.add_argument("--csm-sd-floor", type=float, default=0.0, help="m, minimum along sd after the CSM update")
@@ -351,7 +363,7 @@ def main():
     gt = gt.astype(np.float64) / 1e9
     if a.zupt_acc > 0 or a.turn_rate > 0 or a.speed_filter:
         it, iacc = read_imu_acc(track_dir)
-    spf = SpeedFilter(b0=a.speed_b0) if a.speed_filter else None
+    spf = SpeedFilter(b0=a.speed_b0, odo_low=a.speed_odo_low) if a.speed_filter else None
     v_spf = 0.0
 
     m = read_pcd_binary(os.path.join(track_dir, a.map))
@@ -447,6 +459,11 @@ def main():
         if a.zupt_acc > 0:
             j0, j1 = np.searchsorted(it, ft[k] - a.zupt_window), np.searchsorted(it, ft[k], side="right")
             standing = j1 - j0 >= 5 and float(np.linalg.norm(iacc[j0:j1].std(axis=0))) < a.zupt_acc
+            if standing and a.zupt_ax > 0 and spf is not None:
+                # a steady acceleration has a small std too (Track03 restart: 1.2 m/s^2 for 1 s was taken for a
+                # standstill and the speed reset to 0 -> 4 m behind): the mean forward acceleration must also be the
+                # standstill one (the speed filter's gravity / bias state b)
+                standing = abs(float(iacc[j0:j1, 0].mean()) - spf.x[1]) < a.zupt_ax
             n_standing += standing
         # gyro increment since the previous frame (shared by all hypotheses)
         # (fixed 23/10: the stretch between the last IMU sample and the frame time was dropped every frame, ~14 % of
