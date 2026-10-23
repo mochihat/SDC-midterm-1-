@@ -3,6 +3,19 @@
 File này dành cho bất kỳ phiên Claude nào (hoặc người) tiếp nhận dự án: đọc xong là biết đang ở đâu, luật là gì,
 làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việt). Cách chạy: `docs/HUONG-DAN-CHAY.md`.
 
+## 0. Bàn giao nhanh (24/10/2026 02:45) – phiên mới đọc mục này trước
+
+- Bảng điểm: Track01 **hạng 1** 0.36 (`lb_t1_r5`, dò), Track02 **hạng 1** 0.11 (`lb_t2_r3`, dò), Track03 hạng 3 0.77 (`t3_full_N`,
+  MHT không nhân quả – KHÔNG dùng làm bài cuối). Clean: Track01 0.51 (`clean_mapyaw_1`), Track02 0.24 (`reg/t2v/t2v_tsm10`),
+  Track03 public 0.80 (`t3_X3f` / `t3_Z3a`); bài cuối Track03 đề xuất **`t3_Z3a`** (`tools/run_track3.sh`), người dùng tự chọn trên Kaggle.
+- Toàn bộ quá trình (trung thực, có sai lầm / mẹo): `docs/report/bao_cao_trung_thuc.pdf`; chi tiết mới nhất: `docs/nhat-ky/12-track3-csm-23-10.md` §8–12.
+- Quy tắc làm việc với người dùng: **mỗi đợt nộp Kaggle phải được người dùng duyệt rõ ràng ("cho phép nộp" + danh sách file)**;
+  người dùng dặn 24/10: 8 giờ sáng (reset lượt) **đừng nộp vội**; hàng đợi bot `~/kaggle-sdc-bot/queue/track{1,2,3}` đang trống.
+  Không nhắc "Use for Final Score" nhiều lần. Trả lời tiếng Việt.
+- Kiểm tra bảng điểm mỗi giờ (lệnh cron trong phiên cũ – phiên mới phải tạo lại nếu muốn): `python3 -I ~/kaggle-sdc-bot/bot.py status`
+  và `tail -5 ~/kaggle-sdc-bot/bot.log`; báo khi đội 11 tụt hạng / đội khác tăng điểm.
+- Track03 theo luật 10/22 (nhân quả, không sửa tay file); người dùng báo TA cho chỉnh tham số theo điểm public.
+
 ## 1. Dự án
 
 - Môn **Self-Driving Cars (SDC) 2026, NYCU – Midterm01: Localization**. Sinh viên làm **một mình**, đội Kaggle tên **"11"**.
