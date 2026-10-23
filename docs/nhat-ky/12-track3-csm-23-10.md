@@ -333,3 +333,8 @@ hẳn offline – đã sửa dấu trước khi nộp.)
 **Track03:** trên `t3_Z3a` (0.80): yaw offset 0.36° → 0.81; tay đòn ngang −0.08 m → 0.82 → giữ 0.66° / +0.12 m (tay
 đòn dọc: −0.5 → 0.95, −0.9 → 0.98 → giữ −0.7). Các biến thể tăng yaw offset / tay đòn ngang làm pha MHT đổi giả thuyết
 (yaw 84 frame đầu lệch RMS 2.4–5°) → không nộp (điểm sẽ phản ánh pha MHT, không phản ánh tham số). Còn 2 lượt Track03 để trống.
+
+**Hai lượt Track03 cuối ngày (người dùng: chỉ nhắm public):** trên `t3_Z3a`: κ CSM 25 → 0.82; τ yaw 10 s trong 20 s đầu →
+0.80 (= Z3a). κ 10 và nhiễu GICP 0.5 làm pha MHT đổi giả thuyết → không nộp. Public tốt nhất (nhân quả) vẫn 0.80
+(X3f / Z3a / P3st20). Lưu ý cho báo cáo: Kaggle chỉ tính private cho bài được chọn (hoặc tự chọn theo public), không lấy
+private tốt nhất của mọi bài.
