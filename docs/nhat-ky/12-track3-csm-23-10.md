@@ -216,8 +216,11 @@ Nhất quán động học qua khúc rẽ trái 88°: yaw đứng yên + góc gy
 (yaw đứng yên thấp ~1°), bản τ 30 + gyro chiếu chỉ −0.02°. Course over ground trước khi dừng (frame 500–850): yaw đứng yên
 ≈ 159.15 ± 0.3° (L2b 158.80, W3h 159.47). Chạy lại với 6 / 10 luồng: trùng 100 %.
 
-**Ứng viên `t3_W3h.csv`** (`bash tools/run_track3.sh`): chấp nhận 98 % frame đang chạy. **Chưa nộp** (lượt kiểm tra cron
-không tự nộp) – chờ người dùng.
+**Ứng viên `t3_W3h.csv`** (`bash tools/run_track3.sh`): chấp nhận 98 % frame đang chạy. Người dùng duyệt nộp (23/10 19:10):
+**public 0.89** (L2b 0.84, A2h 0.96, L2 1.05, N 0.77). Ở phần public (đoạn đầu) W3h khác L2b chủ yếu ở yaw frame 0–157
+(thấp hơn 0.31°) và dọc 0.14–0.24 m RMS; độ khớp bản đồ offline dự đoán hai bản gần bằng nhau ở đoạn này → thước đo khớp bản
+đồ không phân biệt được chênh lệch cỡ 0.05 điểm. Các thay đổi của W3h nhắm phần private (đứng yên, khúc cua); điểm public
+không đo được phần đó. Không chỉnh tiếp theo điểm public (luật 10/22).
 
 **Còn mở:** khi xe chạy lại sau đứng yên (frame 2200–2306) vị trí dọc trễ ~3 m rồi CSM sửa ở 2306–2318 (cả L2b và W3h);
 khúc cua vẫn là đoạn khớp kém nhất (−0.55); pha đầu (yaw MHT +0.8…1.2° so với yaw hội tụ).
