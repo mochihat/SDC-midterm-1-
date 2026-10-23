@@ -30,7 +30,7 @@ phép** để lên hạng, và người dùng được trình bày chiến thu�
 4. Không commit token Kaggle / dữ liệu; không ghi tên thành viên đội khác; không dùng nhiều tài khoản.
 5. Trả lời tiếng Việt; báo cáo / slide nộp thật bằng tiếng Anh.
 
-## 3. Kết quả hiện tại (23/10 15:30)
+## 3. Kết quả hiện tại (23/10 13:50)
 
 | | Track01 | Track02 | Track03 |
 |---|---|---|---|
