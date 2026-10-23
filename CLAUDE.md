@@ -30,17 +30,18 @@ phép** để lên hạng, và người dùng được trình bày chiến thu�
 4. Không commit token Kaggle / dữ liệu; không ghi tên thành viên đội khác; không dùng nhiều tài khoản.
 5. Trả lời tiếng Việt; báo cáo / slide nộp thật bằng tiếng Anh.
 
-## 3. Kết quả hiện tại (23/10 08:40)
+## 3. Kết quả hiện tại (23/10 13:30)
 
 | | Track01 | Track02 | Track03 |
 |---|---|---|---|
 | Bảng điểm (tốt nhất) | **0.40** (`lb_t1_r4`, dò – bằng hạng 1 đội 12) | **0.11** (`lb_t2_r3`, dò – hạng 1; đội 12 0.17) | **0.77** (`t3_vN`, nhân quả – hạng 2; dẫn đầu 0.51) |
 | Clean (pipeline, không dò) | 0.62 (`t6_range20_turn0_1`: GICP tầm 20 m, bỏ khi cua) | 0.28 (`clean_cfz2_tau15`) | = cột trên (Track03 luôn clean) |
-| Đã nộp 23/10 08:00 (bot) | – | `lb_t2_r3`: dự đoán ~0.11 → **0.11** | `t3_full_N` (bản đủ 3142 frame của N): public 0.77, private chưa biết |
-| Lượt ngày UTC 23/10 (reset 24/10 08:00) | 0/15 | 1/15 | 1/15 |
+| Ứng viên chờ người dùng duyệt nộp | vòng 5: 9 file dò `result/reg/probes/r5/` (yaw0, yawrate, gyroscale, yaw5–8, along, lateral) → ghép bằng `tools/lb_combine2.py` | – | **`t3_A2h.csv`** (`tools/run_track3.sh`): bám đường suốt track, sửa trôi 29 m của bản N |
 
-Kaggle chỉ hiện 2 chữ số **cắt bớt**. Điểm 5 chữ số cũ: `docs/nhat-ky/data/kaggle_submissions.csv`. Chi tiết đêm 22→23/10:
-`docs/nhat-ky/11-track3-va-do-diem-23-10.md`. Bot có track 3 (`queue/track3`).
+Track03 23/10 (`docs/nhat-ky/12-track3-csm-23-10.md`): MHT cũ ghi ngược quỹ đạo (không nhân quả) → đã sửa; lỗi tích phân gyro
+(mất 14 % góc quay) → đã sửa; bản N trôi 13–30 m từ frame ~500 (phần lớn private) → CSM + nhiễu GICP dọc 2 m. Bộ đệm
+`~/SDC-midterm01/cache` (không commit). Phần public Track03 chỉ là đoạn đầu → điểm public gần như không phản ánh sửa đổi.
+Kaggle chỉ hiện 2 chữ số **cắt bớt**. Điểm 5 chữ số cũ: `docs/nhat-ky/data/kaggle_submissions.csv`.
 
 ## 4. Pipeline (bài chấm)
 
