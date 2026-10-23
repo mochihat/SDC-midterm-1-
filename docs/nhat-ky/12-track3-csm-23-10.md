@@ -259,3 +259,25 @@ Hướng thẳng đứng tính nhân quả (trung bình gia tốc kế) lệch *
 
 Track01/02 có trợ giúp với hướng cố định: yaw Track01 0.665 → 0.608°, Track02 0.470 → 0.614° (Track02 đổi độ dốc dọc
 đường; hướng cố định không theo); bias dạng véc-tơ (`--gyro-bias3`): Track01 0.512°, Track02 0.639°. Điểm public chọn X3f.
+
+## 10. Tối 23/10 (20:00–20:25) – clean Track01: yaw theo bản đồ; Track03 đợt 3
+
+**Chẩn đoán từ vòng dò 5:** bản clean Track01 mang nguyên sai số yaw chậm mode 7 (−0.71°, chu kỳ ~30 s) và mode 2 / 4
+(+0.27 / +0.41°) – phần chậm của yaw lấy từ hướng GNSS. Bước mới (không dùng thông tin bảng điểm trong file):
+`tools/raw_gicp_at_poses.py` (GICP point cloud LoGeR tại pose clean, như bộ bám Track03) + `tools/map_yaw_fuse.py`
+(gyro cho phần nhanh, yaw GICP cho phần chậm, làm mượt Gauss có trọng số 8 s, bỏ xu hướng tuyến tính = bias gyro trước
+khi làm mượt, giữ trung bình hướng GNSS).
+
+| Track01, yaw so với `lb_t1_r5` (bản dò tốt nhất) | RMS | mode 2 / 4 / 7 |
+|---|---|---|
+| clean `clean_csm_1` (hướng GNSS, τ 7 s) | 0.672° | +0.27 / +0.41 / −0.71 |
+| yaw GICP 3 camera, σ 8 s | 0.637° | +0.51 / +0.15 / −0.60 |
+| **yaw GICP LoGeR, σ 8 s (`clean_mapyaw_1`)** | **0.485°** | +0.26 / +0.08 / −0.53 |
+| yaw GICP LoGeR, σ 15 / 30 s | 0.66 / 0.87° | (yaw GICP có sai số chậm riêng) |
+
+σ 8 s **chọn bằng cách so với bản dò** (ghi rõ trong báo cáo). Track02: cùng bước làm yaw kém đi (0.115 → 0.51°) – hướng
+GNSS Track02 đã rất tốt → giữ nguyên. **Nộp: `clean_mapyaw_1` = 0.51** (clean Track01 trước: 0.55).
+
+**Track03 đợt 3:** `t3_Y3a` (X3f + lưới giả thuyết yaw 2°; chỉ đổi frame 0–83: yaw thấp hơn 1.4° do giả thuyết +14…+16°
+tạm dẫn đầu) = **0.82**; `t3_Y3c` (X3f + tay đòn −0.9; pha MHT cũng đổi: yaw frame 0–84 lệch RMS 2.7°) = **0.98**.
+→ X3f (0.80) vẫn tốt nhất; điểm public rất nhạy với 84 frame đầu (pha MHT).

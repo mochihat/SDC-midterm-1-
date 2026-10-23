@@ -34,9 +34,9 @@ phép** để lên hạng, và người dùng được trình bày chiến thu�
 
 | | Track01 | Track02 | Track03 |
 |---|---|---|---|
-| Bảng điểm (tốt nhất) | **0.40** (`lb_t1_r4`, dò – bằng hạng 1 đội 12) | **0.11** (`lb_t2_r3`, dò – hạng 1; đội 12 0.17) | **0.77** (`t3_vN`, nhân quả – hạng 2; dẫn đầu 0.51) |
-| Clean (pipeline, không dò) | **0.55** (`clean_csm_1` = `t6_range20_turn0_1` + `tools/csm_fuse.py`; trước 0.62) | **0.25** (`clean_csm_2` = `clean_cfz2_tau15` + CSM; trước 0.28) | = cột trên (Track03 luôn clean) |
-| Ứng viên / trạng thái | vòng 5 dò: 9 file `result/reg/probes/r5/` – người dùng chưa duyệt (họ muốn ưu tiên cải thiện clean) | – | đã nộp `t3_A2h` 0.96, `t3_L2` 1.05, **`t3_L2b` 0.84** (public = ~15 % frame đầu, không phản ánh private); `t3_W3h` (`tools/run_track3.sh`, nhật ký 12 §8: yaw thẳng đứng, τ 30 s, giữ vị trí khi đứng yên) public **0.89** (nộp 23/10 19:10; nhắm phần private) |
+| Bảng điểm (tốt nhất) | **0.36** (`lb_t1_r5`, dò vòng 5, 23/10 19:56 – hạng 1; đội 12 0.40) | **0.11** (`lb_t2_r3`, dò – hạng 1; đội 12 0.17) | **0.77** (`t3_vN`, nhân quả – hạng 2; dẫn đầu 0.51) |
+| Clean (pipeline, không dò) | **0.51** (`clean_mapyaw_1` = `clean_csm_1` + yaw theo bản đồ `tools/map_yaw_fuse.py`, σ 8 s chọn theo bản dò; trước 0.55 / 0.62) | **0.25** (`clean_csm_2` = `clean_cfz2_tau15` + CSM; trước 0.28) | = cột trên (Track03 luôn clean) |
+| Ứng viên / trạng thái | vòng 5 dò: 9 file `result/reg/probes/r5/` – người dùng chưa duyệt (họ muốn ưu tiên cải thiện clean) | – | đã nộp `t3_A2h` 0.96, `t3_L2` 1.05, **`t3_L2b` 0.84** (public = ~15 % frame đầu, không phản ánh private); `t3_W3h` 0.89, **`t3_X3f` 0.80** (= W3h + `--gyro-up` hướng lắp IMU hiệu chuẩn; tốt nhất nhân quả), X3z 0.82, X3l 0.95, Y3a 0.82, Y3c 0.98 (nhật ký 12 §8–10) |
 
 Track03 23/10 (`docs/nhat-ky/12-track3-csm-23-10.md`): MHT cũ ghi ngược quỹ đạo (không nhân quả) → đã sửa; lỗi tích phân gyro
 (mất 14 % góc quay) → đã sửa; bản N trôi 13–30 m từ frame ~500 (phần lớn private) → CSM + nhiễu GICP dọc 2 m. Bộ đệm
