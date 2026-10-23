@@ -1,4 +1,4 @@
-# Trạng thái dự án – đọc file này trước (cập nhật 23/10/2026 19:30)
+# Trạng thái dự án – đọc file này trước (cập nhật 23/10/2026 17:40)
 
 File này dành cho bất kỳ phiên Claude nào (hoặc người) tiếp nhận dự án: đọc xong là biết đang ở đâu, luật là gì,
 làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việt). Cách chạy: `docs/HUONG-DAN-CHAY.md`.
