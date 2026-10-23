@@ -30,13 +30,14 @@ phép** để lên hạng, và người dùng được trình bày chiến thu�
 4. Không commit token Kaggle / dữ liệu; không ghi tên thành viên đội khác; không dùng nhiều tài khoản.
 5. Trả lời tiếng Việt; báo cáo / slide nộp thật bằng tiếng Anh.
 
-## 3. Kết quả hiện tại (23/10 05:30)
+## 3. Kết quả hiện tại (23/10 08:40)
 
 | | Track01 | Track02 | Track03 |
 |---|---|---|---|
-| Bảng điểm (tốt nhất) | **0.40** (`lb_t1_r4`, dò – bằng hạng 1 đội 12) | **0.15** (`corr_r2_2`, dò – hạng 1) | **0.77** (`t3_vN`, nhân quả – hạng 2; D.KI 0.51) |
+| Bảng điểm (tốt nhất) | **0.40** (`lb_t1_r4`, dò – bằng hạng 1 đội 12) | **0.11** (`lb_t2_r3`, dò – hạng 1; đội 12 0.17) | **0.77** (`t3_vN`, nhân quả – hạng 2; dẫn đầu 0.51) |
 | Clean (pipeline, không dò) | 0.62 (`t6_range20_turn0_1`: GICP tầm 20 m, bỏ khi cua) | 0.28 (`clean_cfz2_tau15`) | = cột trên (Track03 luôn clean) |
-| Chờ nộp 24/10 08:00 (bot) | – | `lb_t2_r3` (dự đoán ~0.11) | `t3_full_N` (bản đủ 3142 frame của N) |
+| Đã nộp 23/10 08:00 (bot) | – | `lb_t2_r3`: dự đoán ~0.11 → **0.11** | `t3_full_N` (bản đủ 3142 frame của N): public 0.77, private chưa biết |
+| Lượt ngày UTC 23/10 (reset 24/10 08:00) | 0/15 | 1/15 | 1/15 |
 
 Kaggle chỉ hiện 2 chữ số **cắt bớt**. Điểm 5 chữ số cũ: `docs/nhat-ky/data/kaggle_submissions.csv`. Chi tiết đêm 22→23/10:
 `docs/nhat-ky/11-track3-va-do-diem-23-10.md`. Bot có track 3 (`queue/track3`).
@@ -59,7 +60,7 @@ Track02: vị trí Kalman ─► yaw gyro (τ 15 s) ─► result_2   (scan matc
 
 **Kết quả 22/10 (§13.7):** Track01 `clean_cfz1_tau7` 0.80, `if_iso_1` 0.84, `if_aniso_1` 0.87; Track02 `clean_cfz2_tau15` 0.28,
 `if_iso_2` 0.30, `if_aniso_2` 0.30 → bộ ghép mới (`info_fuse.py`) KÉM hơn; giữ pipeline cũ (2 lượt GICP, làm mượt 2 s).
-Hàng đợi bot hiện trống; hôm nay đã dùng 3/15 lượt mỗi track.
+Hàng đợi bot trống (23/10 08:40); `lb_t2_r3` và `t3_full_N` đã nộp lúc 23/10 08:00.
 
 **Brief 22/10 (`docs/brief_claude_code.pdf`) – kết quả ở `docs/nhat-ky/10-tra-loi-cau-hoi.md`:**
 - Xong: T0 (sao lưu `~/SDC-midterm01/backup/2026-10-22`), T1, T2 (lỗi do point cloud AI, GICP ~5 mm trên point cloud hoàn hảo),

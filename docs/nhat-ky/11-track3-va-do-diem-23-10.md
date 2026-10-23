@@ -46,7 +46,7 @@ GICP chọn sai ở Track02 (13 s đứng yên) → đổi sang innovation sau 2
 | `t3_vM` | F + gap 4 | 0.83 |
 | **`t3_vN`** | **gap 6 + bias −0.27** | **0.77** (hạng 2; dẫn đầu 0.51) |
 
-Bản đủ 3142 frame của cấu hình N: `src/localization/result/track3/t3_full_N.csv` (xếp nộp 24/10 – phần private 70–90 %).
+Bản đủ 3142 frame của cấu hình N: `src/localization/result/track3/t3_full_N.csv` (nộp 23/10 08:00: public **0.77**, như `t3_vN`; phần private 70–90 % chỉ biết điểm khi cuộc thi đóng).
 Nhận xét: gap odometry ngắn hơn tốt hơn tới 6 (gap 4 ngang); bù đủ độ lệch dọc làm hỏng (bộ bám "trượt" dọc đường → bù cộng dồn).
 
 ## Track01 / Track02 – dò (được phép, 23/10)
@@ -58,7 +58,7 @@ Nhận xét: gap odometry ngắn hơn tốt hơn tới 6 (gap 4 ngang); bù đ�
 | `probe_yaw1..4_1` | 01 | dao động cosin yaw bậc 1–4, biên độ 1.5° | – | 0.53 0.54 0.51 0.58 |
 | `lb_t1_r4` | 01 | tổ hợp yaw 4 dao động (bậc 4 lớn nhất, a = −0.37) | 0.40 | **0.40** (bằng hạng 1) |
 | `probe_x/y14..18_2` | 02 | dao động vị trí bậc 14–18 | – | 0.42–0.49 |
-| `lb_t2_r3` | 02 | tổ hợp 41 hướng, ridge λ 1e-4 | 0.11 | (xếp nộp 24/10 08:00) |
+| `lb_t2_r3` | 02 | tổ hợp 41 hướng, ridge λ 1e-4 | 0.11 | **0.11** (hạng 1; nộp 23/10 08:00) |
 
 Bài học: (1) nhiều hướng gần trùng (9 file pipeline) + điểm bị cắt 2 chữ số → hệ số ±4.6 khuếch đại sai số → dự đoán 0.33 thành 0.42;
 mô phỏng Monte Carlo chỉ bắt được nhiễu độc lập. (2) hai file cùng vị trí (`posproj_t2_v1_2`, `lb_posyaw_v1_2`) làm G suy biến, hệ số
