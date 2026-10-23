@@ -50,6 +50,16 @@ yaw − gyro giữ −0.9° suốt 45 s dừng (trước: trôi tới −2.4°).
 **Ứng viên Track03: `t3_A2h.csv`** = `bash tools/run_track3.sh` (bộ đệm + bộ bám; chạy lại / đổi số luồng: trùng 100 %),
 chấp nhận 99 %, yaw 100 frame đầu 2.1° RMS so với yaw gyro truy ngược (bản "trung bình hậu nghiệm" 3.0°).
 
+### 3c. Nộp `t3_A2h` (người dùng duyệt, 23/10 ~12:45): public **0.96** (bản N: 0.77)
+
+So từng frame với N: frame 0–450 hai bản lệch nhau < 1 m (không có hướng hệ thống); từ 450 A2h lùi 6 → 30 m (phần sửa trôi).
+Vì N lệch 6–30 m sau frame ~470 mà vẫn được 0.77, phần public chỉ có thể nằm trong ~15 % frame đầu (A2h cũng chỉ 0.96).
+Chênh 0.19 khớp với ~25 frame (50–75) của pha MHT: bản nhân quả xuất giả thuyết +12° (đang tốt nhất lúc đó), lệch ~5° so
+với N – N "đẹp" ở đây chính vì ghi ngược kết quả của giả thuyết thắng (không hợp lệ). Đoạn này không thuộc private.
+Thử τ yaw nhanh trong pha MHT (`--tau-yaw-start 1/3`, lưới 3°): không rõ tốt hơn (yaw sau đó lệch −1.4…−2.6°) → giữ A2h;
+không dùng thêm lượt nộp để chỉnh pha đầu theo bảng điểm (sẽ là leaderboard fitting).
+**Phải chọn tay `t3_A2h` làm "Use for Final Score"** – nếu để Kaggle tự chọn theo public, nó lấy N (private rất tệ).
+
 ## 4. Kiểm thử không GNSS trên Track01/02 (so với bài tốt nhất)
 
 | Bản | Track01 đoạn 1–4 / 5–10 | Track02 |

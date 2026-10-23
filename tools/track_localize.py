@@ -203,6 +203,8 @@ def main():
                         "being overwritten by it; the map corrections then also correct the speed")
     p.add_argument("--odo-sigma", default="0.15,0.3", help="odo-filter: velocity noise = a * speed + b (m/s)")
     p.add_argument("--mht-score", default="innovation", choices=["innovation", "csm"])
+    p.add_argument("--tau-yaw-start", type=float, default=0.0,
+                   help="s, map-yaw pull while several start hypotheses are alive (0 = --tau-yaw)")
     p.add_argument("--hold-yaw-standing", action="store_true",
                    help="no map-yaw pull while standing (the matches of one view share their error)")
     p.add_argument("--sigma-match-along", type=float, default=0.0,
@@ -415,7 +417,8 @@ def main():
                 hy.x = hy.x + K @ innov
                 hy.P = (np.eye(4) - K @ H) @ hy.P
                 if dt and not turning and not (standing and a.hold_yaw_standing):
-                    corr = (1 - np.exp(-dt / a.tau_yaw)) * wrap(gy - hy.yaw)
+                    tau = a.tau_yaw_start if (a.tau_yaw_start > 0 and len(hyps) > 1) else a.tau_yaw
+                    corr = (1 - np.exp(-dt / tau)) * wrap(gy - hy.yaw)
                     hy.yaw = wrap(hy.yaw + corr)
                     hy.pull += corr
                 hy.T[:3, :3] = T[:3, :3]
