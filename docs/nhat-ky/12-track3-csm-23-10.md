@@ -79,3 +79,34 @@ còn Track03 giữ 96–99 % → tỉ lệ chấp nhận là chỉ báo bám / l
 `tools/make_probes_phys.py`: hướng có hình dạng vật lý trên gốc `lb_t1_r4` (0.40): yaw lệch hằng, yaw trễ (τ·ω), sai tỉ lệ gyro
 (phần cao tần 7 s của góc tích phân), yaw cosin bậc 5–8, vị trí lệch dọc / ngang thân xe (bỏ "trễ thời gian vị trí": tương quan
 0.96 với lệch dọc). Ghép: `tools/lb_combine2.py` (ridge, chọn λ theo Monte Carlo với nhiễu cắt 2 chữ số và sai số P₀).
+
+## 6. Chiều 23/10 – chẩn đoán clean Track01/02 và Track03 vòng 2 (cấu hình L2)
+
+### Clean Track01/02 khác bản dò ở đâu (bản dò gần đáp án hơn → hiệu = lỗi của bản clean, chỉ để chẩn đoán)
+
+| | Track01 clean 0.62 vs `lb_t1_r4` 0.40 | Track02 clean 0.28 vs `lb_t2_r3` 0.11 |
+|---|---|---|
+| Ước lượng lỗi bản clean | P ≈ 0.48 m, Y ≈ 0.83° | P ≈ 0.24 m, Y ≈ 0.19° |
+| Hiệu vị trí | 0.40 m RMS; phần nhanh (< 10 s) lớn hơn phần chậm (ngang 0.27 / 0.10 m) | 0.22 m; dọc đường tỉ lệ tốc độ (+0.020 s ≈ GNSS lệch thời gian 20 ms) và 0.42 m lúc đứng yên đầu track |
+| Hiệu yaw | 0.40° (chậm 0.28°); 1/10 cuối 0.91° | 0.12° |
+| Ghi chú | bản dò cũng chứa nhiễu nhanh (ghép 9 file pipeline hệ số ±4.6) → phần nhanh chưa chắc là lỗi clean | GICP (camera) không đủ chính xác để đo 20 ms (lệch theo vị trí, ngược dấu giữa 2 track) |
+
+### Track03 vòng 2
+
+1. **Hiệu chuẩn tay đòn camera của CSM** (`--csm-bias-along -1.0 --csm-bias-lat 0.12`): đỉnh likelihood tại pose đáp án nằm
+   **−1.00 m** dọc (trung vị) trên **cả Track01 và Track02** (bộ bám giả định −0.27) ↔ chạy "có trợ giúp" (`--reset-ref`,
+   chỉ Track01/02: lạc > 3 m thì đặt lại về đáp án, đo lệch khi đang bám): dọc −0.67 / −0.70 m → sau hiệu chuẩn −0.30 / −0.06 m.
+2. **Bộ lọc tốc độ IMU** (`--speed-filter`, class `SpeedFilter`): trạng thái [v, b]; dự đoán bằng gia tốc dọc; đo: ZUPT,
+   tốc độ hướng tâm a_y/ω khi quay > 5°/s, odometry có cổng 3σ. Lý do: trong khúc cua Track03 odometry nhảy 2 ↔ 11 m/s giữa
+   các frame, còn a_y/ω mượt (2.2 → 5.9 → 7.3 m/s). Track01/02 có trợ giúp: số lần lạc 49 → 9 / 80 → 33, frame bám 52 → 77 %
+   / 38 → 59 %; sai số tốc độ Track01 5.55 → 1.27 m/s RMS.
+3. **Chỗ dừng cuối Track03**: A2h đi 6.2 m từ frame 2900, IMU (tích phân ngược từ lúc dừng, 4 s) chỉ 3.9 m → vượt 2–4 m
+   (likelihood phẳng, độ tương phản 0.10–0.15). L2: dịch chuyển thực 3.40 m (IMU 3.86) từ 2900, 0.54 m (IMU 0.69) từ 2950.
+   CSM cả lúc đứng yên (`--csm-standing`) làm tệ hơn ở chỗ likelihood phẳng → không dùng.
+
+**Ứng viên mới `t3_L2.csv`** (`bash tools/run_track3.sh`, tất định): chấp nhận 99 %, đỉnh likelihood −1.25 m so với tay đòn
+−1.0 (sai số ±0.23), so với A2h: +0.5–0.65 m dọc ở 900 frame đầu (tay đòn), +1.5 m ở khúc cua. Không trợ giúp, Track01/02
+vẫn lạc (RMSE 31 / 172 m, trước 165 / 393 m) – hai track này odometry hụt 40–60 % và có vùng cây cối, khó hơn Track03.
+
+**Vấn đề còn lại của Track03:** lệch dọc / ngang còn lại ~0.2–0.3 m, yaw ±0.5°; khúc cua (frame 2200–2600) vẫn là chỗ
+yếu nhất; pha MHT (chỉ public); không có đáp án → mọi đánh giá dựa trên bản đồ, IMU và Track01/02.

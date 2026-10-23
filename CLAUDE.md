@@ -30,13 +30,13 @@ phép** để lên hạng, và người dùng được trình bày chiến thu�
 4. Không commit token Kaggle / dữ liệu; không ghi tên thành viên đội khác; không dùng nhiều tài khoản.
 5. Trả lời tiếng Việt; báo cáo / slide nộp thật bằng tiếng Anh.
 
-## 3. Kết quả hiện tại (23/10 13:30)
+## 3. Kết quả hiện tại (23/10 15:30)
 
 | | Track01 | Track02 | Track03 |
 |---|---|---|---|
 | Bảng điểm (tốt nhất) | **0.40** (`lb_t1_r4`, dò – bằng hạng 1 đội 12) | **0.11** (`lb_t2_r3`, dò – hạng 1; đội 12 0.17) | **0.77** (`t3_vN`, nhân quả – hạng 2; dẫn đầu 0.51) |
 | Clean (pipeline, không dò) | 0.62 (`t6_range20_turn0_1`: GICP tầm 20 m, bỏ khi cua) | 0.28 (`clean_cfz2_tau15`) | = cột trên (Track03 luôn clean) |
-| Ứng viên chờ người dùng duyệt nộp | vòng 5: 9 file dò `result/reg/probes/r5/` (yaw0, yawrate, gyroscale, yaw5–8, along, lateral) → ghép bằng `tools/lb_combine2.py` | – | **`t3_A2h.csv`** (`tools/run_track3.sh`): bám đường suốt track, sửa trôi 29 m của bản N |
+| Ứng viên / trạng thái | vòng 5 dò: 9 file `result/reg/probes/r5/` – người dùng chưa duyệt (họ muốn ưu tiên cải thiện clean) | – | `t3_A2h` đã nộp: public 0.96 (public = ~15 % frame đầu); **mới: `t3_L2.csv`** (tay đòn CSM hiệu chuẩn + bộ lọc tốc độ IMU) chờ duyệt nộp |
 
 Track03 23/10 (`docs/nhat-ky/12-track3-csm-23-10.md`): MHT cũ ghi ngược quỹ đạo (không nhân quả) → đã sửa; lỗi tích phân gyro
 (mất 14 % góc quay) → đã sửa; bản N trôi 13–30 m từ frame ~500 (phần lớn private) → CSM + nhiễu GICP dọc 2 m. Bộ đệm

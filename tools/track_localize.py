@@ -71,7 +71,9 @@ def csm_update(field, field_score, x, P, yaw, yaw_off, sx, sy, a):
     ga, gl = np.meshgrid(da, dl, indexing="ij")
     ga, gl = ga.ravel(), gl.ravel()
     # camera position for each grid offset (reference + lever), cloud rotated by the camera yaw
-    lever = np.array([a.bias_along * c - a.bias_lat * s, a.bias_along * s + a.bias_lat * c])
+    ba = a.bias_along if a.csm_bias_along is None else a.csm_bias_along
+    bl = a.bias_lat if a.csm_bias_lat is None else a.csm_bias_lat
+    lever = np.array([ba * c - bl * s, ba * s + bl * c])
     cam = x[:2] + lever
     cy_, sy_ = np.cos(yaw + yaw_off), np.sin(yaw + yaw_off)
     wx0 = cy_ * sx - sy_ * sy
@@ -112,6 +114,47 @@ def csm_update(field, field_score, x, P, yaw, yaw_off, sx, sy, a):
     P = P.copy()
     P[:2, :2] = Rh @ C @ Rh.T
     return x, P, info
+
+
+class SpeedFilter:
+    """Forward speed from the IMU (23/10): state [v, b], b = gravity + bias on the IMU x axis (road slope changes it).
+    predict v += (a_x - b) dt; measurements: standing -> v = 0; turning (|w| > turn_min) -> centripetal speed
+    (a_y - a_y0) / w; scan-to-scan odometry speed, gated at 3 sigma (it jumps 2 <-> 11 m/s in the Track03 turn).
+    a_y0 (lateral gravity) is re-measured at every standstill. Uses only IMU samples up to the current frame."""
+
+    def __init__(self, b0=-0.85, ay0=0.2, v0=None):
+        self.x = np.array([0.0 if v0 is None else v0, b0])
+        self.P = np.diag([25.0 if v0 is None else 1.0, 0.1 ** 2])
+        self.ay0 = ay0
+        self.ay_sum, self.ay_n = 0.0, 0
+
+    def step(self, dt, ax, ay, w, standing, v_odo, odo_ok, turn_min=np.radians(5)):
+        if dt > 0:
+            F = np.array([[1.0, -dt], [0.0, 1.0]])
+            self.x = F @ self.x + np.array([ax * dt, 0.0])
+            self.P = F @ self.P @ F.T + np.diag([0.3 ** 2 * dt, 0.03 ** 2 * dt])
+        meas = []
+        if standing:
+            meas.append((0.0, 0.02 ** 2))
+            self.ay_sum += ay
+            self.ay_n += 1
+            self.ay0 = self.ay_sum / self.ay_n
+        else:
+            if abs(w) > turn_min:
+                vc = (ay - self.ay0) / w
+                if vc > 0:
+                    meas.append((vc, (0.08 / abs(w) + 0.05 * vc) ** 2))
+            if odo_ok:
+                sd = 0.25 * abs(v_odo) + 0.3
+                if abs(v_odo - self.x[0]) < 3 * np.sqrt(self.P[0, 0] + sd ** 2):
+                    meas.append((v_odo, sd ** 2))
+        for z, r in meas:
+            S = self.P[0, 0] + r
+            K = self.P[:, 0] / S
+            self.x = self.x + K * (z - self.x[0])
+            self.P = self.P - np.outer(K, self.P[0, :])
+        self.x[0] = max(self.x[0], 0.0)
+        return self.x[0]
 
 
 def read_imu_acc(track_dir):
@@ -203,6 +246,16 @@ def main():
                         "being overwritten by it; the map corrections then also correct the speed")
     p.add_argument("--odo-sigma", default="0.15,0.3", help="odo-filter: velocity noise = a * speed + b (m/s)")
     p.add_argument("--mht-score", default="innovation", choices=["innovation", "csm"])
+    p.add_argument("--speed-filter", action="store_true",
+                   help="motion from an IMU speed filter (SpeedFilter) along the yaw instead of the raw odometry step")
+    p.add_argument("--speed-b0", type=float, default=-0.85, help="m/s^2, start value of the x-axis gravity / bias")
+    p.add_argument("--csm-bias-along", type=float, help="m, camera lever of the CSM along the heading (default --bias-along);"
+                   " the likelihood peak sits 1.0 m behind the true reference on Track01 and Track02")
+    p.add_argument("--csm-bias-lat", type=float, help="m (default --bias-lat)")
+    p.add_argument("--csm-standing", action="store_true", help="CSM also updates the position while standing")
+    p.add_argument("--reset-ref", help="VALIDATION ONLY (Track01/02): reference CSV; when the estimate is more than "
+                                       "--reset-dist m off, the state is reset to it (to measure biases while locked)")
+    p.add_argument("--reset-dist", type=float, default=3.0)
     p.add_argument("--tau-yaw-start", type=float, default=0.0,
                    help="s, map-yaw pull while several start hypotheses are alive (0 = --tau-yaw)")
     p.add_argument("--hold-yaw-standing", action="store_true",
@@ -214,6 +267,10 @@ def main():
     p.add_argument("--hyp-prior", type=float, default=15.0, help="deg, sigma of the start-yaw error prior")
     a = p.parse_args()
 
+    if a.reset_ref and a.track == 3:
+        sys.exit("--reset-ref uses the answer: validation on Track01/02 only, never Track03")
+    reset_ref = np.loadtxt(a.reset_ref, delimiter=",", skiprows=1) if a.reset_ref else None
+    n_reset = 0
     track_dir = os.path.join(a.data, f"Track{a.track}")
     for path in (a.init, os.path.join(track_dir, a.map)):
         if not os.path.exists(path):
@@ -233,8 +290,10 @@ def main():
     T0 = T0.reshape(4, 4)
     gt, gw = read_gyro(track_dir, axis="z")
     gt = gt.astype(np.float64) / 1e9
-    if a.zupt_acc > 0 or a.turn_rate > 0:
+    if a.zupt_acc > 0 or a.turn_rate > 0 or a.speed_filter:
         it, iacc = read_imu_acc(track_dir)
+    spf = SpeedFilter(b0=a.speed_b0) if a.speed_filter else None
+    v_spf = 0.0
 
     m = read_pcd_binary(os.path.join(track_dir, a.map))
     if a.level_init:
@@ -341,6 +400,14 @@ def main():
                 dyaw = 0.0
                 odo_step = np.zeros(2)
         gyro_sum += dyaw
+        if spf is not None and k:
+            j0, j1 = np.searchsorted(it, ft[k - 1], side="right"), np.searchsorted(it, ft[k], side="right")
+            g0, g1 = np.searchsorted(gt, ft[k] - 0.3), np.searchsorted(gt, ft[k], side="right")
+            if j1 > j0:
+                ax_, ay_ = iacc[j0:j1, 0].mean(), iacc[j0:j1, 1].mean()
+                w_ = float(gw[g0:g1].mean() - bias) if g1 > g0 else 0.0
+                odo_ok = a.odometry and len(clouds) >= a.odometry + 1 and not standing
+                v_spf = spf.step(dt, ax_, ay_, w_, standing, odo_step[0] / max(dt, 1e-3), odo_ok)
         turning = False
         if a.turn_rate > 0:
             j0, j1 = np.searchsorted(gt, ft[k] - 0.3), np.searchsorted(gt, ft[k], side="right")
@@ -355,6 +422,15 @@ def main():
             if a.odometry and standing:
                 hy.x = hy.x.copy()
                 hy.x[2:] = 0.0
+            elif spf is not None:
+                c_, s2 = np.cos(hy.yaw), np.sin(hy.yaw)
+                step = v_spf * dt * np.array([c_, s2])
+                hy.x = hy.x.copy()
+                hy.x[:2] += step
+                hy.x[2:] = step / max(dt, 1e-3)
+                qn = (a.odo_noise * np.hypot(*step) + 0.02) ** 2
+                hy.P = hy.P.copy()
+                hy.P[:2, :2] += np.eye(2) * qn
             elif a.odometry and a.odo_filter:
                 hy.x = F @ hy.x
                 hy.P = F @ hy.P @ F.T + Q
@@ -387,7 +463,7 @@ def main():
             if field is not None and len(csx) >= 30:
                 # standing: the score still ranks the MHT hypotheses (yaw), but the state is not updated
                 xu, Pu, csm_info = csm_update(field, field_score, hy.x, hy.P, hy.yaw, yaw_off, csx, csy, a)
-                if not standing:
+                if not standing or a.csm_standing:
                     hy.x, hy.P = xu, Pu
             Tp = hy.T.copy()
             Tp[:3, :3] = rot_z(hy.yaw - yaw_of(hy.T)) @ hy.T[:3, :3]
@@ -434,7 +510,15 @@ def main():
                             res.error / max(res.num_inliers, 1), float(np.hypot(*innov)),
                             float(np.degrees(wrap(gy - hy.yaw))), odo_step[0], odo_step[1], len(hyps),
                             float(np.degrees(gyro_sum)), float(np.degrees(hy.pull)), int(standing), int(turning),
-                            csm_info[0], csm_info[1], csm_info[2]))
+                            csm_info[0], csm_info[1], csm_info[2], v_spf))
+        if reset_ref is not None and len(hyps) == 1 and k < len(reset_ref):
+            hy = hyps[0]
+            if np.hypot(hy.x[0] - reset_ref[k, 1], hy.x[1] - reset_ref[k, 2]) > a.reset_dist:
+                hy.x = np.array([reset_ref[k, 1], reset_ref[k, 2], 0.0, 0.0])
+                hy.P = np.diag([0.25, 0.25, 4.0, 4.0])
+                hy.yaw = reset_ref[k, 3]
+                n_reset += 1
+                hy.rows[-1] = hy.rows[-1][:4] + (-1,) + hy.rows[-1][5:]     # ok = -1 marks a reset frame
         cur = min(hyps, key=lambda h_: np.mean(h_.score))
         if a.mht_output == "mean" and len(hyps) > 1:
             # posterior over the hypotheses: prior on the start-yaw error x likelihood exp(-sum of capped innovation^2 / 2)
@@ -464,16 +548,17 @@ def main():
         for r in rows:
             f.write(f"{r[0]},{r[1]:.6f},{r[2]:.6f},{r[3]:.6f}\n")
     print(f"wrote {a.out}: accepted {np.mean([r[4] for r in rows]):.0%} of frames"
-          + (f", standing {n_standing} frames, gyro bias {np.degrees(bias):+.3f} deg/s" if a.zupt_acc > 0 else ""),
+          + (f", standing {n_standing} frames, gyro bias {np.degrees(bias):+.3f} deg/s" if a.zupt_acc > 0 else "")
+          + (f", {n_reset} resets to the reference" if reset_ref is not None else ""),
           flush=True)
     if a.diag:
         with open(a.diag, "w") as f:
             f.write("idx,x,y,yaw,ok,d,inliers,err_per_inlier,innov_m,dyaw_deg,odo_fwd,odo_lat,hyps,gyro_sum_deg,"
-                    "pull_deg,standing,turning,csm_shift_along,csm_sd_along,csm_contrast\n")
+                    "pull_deg,standing,turning,csm_shift_along,csm_sd_along,csm_contrast,v_imu\n")
             for r in rows:
                 f.write(f"{r[0]},{r[1]:.4f},{r[2]:.4f},{r[3]:.6f},{r[4]},{r[5]:.3f},{r[6]},{r[7]:.5f},{r[8]:.3f},"
                         f"{r[9]:.2f},{r[10]:.4f},{r[11]:.4f},{r[12]},{r[13]:.3f},{r[14]:.3f},{r[15]},{r[16]},"
-                        f"{r[17]:.3f},{r[18]:.3f},{r[19]:.3f}\n")
+                        f"{r[17]:.3f},{r[18]:.3f},{r[19]:.3f},{r[20]:.3f}\n")
     if a.pose_check:
         ref = np.loadtxt(a.pose_check, delimiter=",", skiprows=1)
         out = np.array([[r[1], r[2], r[3]] for r in rows])
