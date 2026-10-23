@@ -12,20 +12,28 @@
 #    CSM peak sits 1.0 m behind the reference; at the right scale it sits at -0.12 m. Track03's own clouds fit best at
 #    x0.925-0.95 (scale_check / online estimate) -> lever -0.56..-0.78 at scale 1.0. Rescaling the clouds instead
 #    (--scale-mult / --scale-online) lost the lock in the Track03 turn, so the scale stays 1.0.
-#    Submitted versions: t3_A2h (drop the last two option lines), t3_L2 (lever -1.0).
+#    Submitted versions: t3_A2h (drop the last three option lines), t3_L2 (lever -1.0), t3_L2b (drop the last option line).
+#    "W3h" (23/10 evening, validated on Track01/02 with --reset-ref and on Track03 by map fit / dynamic consistency):
+#    the IMU is mounted ~6 deg off level -> yaw rate = gyro vector . causal gravity direction (--gyro-axis up, bias
+#    prior -0.24 deg/s fitted on Track01/02); map-yaw time constant 30 s (10 s during the first 10 s: start
+#    hypotheses are 6 deg apart) -> yaw RMS Track02 0.88 -> 0.40 deg, Track01 0.64 -> 0.55 deg; the speed filter's
+#    variance widens the along-track prior (turns); no GICP update while standing (one static view: Track02's
+#    230 standing frames drag the position 2 m off).
 # Same output for any --threads (checked 23/10).
 set -e
 cd "$(dirname "$0")/../.."                      # ~/SDC-midterm01
-OUT=${1:-src/localization/result/track3/t3_L2b.csv}
+OUT=${1:-src/localization/result/track3/t3_W3h.csv}
 run() { docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/w" -w /w/midterm01 sdc-reg:latest "$@"; }
 mkdir -p cache
 run python3 tools/cache_ply.py 3 --data /w/data --cache /w/cache
 run python3 tools/track_localize.py 3 --data /w/data --cache /w/cache --init /w/data/Track3/init_guess.txt \
   --ply raw_ply --level-init --threads 10 \
-  --yaw-offset 0.66 --bias-along -0.27 --bias-lat 0 --tau-yaw 10 \
+  --yaw-offset 0.66 --bias-along -0.27 --bias-lat 0 \
   --hyp-yaw=-30,-24,-18,-12,-6,0,6,12,18,24,30 \
   --odometry 6 --zupt-acc 0.1 --bias-online 500 \
   --csm-window 15 --csm-kappa 15 --sigma-match-along 2 --hold-yaw-standing \
   --csm-bias-along -0.7 --csm-bias-lat 0.12 \
   --speed-filter \
+  --gyro-axis up --gyro-bias -0.24 --tau-yaw 30 --tau-yaw-start 10 --tau-yaw-start-time 10 --along-speed-noise 28 \
+  --hold-position-standing \
   --out "$OUT" --diag "${OUT%.csv}_diag.csv"

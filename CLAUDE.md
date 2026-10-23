@@ -1,4 +1,4 @@
-# Trạng thái dự án – đọc file này trước (cập nhật 23/10/2026 05:30)
+# Trạng thái dự án – đọc file này trước (cập nhật 23/10/2026 19:30)
 
 File này dành cho bất kỳ phiên Claude nào (hoặc người) tiếp nhận dự án: đọc xong là biết đang ở đâu, luật là gì,
 làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việt). Cách chạy: `docs/HUONG-DAN-CHAY.md`.
@@ -36,7 +36,7 @@ phép** để lên hạng, và người dùng được trình bày chiến thu�
 |---|---|---|---|
 | Bảng điểm (tốt nhất) | **0.40** (`lb_t1_r4`, dò – bằng hạng 1 đội 12) | **0.11** (`lb_t2_r3`, dò – hạng 1; đội 12 0.17) | **0.77** (`t3_vN`, nhân quả – hạng 2; dẫn đầu 0.51) |
 | Clean (pipeline, không dò) | **0.55** (`clean_csm_1` = `t6_range20_turn0_1` + `tools/csm_fuse.py`; trước 0.62) | **0.25** (`clean_csm_2` = `clean_cfz2_tau15` + CSM; trước 0.28) | = cột trên (Track03 luôn clean) |
-| Ứng viên / trạng thái | vòng 5 dò: 9 file `result/reg/probes/r5/` – người dùng chưa duyệt (họ muốn ưu tiên cải thiện clean) | – | đã nộp `t3_A2h` 0.96, `t3_L2` 1.05, **`t3_L2b` 0.84** (public = ~15 % frame đầu, không phản ánh private) |
+| Ứng viên / trạng thái | vòng 5 dò: 9 file `result/reg/probes/r5/` – người dùng chưa duyệt (họ muốn ưu tiên cải thiện clean) | – | đã nộp `t3_A2h` 0.96, `t3_L2` 1.05, **`t3_L2b` 0.84** (public = ~15 % frame đầu, không phản ánh private); **ứng viên mới `t3_W3h`** (`tools/run_track3.sh`, nhật ký 12 §8: yaw thẳng đứng, τ 30 s, giữ vị trí khi đứng yên) – CHƯA nộp, chờ người dùng |
 
 Track03 23/10 (`docs/nhat-ky/12-track3-csm-23-10.md`): MHT cũ ghi ngược quỹ đạo (không nhân quả) → đã sửa; lỗi tích phân gyro
 (mất 14 % góc quay) → đã sửa; bản N trôi 13–30 m từ frame ~500 (phần lớn private) → CSM + nhiễu GICP dọc 2 m. Bộ đệm

@@ -112,6 +112,8 @@ def csm_update(field, field_score, x, P, yaw, yaw_off, sx, sy, a):
     x = x.copy()
     x[:2] = x[:2] + Rh @ mu
     P = P.copy()
+    if a.csm_sd_floor > 0:
+        C[0, 0] = max(C[0, 0], a.csm_sd_floor ** 2)
     P[:2, :2] = Rh @ C @ Rh.T
     return x, P, info
 
@@ -155,6 +157,27 @@ class SpeedFilter:
             self.P = self.P - np.outer(K, self.P[0, :])
         self.x[0] = max(self.x[0], 0.0)
         return self.x[0]
+
+
+def read_gyro_up(track_dir):
+    """Causal vertical yaw rate (23/10): the IMU is mounted ~6 deg off level (gravity in the IMU frame at standstill
+    Track01/02/03: (-0.095, 0.041, 0.995), (-0.098, -0.004, 0.995), (-0.103, 0.019, 0.994)), so the z gyro alone sees
+    cos(6 deg) of the rotation about the vertical and mixes in the x / y gyro biases. Rate = gyro vector . up, with up the
+    mean accelerometer direction of the samples so far (no future sample)."""
+    from pathlib import Path
+    from rosbags.highlevel import AnyReader
+    rows = []
+    with AnyReader([Path(track_dir)]) as r:
+        conns = [c for c in r.connections if c.topic == "/imu/data"]
+        for c, ts, raw in r.messages(connections=conns):
+            m = r.deserialize(raw, c.msgtype)
+            w, acc = m.angular_velocity, m.linear_acceleration
+            rows.append((ts, w.x, w.y, w.z, acc.x, acc.y, acc.z))
+    rows.sort()
+    a = np.array(rows, dtype=np.float64)
+    up = np.cumsum(a[:, 4:7], axis=0)
+    up /= np.linalg.norm(up, axis=1, keepdims=True)
+    return a[:, 0].astype(np.int64), np.sum(a[:, 1:4] * up, axis=1)
 
 
 def read_imu_acc(track_dir):
@@ -216,6 +239,8 @@ def main():
     p.add_argument("--odometry", type=int, default=0, help="scan-to-scan odometry gap in frames (0 = constant velocity)")
     p.add_argument("--odo-noise", type=float, default=0.15)
     p.add_argument("--gyro-bias", type=float, default=-0.26, help="deg/s, IMU z-gyro bias (calibration)")
+    p.add_argument("--gyro-axis", default="z", choices=["z", "up"],
+                   help="z: z gyro only; up: gyro vector projected on the causal gravity direction (read_gyro_up)")
     p.add_argument("--odo-target", type=float, default=0.0,
                    help="m; if > 0 the gap adapts so the displacement is about this (gap between 6 and --odometry)")
     p.add_argument("--mount-pitch", type=float, default=2.4, help="deg (T7: +2.47 Track01, +2.30 Track02)")
@@ -255,6 +280,9 @@ def main():
     p.add_argument("--speed-filter", action="store_true",
                    help="motion from an IMU speed filter (SpeedFilter) along the yaw instead of the raw odometry step")
     p.add_argument("--speed-b0", type=float, default=-0.85, help="m/s^2, start value of the x-axis gravity / bias")
+    p.add_argument("--along-speed-noise", type=float, default=0.0,
+                   help="factor: speed-filter variance x dt^2 added to the along-track process noise (0 = off)")
+    p.add_argument("--csm-sd-floor", type=float, default=0.0, help="m, minimum along sd after the CSM update")
     p.add_argument("--csm-bias-along", type=float, help="m, camera lever of the CSM along the heading (default --bias-along);"
                    " the likelihood peak sits 1.0 m behind the true reference on Track01 and Track02")
     p.add_argument("--csm-bias-lat", type=float, help="m (default --bias-lat)")
@@ -264,6 +292,11 @@ def main():
     p.add_argument("--reset-dist", type=float, default=3.0)
     p.add_argument("--tau-yaw-start", type=float, default=0.0,
                    help="s, map-yaw pull while several start hypotheses are alive (0 = --tau-yaw)")
+    p.add_argument("--hold-position-standing", action="store_true",
+                   help="no GICP update while standing: repeated matches of one static view share their error (Track02:"
+                        " 230 standing frames drag the position 1.0 m along / 1.9 m lateral away from the truth)")
+    p.add_argument("--tau-yaw-start-time", type=float, default=0.0,
+                   help="s from the first frame during which --tau-yaw-start applies (also after the MHT pruning)")
     p.add_argument("--hold-yaw-standing", action="store_true",
                    help="no map-yaw pull while standing (the matches of one view share their error)")
     p.add_argument("--sigma-match-along", type=float, default=0.0,
@@ -296,7 +329,7 @@ def main():
             sys.exit(f"{cdir}: cache does not match the frames of {a.ply}")
     T0 = np.loadtxt(a.init, delimiter=",") if "," in open(a.init).read() else np.loadtxt(a.init)
     T0 = T0.reshape(4, 4)
-    gt, gw = read_gyro(track_dir, axis="z")
+    gt, gw = read_gyro(track_dir, axis="z") if a.gyro_axis == "z" else read_gyro_up(track_dir)
     gt = gt.astype(np.float64) / 1e9
     if a.zupt_acc > 0 or a.turn_rate > 0 or a.speed_filter:
         it, iacc = read_imu_acc(track_dir)
@@ -443,6 +476,10 @@ def main():
                 qn = (a.odo_noise * np.hypot(*step) + 0.02) ** 2
                 hy.P = hy.P.copy()
                 hy.P[:2, :2] += np.eye(2) * qn
+                if a.along_speed_noise > 0:
+                    # the speed filter's own variance drives the along-track uncertainty (turns: centripetal speed and
+                    # gated odometry only -> the speed is uncertain and the CSM must be able to move the position)
+                    hy.P[:2, :2] += a.along_speed_noise * spf.P[0, 0] * dt ** 2 * np.outer([c_, s2], [c_, s2])
             elif a.odometry and a.odo_filter:
                 hy.x = F @ hy.x
                 hy.P = F @ hy.P @ F.T + Q
@@ -500,12 +537,15 @@ def main():
             ok = res.num_inliers > 50 and d < a.gate and abs(wrap(gy - hy.yaw)) < np.radians(a.yaw_gate)
             if (turning and a.turn_skip == "all") or a.no_gicp:
                 ok = False
+            if standing and a.hold_position_standing:
+                ok = False
             if ok:
                 K = hy.P @ H.T @ np.linalg.inv(S)
                 hy.x = hy.x + K @ innov
                 hy.P = (np.eye(4) - K @ H) @ hy.P
                 if dt and not turning and not (standing and a.hold_yaw_standing):
-                    tau = a.tau_yaw_start if (a.tau_yaw_start > 0 and len(hyps) > 1) else a.tau_yaw
+                    start_phase = len(hyps) > 1 or ft[k] - ft[0] < a.tau_yaw_start_time
+                    tau = a.tau_yaw_start if (a.tau_yaw_start > 0 and start_phase) else a.tau_yaw
                     corr = (1 - np.exp(-dt / tau)) * wrap(gy - hy.yaw)
                     hy.yaw = wrap(hy.yaw + corr)
                     hy.pull += corr
@@ -590,7 +630,9 @@ def main():
         f.write("idx,x,y,yaw\n")
         for r in rows:
             f.write(f"{r[0]},{r[1]:.6f},{r[2]:.6f},{r[3]:.6f}\n")
-    print(f"wrote {a.out}: accepted {np.mean([r[4] for r in rows]):.0%} of frames"
+    moving = [r[4] for r in rows if not r[15]]
+    print(f"wrote {a.out}: accepted {np.mean([r[4] for r in rows]):.0%} of frames ({np.mean(moving):.0%} of the "
+          f"{len(moving)} moving frames)"
           + (f", standing {n_standing} frames, gyro bias {np.degrees(bias):+.3f} deg/s" if a.zupt_acc > 0 else "")
           + (f", {n_reset} resets to the reference" if reset_ref is not None else "")
           + (f", scale multiplier {m_est:.3f} ({len(m_hist)} estimates)" if a.scale_online else ""),

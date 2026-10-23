@@ -150,3 +150,74 @@ phải bộ lọc. Mô hình sai độ sâu theo khoảng cách p' = p(1 + 4c)/(
 tay đòn tại c = 0.004 vẫn khác 0.5 m giữa Track01 và Track02 → hiệu chuẩn dọc chỉ tới ±0.3 m. Point cloud 3 camera của
 Track01/02 là MapAnything (~330 nghìn điểm / frame) – không chạy lại được cho Track03 trên GPU 6 GB của máy này.
 Đầu Track03 (frame 0–150): đỉnh CSM −0.25…−1.0 m dọc (kỳ vọng −0.7), ngang 0…−0.25 m → không có lỗi lớn riêng ở đầu track.
+
+## 8. Tối 23/10 (16:40–19:30) – cấu hình W3h: yaw theo phương thẳng đứng, τ 30 s, giữ vị trí khi đứng yên
+
+Luật Track03 (slide 10/20, đọc lại): "Public Score: Evaluates only the first 5–40% of the trajectory", **private (phần còn lại)
+dùng để chấm và xếp hạng**, cần ≤ 1.40. Được phép "explore multi-camera images" (bag Track03 có 3 luồng ảnh h265).
+Phần private của Track03: xe **đứng yên frame ~950–2150 = 45 % số frame private** → vị trí và yaw lúc đứng yên quyết định
+phần lớn điểm private. Mọi so sánh dưới đây không dùng bảng điểm.
+
+### 8.1 Những hướng đã kiểm tra và bỏ
+
+| Hướng | Kiểm tra | Kết quả |
+|---|---|---|
+| Point cloud 3 camera (MapAnything, chỉ Track01/02) | `cache_ply.py --ply 3cameras_ply`, Track02 có trợ giúp | RMS vị trí khi bám 0.95 m (LoGeR 0.91) – chỉ ít lạc hơn (14 / 34 lần đặt lại) → nguồn point cloud không phải nút thắt |
+| Bước lưới CSM 0.25 m / 1500 điểm CSM / `--odo-noise 0.08` | Track02 có trợ giúp | 0.90 / 0.92 / 0.92 m – không lợi |
+| Course over ground của quỹ đạo bám làm mốc yaw | so với yaw tham chiếu Track01/02 | 1.0–2.2° RMS, kém yaw hiện tại (0.56–0.88°) |
+| Quaternion hướng của IMU | so với yaw tham chiếu | trôi ~4° trên Track02 → không tuyệt đối |
+| Vạch kẻ đường | `map.pcd` có intensity (vạch thấy rõ, `cache/Track3/map_corridor.npy`) | raw_ply quá thưa trên mặt đường, không thấy vạch → cần giải mã ảnh h265 (chưa làm) |
+| CSM một frame lúc đứng yên (yaw × tỉ lệ × dọc × ngang) | 5 frame cùng khung cảnh | cực đại nhảy ±3°, ±1.5 m → không dùng để chốt vị trí đứng yên |
+| Sàn độ lệch chuẩn dọc 0.7 m sau CSM | Track03 | lạc ở khúc cua → bỏ |
+
+### 8.2 Bốn thay đổi giữ lại (mỗi cái thử riêng, trên Track01/02 có trợ giúp và trên Track03)
+
+1. **Yaw rate theo phương thẳng đứng** (`--gyro-axis up`, `read_gyro_up`): trọng lực trong hệ IMU lúc đứng yên
+   (−0.095, 0.041, 0.995) / (−0.098, −0.004, 0.995) / (−0.103, 0.019, 0.994) → IMU nghiêng ~6°; trục z chỉ thấy cos 6° của
+   góc quay quanh phương thẳng đứng và trộn bias trục x / y. Yaw rate = véc-tơ gyro · hướng trọng lực (trung bình gia tốc kế
+   của các mẫu đã qua – nhân quả). Bias prior −0.24 °/s (khớp theo hướng đi: Track01 −0.227, Track02 −0.250; trục z cũ
+   −0.26 với tản mát −0.26…−0.30).
+2. **τ yaw 30 s** (10 s trong 10 s đầu: các giả thuyết yaw đầu cách nhau 6° → sai số đầu tới ±3°): yaw GICP có sai số
+   theo cảnh tương quan 2–15 s; τ dài lấy trung bình nhiều cảnh hơn.
+3. **Phương sai tốc độ vào nhiễu dọc** (`--along-speed-noise 28`): CSM thay hiệp phương sai bằng độ rộng đỉnh cục bộ → trong
+   khúc cua độ lệch chuẩn dọc co còn 0.39 m trong khi sai số thật ~2–3 m, prior chặn mất mode đúng (frame 2646: L2b nhảy
+   −2.3 m về vị trí khớp bản đồ tốt hơn, bản gyro chiếu không nhảy → lệch 3 m trong 100 frame).
+4. **Không cập nhật GICP khi đứng yên** (`--hold-position-standing`, giống `--hold-yaw-standing`): Track02 khởi đầu đúng
+   vị trí tham chiếu, 230 frame đứng yên GICP kéo lệch −1.0 m dọc / +1.9 m ngang; Track03 kéo vị trí đứng yên lùi 0.3–0.5 m.
+
+| Track01/02 có trợ giúp (frame đang bám) | RMS vị trí | RMS yaw |
+|---|---|---|
+| Track02 – L2b | 0.913 m | 0.88° |
+| Track02 – τ 30 | 0.905 | 0.45 |
+| Track02 – τ 30 + gyro chiếu | 0.886 | **0.40** |
+| Track02 – W3h (cả 4) | 0.94 (cùng frame: 230–500 1.49 → 1.48, đứng yên 1.95 → 1.56) | 0.47 |
+| Track01 – L2b | 1.019 | 0.64 |
+| Track01 – τ 30 + gyro chiếu | 1.016 | **0.55** |
+| Track01 – W3h | **1.003** | 0.67 (khác biệt ở frame 1200–1800 do lần đặt lại về tham chiếu khác nhau, không phải do cấu hình) |
+
+### 8.3 Track03 – kiểm tra không có đáp án
+
+Độ khớp bản đồ tại chính pose của quỹ đạo (`fit_at_pose.py` trong scratchpad: điểm trên mặt đường 0.4–3 m, tỉ lệ ×0.95,
+tay đòn −0.4 m, không tìm kiếm; càng gần 0 càng tốt):
+
+| Đoạn | L2b (đã nộp) | W3h |
+|---|---|---|
+| 0–157 | **−0.161** | −0.166 |
+| 157–470 | −0.262 | **−0.244** |
+| 470–950 | −0.220 | **−0.207** |
+| 950–2150 (đứng yên) | −0.156 | **−0.138** |
+| 2150–2300 (chạy lại) | −0.158 | **−0.145** |
+| 2300–2450 | −0.553 | **−0.545** |
+| 2450–2650 | −0.364 | **−0.331** |
+| 2650–2850 | −0.047 | −0.047 |
+| 3000–3142 (dừng cuối) | **−0.116** | −0.117 |
+
+Nhất quán động học qua khúc rẽ trái 88°: yaw đứng yên + góc gyro = yaw bản đồ sau khúc cua → L2b cần bản đồ bù +1.43°
+(yaw đứng yên thấp ~1°), bản τ 30 + gyro chiếu chỉ −0.02°. Course over ground trước khi dừng (frame 500–850): yaw đứng yên
+≈ 159.15 ± 0.3° (L2b 158.80, W3h 159.47). Chạy lại với 6 / 10 luồng: trùng 100 %.
+
+**Ứng viên `t3_W3h.csv`** (`bash tools/run_track3.sh`): chấp nhận 98 % frame đang chạy. **Chưa nộp** (lượt kiểm tra cron
+không tự nộp) – chờ người dùng.
+
+**Còn mở:** khi xe chạy lại sau đứng yên (frame 2200–2306) vị trí dọc trễ ~3 m rồi CSM sửa ở 2306–2318 (cả L2b và W3h);
+khúc cua vẫn là đoạn khớp kém nhất (−0.55); pha đầu (yaw MHT +0.8…1.2° so với yaw hội tụ).
