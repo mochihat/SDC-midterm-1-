@@ -224,3 +224,38 @@ không đo được phần đó. Không chỉnh tiếp theo điểm public (lu�
 
 **Còn mở:** khi xe chạy lại sau đứng yên (frame 2200–2306) vị trí dọc trễ ~3 m rồi CSM sửa ở 2306–2318 (cả L2b và W3h);
 khúc cua vẫn là đoạn khớp kém nhất (−0.55); pha đầu (yaw MHT +0.8…1.2° so với yaw hội tụ).
+
+## 9. Tối 23/10 (19:45–20:00) – nộp theo lời người dùng: Track01 vòng 5, ba biến thể Track03
+
+Người dùng (23/10 tối): TA chỉ cấm sửa trực tiếp file kết quả mà không qua thuật toán; **chỉnh tham số / thuật toán Track03
+theo điểm public là được**. Người dùng duyệt nộp các file đã nêu.
+
+### 9.1 Track01 vòng 5 (dò – TA cho phép ở Track01/02)
+
+| File dò (trên `lb_t1_r4`, 0.40) | Điểm | m = mean(e·D) | Ghi chú |
+|---|---|---|---|
+| yaw0 (lệch hằng 1.5°) | 0.61 | +0.193 | |
+| yawrate (trễ τ·ω) | 0.50 | −0.023 | |
+| gyroscale | 0.52 | +0.076 | |
+| yaw5 / yaw6 / yaw7 / yaw8 (cosin bậc K) | 0.50 / 0.52 / **0.42** / 0.51 | −0.073 / +0.055 / **−0.485** / −0.010 | mode 7 chứa phần lớn sai số yaw còn lại |
+| along / lateral (0.5 m) | 0.71 / 0.71 | +0.003 / +0.003 | vị trí: không còn lệch hằng theo thân xe |
+| csm (`lb_t1_r4` + hiệu chỉnh `csm_fuse.py`) | 0.43 | −0.001 | khớp bản đồ không cải thiện được bản dò |
+
+Ghép (`tools/lb_combine2.py`, P0 0.259): yaw 0.73° → 0.545° (hệ số lớn nhất 0.45 ở mode 7), vị trí giữ nguyên →
+dự đoán 0.368 → **`lb_t1_r5` = 0.36** (đội 12: 0.40) → Track01 hạng 1. Vòng 6 đã tạo (chưa nộp): yaw9, yaw10 trên `lb_t1_r5`.
+
+### 9.2 Track03 – lý do W3h kém L2b ở đoạn đầu, và ba biến thể (mỗi bản đổi 1 tham số so với W3h)
+
+Hướng thẳng đứng tính nhân quả (trung bình gia tốc kế) lệch **8°** ở giây đầu Track03 (xe tăng tốc và rẽ ngay từ frame 0),
+3.9° sau 2 s, 1.9° sau 5 s → bias trục gyro x (−0.45 °/s) rò vào yaw rate ~0.06 °/s → yaw đoạn đầu hụt 0.3°.
+
+| Bản | Thay đổi so với W3h | Yaw 0–157 so với L2b | Public |
+|---|---|---|---|
+| **`t3_X3f`** | `--gyro-up=-0.0985,-0.0036,0.9951` (trọng lực lúc đứng yên Track02 – hiệu chuẩn hướng lắp IMU) | +0.11° | **0.80** |
+| `t3_X3z` | `--gyro-axis z --gyro-bias -0.26` | +0.08° | 0.82 |
+| `t3_X3l` | `--csm-bias-along -0.5` (dọc −0.2 m) | −0.80° | 0.95 |
+| (W3h) | | −0.31° | 0.89 |
+| (L2b) | | 0 | 0.84 |
+
+Track01/02 có trợ giúp với hướng cố định: yaw Track01 0.665 → 0.608°, Track02 0.470 → 0.614° (Track02 đổi độ dốc dọc
+đường; hướng cố định không theo); bias dạng véc-tơ (`--gyro-bias3`): Track01 0.512°, Track02 0.639°. Điểm public chọn X3f.
