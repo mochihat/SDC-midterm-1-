@@ -151,7 +151,7 @@ tay đòn tại c = 0.004 vẫn khác 0.5 m giữa Track01 và Track02 → hiệ
 Track01/02 là MapAnything (~330 nghìn điểm / frame) – không chạy lại được cho Track03 trên GPU 6 GB của máy này.
 Đầu Track03 (frame 0–150): đỉnh CSM −0.25…−1.0 m dọc (kỳ vọng −0.7), ngang 0…−0.25 m → không có lỗi lớn riêng ở đầu track.
 
-10 (16:40–19:30)/10 (16:40–19:30) – cấu hình W3h: yaw theo phương thẳng đứng, τ 30 s, giữ vị trí khi đứng yên
+## 8. Chiều 23/10 (16:40–17:40) – cấu hình W3h: yaw theo phương thẳng đứng, τ 30 s, giữ vị trí khi đứng yên
 
 Luật Track03 (slide 10/20, đọc lại): "Public Score: Evaluates only the first 5–40% of the trajectory", **private (phần còn lại)
 dùng để chấm và xếp hạng**, cần ≤ 1.40. Được phép "explore multi-camera images" (bag Track03 có 3 luồng ảnh h265).
