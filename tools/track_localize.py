@@ -159,7 +159,7 @@ class SpeedFilter:
         return self.x[0]
 
 
-def read_gyro_up(track_dir):
+def read_gyro_up(track_dir, up_fixed=None, full=False):
     """Causal vertical yaw rate (23/10): the IMU is mounted ~6 deg off level (gravity in the IMU frame at standstill
     Track01/02/03: (-0.095, 0.041, 0.995), (-0.098, -0.004, 0.995), (-0.103, 0.019, 0.994)), so the z gyro alone sees
     cos(6 deg) of the rotation about the vertical and mixes in the x / y gyro biases. Rate = gyro vector . up, with up the
@@ -175,8 +175,15 @@ def read_gyro_up(track_dir):
             rows.append((ts, w.x, w.y, w.z, acc.x, acc.y, acc.z))
     rows.sort()
     a = np.array(rows, dtype=np.float64)
-    up = np.cumsum(a[:, 4:7], axis=0)
-    up /= np.linalg.norm(up, axis=1, keepdims=True)
+    if up_fixed is not None:
+        # calibrated mounting (same IMU / car on every track): the running mean is 8 deg off during the first second of
+        # Track03 (the car accelerates and turns from frame 0) and the x gyro's -0.45 deg/s bias leaks in through it
+        up = np.broadcast_to(np.asarray(up_fixed, dtype=np.float64) / np.linalg.norm(up_fixed), a[:, 4:7].shape)
+    else:
+        up = np.cumsum(a[:, 4:7], axis=0)
+        up /= np.linalg.norm(up, axis=1, keepdims=True)
+    if full:
+        return a[:, 0].astype(np.int64), np.sum(a[:, 1:4] * up, axis=1), a[:, 1:4], up
     return a[:, 0].astype(np.int64), np.sum(a[:, 1:4] * up, axis=1)
 
 
@@ -241,6 +248,12 @@ def main():
     p.add_argument("--gyro-bias", type=float, default=-0.26, help="deg/s, IMU z-gyro bias (calibration)")
     p.add_argument("--gyro-axis", default="z", choices=["z", "up"],
                    help="z: z gyro only; up: gyro vector projected on the causal gravity direction (read_gyro_up)")
+    p.add_argument("--gyro-bias3", help="x,y,z deg/s: bias VECTOR prior for --gyro-axis up (re-estimated at standstills "
+                                        "with --bias-online); rate = (w - b) . up, so an error of the up direction no "
+                                        "longer leaks the x gyro's -0.45 deg/s bias (Track02 standstill: "
+                                        "-0.440,-0.180,-0.297)")
+    p.add_argument("--gyro-up", help="x,y,z: fixed gravity direction in the IMU frame for --gyro-axis up (calibration;"
+                                     " Track02 standstill: -0.0985,-0.0036,0.9951)")
     p.add_argument("--odo-target", type=float, default=0.0,
                    help="m; if > 0 the gap adapts so the displacement is about this (gap between 6 and --odometry)")
     p.add_argument("--mount-pitch", type=float, default=2.4, help="deg (T7: +2.47 Track01, +2.30 Track02)")
@@ -329,7 +342,12 @@ def main():
             sys.exit(f"{cdir}: cache does not match the frames of {a.ply}")
     T0 = np.loadtxt(a.init, delimiter=",") if "," in open(a.init).read() else np.loadtxt(a.init)
     T0 = T0.reshape(4, 4)
-    gt, gw = read_gyro(track_dir, axis="z") if a.gyro_axis == "z" else read_gyro_up(track_dir)
+    gw3 = gup = None
+    if a.gyro_axis == "z":
+        gt, gw = read_gyro(track_dir, axis="z")
+    else:
+        gt, gw, gw3, gup = read_gyro_up(track_dir, [float(v) for v in a.gyro_up.split(",")] if a.gyro_up else None,
+                                        full=True)
     gt = gt.astype(np.float64) / 1e9
     if a.zupt_acc > 0 or a.turn_rate > 0 or a.speed_filter:
         it, iacc = read_imu_acc(track_dir)
@@ -372,6 +390,12 @@ def main():
     # Track02, measured while standing / fitted to the heading); the first second is NOT assumed to be standing
     bias = np.radians(a.gyro_bias)
     bias_sum, bias_n = 0.0, 0
+    b3 = np.radians([float(v) for v in a.gyro_bias3.split(",")]) if (a.gyro_bias3 and gup is not None) else None
+    b3_prior, b3_sum = (b3.copy() if b3 is not None else None), np.zeros(3)
+
+    def gbias(i0, i1):
+        """bias of the integrated rate for IMU samples i0..i1-1 (scalar bias, or bias vector . up)"""
+        return np.full(i1 - i0, bias) if b3 is None else gup[i0:i1] @ b3
     gyro_sum = 0.0
     n_standing = 0
     yaw_off = np.radians(a.yaw_offset)
@@ -431,16 +455,19 @@ def main():
         if k:
             g_first = gi
             while gi < len(gt) and gt[gi] <= ft[k]:
-                dyaw += (gw[gi] - bias) * (gt[gi] - t_int)
+                dyaw += (gw[gi] - gbias(gi, gi + 1)[0]) * (gt[gi] - t_int)
                 t_int = gt[gi]
                 gi += 1
             if gi > 0:
-                dyaw += (gw[gi - 1] - bias) * (ft[k] - t_int)
+                dyaw += (gw[gi - 1] - gbias(gi - 1, gi)[0]) * (ft[k] - t_int)
             t_int = ft[k]
             if standing and a.bias_online > 0 and gi > g_first:
                 bias_sum += float(gw[g_first:gi].sum())
                 bias_n += gi - g_first
                 bias = (a.bias_online * np.radians(a.gyro_bias) + bias_sum) / (a.bias_online + bias_n)
+                if b3 is not None:
+                    b3_sum += gw3[g_first:gi].sum(axis=0)
+                    b3 = (a.bias_online * b3_prior + b3_sum) / (a.bias_online + bias_n)
             if standing:
                 dyaw = 0.0
                 odo_step = np.zeros(2)
@@ -450,13 +477,13 @@ def main():
             g0, g1 = np.searchsorted(gt, ft[k] - 0.3), np.searchsorted(gt, ft[k], side="right")
             if j1 > j0:
                 ax_, ay_ = iacc[j0:j1, 0].mean(), iacc[j0:j1, 1].mean()
-                w_ = float(gw[g0:g1].mean() - bias) if g1 > g0 else 0.0
+                w_ = float(np.mean(gw[g0:g1] - gbias(g0, g1))) if g1 > g0 else 0.0
                 odo_ok = a.odometry and len(clouds) >= a.odometry + 1 and not standing
                 v_spf = spf.step(dt, ax_, ay_, w_, standing, odo_step[0] / max(dt, 1e-3), odo_ok)
         turning = False
         if a.turn_rate > 0:
             j0, j1 = np.searchsorted(gt, ft[k] - 0.3), np.searchsorted(gt, ft[k], side="right")
-            turning = j1 > j0 and abs(np.degrees(gw[j0:j1].mean() - bias)) > a.turn_rate
+            turning = j1 > j0 and abs(np.degrees(np.mean(gw[j0:j1] - gbias(j0, j1)))) > a.turn_rate
         F = np.array([[1, 0, dt, 0], [0, 1, 0, dt], [0, 0, 1, 0], [0, 0, 0, 1]])
         q = a.qa ** 2
         Q = q * np.array([[dt ** 4 / 4, 0, dt ** 3 / 2, 0], [0, dt ** 4 / 4, 0, dt ** 3 / 2],
@@ -634,6 +661,7 @@ def main():
     print(f"wrote {a.out}: accepted {np.mean([r[4] for r in rows]):.0%} of frames ({np.mean(moving):.0%} of the "
           f"{len(moving)} moving frames)"
           + (f", standing {n_standing} frames, gyro bias {np.degrees(bias):+.3f} deg/s" if a.zupt_acc > 0 else "")
+          + (f" (bias vector {np.round(np.degrees(b3), 3)} deg/s)" if b3 is not None else "")
           + (f", {n_reset} resets to the reference" if reset_ref is not None else "")
           + (f", scale multiplier {m_est:.3f} ({len(m_hist)} estimates)" if a.scale_online else ""),
           flush=True)
