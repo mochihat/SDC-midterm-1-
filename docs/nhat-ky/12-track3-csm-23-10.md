@@ -129,3 +129,24 @@ Thử sửa tỉ lệ trực tiếp (`--scale-mult`, `--scale-online`, `--scale-
 0.95 → 0.78 m, độ lệch ngang 0.50 → 0.31 m) nhưng Track03 mất bám ở khúc cua (chấp nhận 17–58 %) → độ sâu LoGeR sai theo
 khoảng cách, một hệ số chung không đủ. Giữ tỉ lệ 1.0 và đặt tay đòn theo sai tỉ lệ đo trên chính Track03: −0.12 −
 0.88·(sai tỉ lệ / 10 %) ≈ −0.56…−0.78 → **−0.7 (`t3_L2b.csv`, chấp nhận 99 %)**. τ yaw 30 s: khúc cua tệ hơn → giữ 10 s.
+
+## 7. Tối 23/10 – nộp `t3_L2b`, clean Track01/02 bằng CSM, giới hạn độ chính xác
+
+**Nộp (người dùng duyệt):** `t3_L2b` public **0.84** (A2h 0.96, L2 1.05; N cũ 0.77 vẫn là điểm hiện trên bảng). Yaw ở pha MHT
+của L2b không bị "hụt" (A2h hụt −3° ở frame 50–75, L2 ở 25–50) → pha MHT còn phụ thuộc may rủi.
+
+**Clean Track01/02 – `tools/csm_fuse.py`** (không dùng thông tin bảng điểm): quanh quỹ đạo clean, CSM (tỉ lệ ×0.9, tay đòn
+−0.12 / +0.12, prior 0.5 m) cho độ lệch theo bản đồ mỗi frame; làm mượt có trọng số (độ tương phản) 3 s, bỏ trung bình.
+Tham số đặt trước (không chọn theo bản dò; quét 1.5 / 3 / 6 s và prior 0.5 / 1.0 cho kết quả gần nhau).
+
+| | trước | sau CSM (nộp) | dự đoán từ hiệu với bản dò | bản dò |
+|---|---|---|---|---|
+| Track01 `clean_csm_1` | 0.62 | **0.55** | 0.56 | 0.40 |
+| Track02 `clean_csm_2` | 0.28 | **0.25** | 0.26 | 0.11 |
+
+**Giới hạn độ chính xác của bộ bám không GNSS** (Track01/02 có trợ giúp, frame đang bám): RMS vị trí 0.90–1.06 m với mọi
+thiết lập nhiễu (`--odo-noise 0.05`, `--sigma-match 1.0`, `--csm-kappa 30`) → giới hạn là hình học point cloud LoGeR, không
+phải bộ lọc. Mô hình sai độ sâu theo khoảng cách p' = p(1 + 4c)/(1 + c r): c tốt nhất 0.008 / 0.004 / 0.004 (Track01/02/03),
+tay đòn tại c = 0.004 vẫn khác 0.5 m giữa Track01 và Track02 → hiệu chuẩn dọc chỉ tới ±0.3 m. Point cloud 3 camera của
+Track01/02 là MapAnything (~330 nghìn điểm / frame) – không chạy lại được cho Track03 trên GPU 6 GB của máy này.
+Đầu Track03 (frame 0–150): đỉnh CSM −0.25…−1.0 m dọc (kỳ vọng −0.7), ngang 0…−0.25 m → không có lỗi lớn riêng ở đầu track.
