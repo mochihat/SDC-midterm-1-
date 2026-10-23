@@ -36,7 +36,7 @@ phép** để lên hạng, và người dùng được trình bày chiến thu�
 |---|---|---|---|
 | Bảng điểm (tốt nhất) | **0.40** (`lb_t1_r4`, dò – bằng hạng 1 đội 12) | **0.11** (`lb_t2_r3`, dò – hạng 1; đội 12 0.17) | **0.77** (`t3_vN`, nhân quả – hạng 2; dẫn đầu 0.51) |
 | Clean (pipeline, không dò) | 0.62 (`t6_range20_turn0_1`: GICP tầm 20 m, bỏ khi cua) | 0.28 (`clean_cfz2_tau15`) | = cột trên (Track03 luôn clean) |
-| Ứng viên / trạng thái | vòng 5 dò: 9 file `result/reg/probes/r5/` – người dùng chưa duyệt (họ muốn ưu tiên cải thiện clean) | – | `t3_A2h` đã nộp: public 0.96 (public = ~15 % frame đầu); **mới: `t3_L2.csv`** (tay đòn CSM hiệu chuẩn + bộ lọc tốc độ IMU) chờ duyệt nộp |
+| Ứng viên / trạng thái | vòng 5 dò: 9 file `result/reg/probes/r5/` – người dùng chưa duyệt (họ muốn ưu tiên cải thiện clean) | – | đã nộp `t3_A2h` 0.96, `t3_L2` 1.05 (public = ~15 % frame đầu, không phản ánh private); **ứng viên mới `t3_L2b.csv`** (tay đòn −0.7 theo sai tỉ lệ của chính Track03) – chưa nộp |
 
 Track03 23/10 (`docs/nhat-ky/12-track3-csm-23-10.md`): MHT cũ ghi ngược quỹ đạo (không nhân quả) → đã sửa; lỗi tích phân gyro
 (mất 14 % góc quay) → đã sửa; bản N trôi 13–30 m từ frame ~500 (phần lớn private) → CSM + nhiễu GICP dọc 2 m. Bộ đệm

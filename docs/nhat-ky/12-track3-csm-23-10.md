@@ -100,9 +100,10 @@ còn Track03 giữ 96–99 % → tỉ lệ chấp nhận là chỉ báo bám / l
    tốc độ hướng tâm a_y/ω khi quay > 5°/s, odometry có cổng 3σ. Lý do: trong khúc cua Track03 odometry nhảy 2 ↔ 11 m/s giữa
    các frame, còn a_y/ω mượt (2.2 → 5.9 → 7.3 m/s). Track01/02 có trợ giúp: số lần lạc 49 → 9 / 80 → 33, frame bám 52 → 77 %
    / 38 → 59 %; sai số tốc độ Track01 5.55 → 1.27 m/s RMS.
-3. **Chỗ dừng cuối Track03**: A2h đi 6.2 m từ frame 2900, IMU (tích phân ngược từ lúc dừng, 4 s) chỉ 3.9 m → vượt 2–4 m
-   (likelihood phẳng, độ tương phản 0.10–0.15). L2: dịch chuyển thực 3.40 m (IMU 3.86) từ 2900, 0.54 m (IMU 0.69) từ 2950.
-   CSM cả lúc đứng yên (`--csm-standing`) làm tệ hơn ở chỗ likelihood phẳng → không dùng.
+3. **Chỗ dừng cuối Track03** (likelihood phẳng, độ tương phản 0.10–0.15): IMU (tích phân ngược từ lúc dừng, 4 s) 3.86 m từ
+   frame 2900. **Sửa lại (cùng ngày):** con số 6.2 m của A2h là *tổng độ dài đường đi* (gồm dao động qua lại); dịch chuyển
+   thực là A2h 3.78 m, L2 3.40 m, L2b 3.45 m → cả ba đều khớp IMU, A2h **không** vượt 2–4 m như đã báo. CSM cả lúc đứng yên
+   (`--csm-standing`) kéo vị trí đi ~4 m ở chỗ likelihood phẳng → không dùng.
 
 **Ứng viên mới `t3_L2.csv`** (`bash tools/run_track3.sh`, tất định): chấp nhận 99 %, đỉnh likelihood −1.25 m so với tay đòn
 −1.0 (sai số ±0.23), so với A2h: +0.5–0.65 m dọc ở 900 frame đầu (tay đòn), +1.5 m ở khúc cua. Không trợ giúp, Track01/02
@@ -110,3 +111,21 @@ vẫn lạc (RMSE 31 / 172 m, trước 165 / 393 m) – hai track này odometry 
 
 **Vấn đề còn lại của Track03:** lệch dọc / ngang còn lại ~0.2–0.3 m, yaw ±0.5°; khúc cua (frame 2200–2600) vẫn là chỗ
 yếu nhất; pha MHT (chỉ public); không có đáp án → mọi đánh giá dựa trên bản đồ, IMU và Track01/02.
+
+### 6b. Nộp `t3_L2` (người dùng duyệt): public **1.05** (A2h 0.96, N 0.77) – và vì sao tay đòn −1.0 sai cho Track03
+
+Ở ~15 % frame đầu (phần public) L2 chỉ khác A2h ở chỗ dời lên trước ~+0.55 m (tay đòn mới) – yaw như nhau sau frame 75.
+Không chỉnh theo bảng điểm; tìm lý do vật lý (`scale_check.py` trong scratchpad, CSM score theo hệ số tỉ lệ × lưới dọc/ngang):
+
+| | hệ số tỉ lệ khớp bản đồ nhất | đỉnh dọc ở tỉ lệ 1.0 | đỉnh dọc ở tỉ lệ 0.9 |
+|---|---|---|---|
+| Track01 (pose đáp án) | **×0.90** (IQR 0.875–0.95) | −1.25 m | −0.25 m |
+| Track02 (pose đáp án) | **×0.90** (IQR 0.875–0.95) | −0.88 m | 0.00 m |
+| Track03 (pose A2h) | **×0.95** (IQR 0.925–1.05); ước lượng online ×0.925 | – | – |
+
+→ point cloud LoGeR theo độ cao mặt đường dài hơn thật ~10 % (Track01/02), ~5–7.5 % (Track03); tay đòn −1.0 m chủ yếu là
+hệ quả của sai tỉ lệ (tay đòn thật ≈ −0.12 m). Track03 sai tỉ lệ ít hơn → −1.0 sửa quá tay ≈ 0.4 m – khớp với điểm public.
+Thử sửa tỉ lệ trực tiếp (`--scale-mult`, `--scale-online`, `--scale-freeze`): Track01/02 có trợ giúp tốt hơn (RMS khi bám
+0.95 → 0.78 m, độ lệch ngang 0.50 → 0.31 m) nhưng Track03 mất bám ở khúc cua (chấp nhận 17–58 %) → độ sâu LoGeR sai theo
+khoảng cách, một hệ số chung không đủ. Giữ tỉ lệ 1.0 và đặt tay đòn theo sai tỉ lệ đo trên chính Track03: −0.12 −
+0.88·(sai tỉ lệ / 10 %) ≈ −0.56…−0.78 → **−0.7 (`t3_L2b.csv`, chấp nhận 99 %)**. τ yaw 30 s: khúc cua tệ hơn → giữ 10 s.

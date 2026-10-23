@@ -8,11 +8,15 @@
 #    no map-yaw pull while standing, 11 start yaws +-30 deg) + CSM camera lever -1.0 m along / +0.12 m lateral
 #    (the likelihood peak sits 1.0 m behind the true reference on Track01 AND Track02) + speed from the IMU
 #    (accelerometer, centripetal speed in turns, ZUPT; odometry only as a gated measurement).
-#    Previous submitted version t3_A2h: drop the last two lines of options.
+#    Lever -0.7 ("L2b"): on Track01/02 the clouds are ~10 % too large (best map fit x0.90 at the true poses) and the
+#    CSM peak sits 1.0 m behind the reference; at the right scale it sits at -0.12 m. Track03's own clouds fit best at
+#    x0.925-0.95 (scale_check / online estimate) -> lever -0.56..-0.78 at scale 1.0. Rescaling the clouds instead
+#    (--scale-mult / --scale-online) lost the lock in the Track03 turn, so the scale stays 1.0.
+#    Submitted versions: t3_A2h (drop the last two option lines), t3_L2 (lever -1.0).
 # Same output for any --threads (checked 23/10).
 set -e
 cd "$(dirname "$0")/../.."                      # ~/SDC-midterm01
-OUT=${1:-src/localization/result/track3/t3_L2.csv}
+OUT=${1:-src/localization/result/track3/t3_L2b.csv}
 run() { docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/w" -w /w/midterm01 sdc-reg:latest "$@"; }
 mkdir -p cache
 run python3 tools/cache_ply.py 3 --data /w/data --cache /w/cache
@@ -22,6 +26,6 @@ run python3 tools/track_localize.py 3 --data /w/data --cache /w/cache --init /w/
   --hyp-yaw=-30,-24,-18,-12,-6,0,6,12,18,24,30 \
   --odometry 6 --zupt-acc 0.1 --bias-online 500 \
   --csm-window 15 --csm-kappa 15 --sigma-match-along 2 --hold-yaw-standing \
-  --csm-bias-along -1.0 --csm-bias-lat 0.12 \
+  --csm-bias-along -0.7 --csm-bias-lat 0.12 \
   --speed-filter \
   --out "$OUT" --diag "${OUT%.csv}_diag.csv"

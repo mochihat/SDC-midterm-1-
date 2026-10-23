@@ -246,6 +246,12 @@ def main():
                         "being overwritten by it; the map corrections then also correct the speed")
     p.add_argument("--odo-sigma", default="0.15,0.3", help="odo-filter: velocity noise = a * speed + b (m/s)")
     p.add_argument("--mht-score", default="innovation", choices=["innovation", "csm"])
+    p.add_argument("--scale-mult", type=float, default=1.0, help="start multiplier of the road-height scale")
+    p.add_argument("--scale-online", type=int, default=0, help="re-estimate the multiplier every N frames (0 = off)")
+    p.add_argument("--scale-grid", default="0.80,1.10,0.025", help="lo,hi,step of the multipliers tried")
+    p.add_argument("--scale-window", type=int, default=40)
+    p.add_argument("--scale-freeze", type=int, default=0, help="stop re-estimating after this frame (0 = never)")
+    p.add_argument("--scale-min-count", type=int, default=10)
     p.add_argument("--speed-filter", action="store_true",
                    help="motion from an IMU speed filter (SpeedFilter) along the yaw instead of the raw odometry step")
     p.add_argument("--speed-b0", type=float, default=-0.85, help="m/s^2, start value of the x-axis gravity / bias")
@@ -267,6 +273,8 @@ def main():
     p.add_argument("--hyp-prior", type=float, default=15.0, help="deg, sigma of the start-yaw error prior")
     a = p.parse_args()
 
+    lo_, hi_, st_ = (float(v) for v in a.scale_grid.split(","))
+    a.scale_grid_values = [float(v) for v in np.arange(lo_, hi_ + 1e-9, st_)]
     if a.reset_ref and a.track == 3:
         sys.exit("--reset-ref uses the answer: validation on Track01/02 only, never Track03")
     reset_ref = np.loadtxt(a.reset_ref, delimiter=",", skiprows=1) if a.reset_ref else None
@@ -338,6 +346,8 @@ def main():
     gi = int(np.searchsorted(gt, ft[0], side="right"))
     t_int = ft[0]
     out_rows = []        # causal output: one row per frame, written when the frame is processed
+    m_est, m_hist = a.scale_mult, []
+    scale_rng = np.random.default_rng(1)
     for k, (_, ts, path) in enumerate(frames):
         if cache is not None:
             i0, n_ = int(cache[1][k, 0]), int(cache[1][k, 1])
@@ -347,12 +357,14 @@ def main():
             xyz = read_ply_xyz(path)
             hist_h.append(ground_height(xyz))
         h = np.median(hist_h[-a.ground_window:])
-        s = a.ground_height / h
+        s_base = a.ground_height / h
+        s = s_base * m_est
+        raw_full = xyz
         xyz = xyz[np.linalg.norm(xyz, axis=1) <= a.max_range / s] * s
         src, _ = small_gicp.preprocess_points(xyz, downsampling_resolution=0.5, num_neighbors=20, num_threads=a.threads)
         if field is not None:
             full = (np.asarray(cache[0][i0:i0 + n_], dtype=np.float64) if cache is not None else read_ply_xyz(path)) * s
-            csx, csy = above_road(full, a.mount_pitch, a.ground_height, h_lo, h_hi, 1.0, a.csm_range)
+            csx, csy = above_road(full, a.mount_pitch, a.ground_height * m_est, h_lo, h_hi, 1.0, a.csm_range)
             if len(csx) > a.csm_points:
                 pick = csm_rng.choice(len(csx), a.csm_points, replace=False)
                 csx, csy = csx[pick], csy[pick]
@@ -510,7 +522,7 @@ def main():
                             res.error / max(res.num_inliers, 1), float(np.hypot(*innov)),
                             float(np.degrees(wrap(gy - hy.yaw))), odo_step[0], odo_step[1], len(hyps),
                             float(np.degrees(gyro_sum)), float(np.degrees(hy.pull)), int(standing), int(turning),
-                            csm_info[0], csm_info[1], csm_info[2], v_spf))
+                            csm_info[0], csm_info[1], csm_info[2], v_spf, m_est))
         if reset_ref is not None and len(hyps) == 1 and k < len(reset_ref):
             hy = hyps[0]
             if np.hypot(hy.x[0] - reset_ref[k, 1], hy.x[1] - reset_ref[k, 2]) > a.reset_dist:
@@ -520,6 +532,37 @@ def main():
                 n_reset += 1
                 hy.rows[-1] = hy.rows[-1][:4] + (-1,) + hy.rows[-1][5:]     # ok = -1 marks a reset frame
         cur = min(hyps, key=lambda h_: np.mean(h_.score))
+        if (a.scale_online and field is not None and k % a.scale_online == 0 and len(hyps) == 1 and not standing
+                and (a.scale_freeze <= 0 or k < a.scale_freeze)
+                and cur.rows[-1][4] == 1 and np.hypot(cur.x[2], cur.x[3]) > 2.0):
+            # online scale of the LoGeR cloud (23/10): the road-height scale makes the clouds ~10 % too large on
+            # Track01/02 (best map fit x0.90 at the true poses) and ~5 % on Track03 -> the multiplier that fits the
+            # map best (CSM score maximised over a small along / lateral grid), median of the recent frames
+            ch, sh = np.cos(cur.yaw), np.sin(cur.yaw)
+            cyc, syc = np.cos(cur.yaw + yaw_off), np.sin(cur.yaw + yaw_off)
+            ba = a.bias_along if a.csm_bias_along is None else a.csm_bias_along
+            bl = a.bias_lat if a.csm_bias_lat is None else a.csm_bias_lat
+            gda, gdl = [g.ravel() for g in np.meshgrid(np.arange(-2, 2.01, 0.25), np.arange(-1, 1.01, 0.25),
+                                                        indexing="ij")]
+            ox = cur.x[0] + (ba + gda) * ch - (bl + gdl) * sh
+            oy = cur.x[1] + (ba + gda) * sh + (bl + gdl) * ch
+            best = []
+            for r in a.scale_grid_values:
+                sx_, sy_ = above_road(raw_full * s_base * r, a.mount_pitch, a.ground_height * r, h_lo, h_hi, 1.0,
+                                      a.csm_range)
+                if len(sx_) < 30:
+                    best = []
+                    break
+                if len(sx_) > a.csm_points:
+                    pk = scale_rng.choice(len(sx_), a.csm_points, replace=False)
+                    sx_, sy_ = sx_[pk], sy_[pk]
+                sc_ = field_score(field, ox[:, None] + (cyc * sx_ - syc * sy_)[None, :],
+                                  oy[:, None] + (syc * sx_ + cyc * sy_)[None, :])
+                best.append(float(sc_.max()))
+            if best and max(best) - np.median(best) > 0.01:
+                m_hist.append(a.scale_grid_values[int(np.argmax(best))])
+                if len(m_hist) >= a.scale_min_count:
+                    m_est = float(np.median(m_hist[-a.scale_window:]))
         if a.mht_output == "mean" and len(hyps) > 1:
             # posterior over the hypotheses: prior on the start-yaw error x likelihood exp(-sum of capped innovation^2 / 2)
             lw = np.array([-0.5 * np.sum(h_.score) - 0.5 * (np.degrees(h_.offset) / a.hyp_prior) ** 2 for h_ in hyps])
@@ -549,16 +592,17 @@ def main():
             f.write(f"{r[0]},{r[1]:.6f},{r[2]:.6f},{r[3]:.6f}\n")
     print(f"wrote {a.out}: accepted {np.mean([r[4] for r in rows]):.0%} of frames"
           + (f", standing {n_standing} frames, gyro bias {np.degrees(bias):+.3f} deg/s" if a.zupt_acc > 0 else "")
-          + (f", {n_reset} resets to the reference" if reset_ref is not None else ""),
+          + (f", {n_reset} resets to the reference" if reset_ref is not None else "")
+          + (f", scale multiplier {m_est:.3f} ({len(m_hist)} estimates)" if a.scale_online else ""),
           flush=True)
     if a.diag:
         with open(a.diag, "w") as f:
             f.write("idx,x,y,yaw,ok,d,inliers,err_per_inlier,innov_m,dyaw_deg,odo_fwd,odo_lat,hyps,gyro_sum_deg,"
-                    "pull_deg,standing,turning,csm_shift_along,csm_sd_along,csm_contrast,v_imu\n")
+                    "pull_deg,standing,turning,csm_shift_along,csm_sd_along,csm_contrast,v_imu,scale_mult\n")
             for r in rows:
                 f.write(f"{r[0]},{r[1]:.4f},{r[2]:.4f},{r[3]:.6f},{r[4]},{r[5]:.3f},{r[6]},{r[7]:.5f},{r[8]:.3f},"
                         f"{r[9]:.2f},{r[10]:.4f},{r[11]:.4f},{r[12]},{r[13]:.3f},{r[14]:.3f},{r[15]},{r[16]},"
-                        f"{r[17]:.3f},{r[18]:.3f},{r[19]:.3f},{r[20]:.3f}\n")
+                        f"{r[17]:.3f},{r[18]:.3f},{r[19]:.3f},{r[20]:.3f},{r[21]:.4f}\n")
     if a.pose_check:
         ref = np.loadtxt(a.pose_check, delimiter=",", skiprows=1)
         out = np.array([[r[1], r[2], r[3]] for r in rows])
