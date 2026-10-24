@@ -28,6 +28,9 @@ def main():
     p.add_argument("meas")
     p.add_argument("out")
     p.add_argument("--kappa", type=float, default=40.0)
+    p.add_argument("--kappa-side", type=float, default=0.0,
+                   help="weight of the side-camera volume (vol_side of paint_measure.py --side --separate; 0 = unused)")
+    p.add_argument("--meas-side", help="file with vol_side (default: MEAS); its search grid must be MEAS's")
     p.add_argument("--q-along", type=float, default=0.03, help="m per frame")
     p.add_argument("--q-lat", type=float, default=0.02, help="m per frame")
     p.add_argument("--q-yaw", type=float, default=0.02, help="deg per frame")
@@ -66,6 +69,7 @@ def main():
     a = p.parse_args()
     prior = np.loadtxt(a.prior, delimiter=",", skiprows=1)
     pm = fi = None
+    vol_side = None
     if a.online:
         import os
         import sys
@@ -84,6 +88,10 @@ def main():
     else:
         z = np.load(a.meas)
         vol, yaws, res, na, nl = z["vol"], np.radians(z["yaws"]), float(z["res"]), int(z["na"]), int(z["nl"])
+        zs = np.load(a.meas_side) if a.meas_side else z
+        vol_side = zs["vol_side"] if ("vol_side" in zs.files and a.kappa_side > 0) else None
+        if vol_side is not None and (vol_side.shape != vol.shape or not np.allclose(zs["prior"], z["prior"])):
+            raise SystemExit("side volumes: other search grid or other window centres than MEAS")
         if len(vol) != len(prior):
             raise SystemExit(f"{len(prior)} prior rows, {len(vol)} measurement frames")
     da = (np.arange(2 * na + 1) - na) * res
@@ -124,8 +132,19 @@ def main():
                  else np.full((len(yaws), 2 * na + 1, 2 * nl + 1), -1.0))
         else:
             v = vol[k].astype(np.float64)
+        vs = vol_side[k].astype(np.float64) if vol_side is not None else None
+        ws = 0.0
+        if vs is not None and vs.max() > -0.5 and float(vs.max() - np.median(vs)) >= a.min_contrast:
+            ws = a.kappa_side / max(a.kappa, 1e-9)       # side-camera evidence, in units of the front kappa
         if v.max() > -0.5:
             contrast = float(v.max() - np.median(v))
+        if vs is not None and ws > 0:
+            # front + side evidence as one log-likelihood in units of kappa: v <- v_front + ws * v_side
+            if v.max() > -0.5 and contrast >= a.min_contrast:
+                v = v + ws * vs
+            else:
+                v = ws * vs
+            contrast = max(contrast, float(v.max() - np.median(v)))
         if a.kappa_motion > 0 and a.kappa_time > 0 and contrast >= a.time_contrast:
             kap = max(kap, kap_t)
         if contrast >= a.min_contrast and kap > 0:

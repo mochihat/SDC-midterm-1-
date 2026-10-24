@@ -33,7 +33,7 @@ fi
 [ -f $C/paint_map.npz ] || run python3 tools/paint_map.py 3 "$PRIOR" /w/$C/paint_map.npz
 # passes 2..: the search windows of frame k centred on the previous pass's pose at k (causal: that pose uses frames
 # <= k); the filter state still is the error of the prior (Z3a). Pass 1 = t3_PA2 (public 0.49).
-FUSE="--kappa 20 --kappa-motion 0.3 --sd-floor 0.3,0.15 --lever-along 0 --lever-lat -0.10 ${FUSE_EXTRA:-}"
+FUSE="${FUSE:---kappa 20 --kappa-motion 0.3 --sd-floor 0.3,0.15 --lever-along 0 --lever-lat -0.10} ${FUSE_EXTRA:-}"
 PASSES=${PASSES:-1}
 CEN="$PRIOR"
 for i in $(seq 1 $PASSES); do

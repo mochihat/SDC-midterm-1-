@@ -81,6 +81,58 @@ class Camera:
         return u, v - self.row0, ok
 
 
+def read_extrinsics(track, data="/w/data"):
+    """T_front_front_left / T_front_front_right (4x4, points of the side camera -> front camera frame) of
+    camera_info/lucid_camera_extrinsics.yaml"""
+    txt = open(os.path.join(data, f"Track{track}", f"Track{track}_images", "camera_info",
+                            "lucid_camera_extrinsics.yaml")).read()
+    out = {}
+    for key, cam in (("T_front_front_left:", "fl"), ("T_front_front_right:", "fr")):
+        i = txt.index(key)
+        j = txt.index("matrix:", i)
+        rows = []
+        for line in txt[j:].splitlines()[1:5]:
+            rows.append([float(v) for v in line.strip().lstrip("-").strip().strip("[]").split(",")])
+        out[cam] = np.array(rows)
+    return out
+
+
+class SideCamera:
+    """front-left / front-right camera: rigidly attached to the front camera (T_front_side of the extrinsics yaml), so
+    it follows the front camera's mounting / pitch candidates; images stored at 'scale' (full-resolution crop rows)"""
+
+    def __init__(self, track, base, T_front_side, name, data="/w/data", row0=0, rows=None, scale=1.0, min_side=1.5):
+        d = os.path.join(data, f"Track{track}", f"Track{track}_images", "camera_info")
+        K, D, w, h = read_camera_yaml(os.path.join(d, f"{name}_camera_info.yaml"))
+        self.K, self.D, self.w, self.full_h = K, D, w, h
+        self.row0, self.rows = row0, (h - row0 if rows is None else rows)
+        self.scale, self.base = scale, base
+        self.R_rel, self.t_rel = T_front_side[:3, :3], T_front_side[:3, 3]
+        self.min_side = min_side
+
+    def project(self, Pv):
+        R = self.base.R_vc @ self.R_rel
+        t = np.array([self.base.lx, self.base.ly, self.base.height]) + self.base.R_vc @ self.t_rel
+        Pc = (Pv - t) @ R
+        u, v, ok = fisheye(Pc, self.K, self.D)
+        ok &= (u >= 0) & (u <= self.w - 1) & (v >= self.row0) & (v <= self.row0 + self.rows - 1)
+        ok &= np.abs(Pv[:, 1]) >= self.min_side                        # the car's own side
+        us, vs = u * self.scale, (v - self.row0) * self.scale
+        return us, vs, ok
+
+
+def fisheye(Pc, K, D):
+    """OpenCV fisheye projection of camera-frame points -> full-resolution (u, v), in front of the camera"""
+    x, y, z = Pc[:, 0], Pc[:, 1], Pc[:, 2]
+    r = np.hypot(x, y)
+    th = np.arctan2(r, z)
+    th2 = th * th
+    k1, k2, k3, k4 = D
+    thd = th * (1 + k1 * th2 + k2 * th2 ** 2 + k3 * th2 ** 3 + k4 * th2 ** 4)
+    sc = np.where(r > 1e-9, thd / np.maximum(r, 1e-9), 0.0)
+    return K[0, 0] * sc * x + K[0, 2], K[1, 1] * sc * y + K[1, 2], z > 0.5
+
+
 def load_mask(cache, track):
     """hood mask (camera_info/gige_100_f_hdr_mask.png, converted by tools/paint_images.py): True = usable"""
     m = np.fromfile(os.path.join(cache, f"Track{track}", "img", "f_mask.raw"), np.uint8).reshape(928, 1440)
@@ -88,13 +140,16 @@ def load_mask(cache, track):
 
 
 class FrameImages:
-    """grey front-camera images (crop rows row0..row0+rows) of tools/paint_images.py; frame k -> array or None"""
+    """grey camera images (full-resolution crop rows row0..row0+rows, stored at 'scale') decoded by
+    tools/run_track3_paint.sh; frame k -> array or None (frames before the stream's first key frame)"""
 
-    def __init__(self, cache, track):
+    def __init__(self, cache, track, cam="f"):
         d = os.path.join(cache, f"Track{track}", "img")
-        meta = json.load(open(os.path.join(d, "f_gray.json")))
+        meta = json.load(open(os.path.join(d, f"{cam}_gray.json")))
         self.row0, self.rows, self.width, self.first = meta["row0"], meta["rows"], meta["width"], meta["first_frame"]
-        self.raw = np.memmap(os.path.join(d, meta["file"]), np.uint8, "r").reshape(-1, self.rows, self.width)
+        self.scale = float(meta.get("scale", 1.0))
+        h, w = int(round(self.rows * self.scale)), int(round(self.width * self.scale))
+        self.raw = np.memmap(os.path.join(d, meta["file"]), np.uint8, "r").reshape(-1, h, w)
 
     def get(self, k):
         j = k - self.first
@@ -279,7 +334,8 @@ class PaintMatcher:
     (FFT, scipy.signal.fftconvolve), yaw candidates and camera pitch candidates (the car pitches with acceleration)"""
 
     def __init__(self, mp, paint, cam, along=(5.0, 18.0), lat=(-7.0, 7.0), res=0.1, s_along=2.0, s_lat=1.0,
-                 yaws=np.arange(-1.5, 1.51, 0.25), pitches=(0.0,), paint_size=0.7, min_seen=2000, q_level=70.0):
+                 yaws=np.arange(-1.5, 1.51, 0.25), pitches=(0.0,), paint_size=0.7, min_seen=2000, q_level=70.0,
+                 extra=(), front_min_along=None, norm=0.0):
         from scipy.signal import fftconvolve
         self.fftconvolve = fftconvolve
         self.mp, self.paint, self.cam, self.res = mp, paint, cam, res
@@ -293,30 +349,65 @@ class PaintMatcher:
         self.k = max(3, int(round(paint_size / res)) | 1)
         self.min_seen = min_seen
         self.q_level = q_level
+        # cameras with their regions of the BEV grid (front: along >= front_min_along; extra side cameras: their
+        # (camera, region mask) pairs, e.g. the near left / right road beside the car)
+        fr = np.ones(self.A.shape, bool) if front_min_along is None else self.A >= front_min_along
+        self.cams = [(cam, fr)] + [(c, r) for c, r in extra]
+        self.norm = norm          # > 0: paint / this grey level for every camera (no per-camera percentile scaling)
 
-    def camera_paint(self, img, x, y, yaw):
-        """camera paint for every pitch candidate: (zero-mean paint on the seen cells / 0 elsewhere, seen mask)"""
+    def camera_paint_parts(self, img, x, y, yaw):
+        """per pitch candidate, per camera of self.cams: (paint on its seen cells / 0 elsewhere, seen mask). img: the
+        front image, or a list with one image (or None) per camera; each camera's paint is normalised on its region"""
+        imgs = img if isinstance(img, (list, tuple)) else [img]
         out = []
-        p0 = self.cam.pitch
+        base = self.cam
+        p0 = base.pitch
         plane = ground_frame(self.mp, x, y, yaw)
         for dp in self.pitches:
-            self.cam.set_mount(self.cam.lx, self.cam.ly, self.cam.height, p0 + dp, self.cam.roll, self.cam.yaw)
-            b, _ = bev(img, self.cam, self.mp, x, y, yaw, self.A, self.L, plane)
-            seen = np.isfinite(b)
-            th = camera_paint_image(b, seen, self.k, self.q_level) if self.q_level > 0 else white_tophat(b, self.k, seen)
-            if seen.sum() >= self.min_seen:
-                q = np.percentile(th[seen], 99.5)
-                th = np.clip(th / max(q, 1.0), 0, 1)
-            out.append((th, seen))
-        self.cam.set_mount(self.cam.lx, self.cam.ly, self.cam.height, p0, self.cam.roll, self.cam.yaw)
+            base.set_mount(base.lx, base.ly, base.height, p0 + dp, base.roll, base.yaw)
+            parts = []
+            for (cam, region), im in zip(self.cams, imgs):
+                th = np.zeros(self.A.shape)
+                seen = np.zeros(self.A.shape, bool)
+                if im is not None:
+                    b, _ = bev(im, cam, self.mp, x, y, yaw, self.A, self.L, plane)
+                    b[~region] = np.nan
+                    sn = np.isfinite(b)
+                    if sn.sum() >= 200:
+                        t = (camera_paint_image(b, sn, self.k, self.q_level) if self.q_level > 0
+                             else white_tophat(b, self.k, sn))
+                        q = self.norm if self.norm > 0 else np.percentile(t[sn], 99.5)
+                        th = np.where(sn, np.clip(t / max(q, 1.0), 0, 1), 0.0)
+                        seen = sn
+                parts.append((th, seen))
+            out.append(parts)
+        base.set_mount(base.lx, base.ly, base.height, p0, base.roll, base.yaw)
         return out
 
-    def ncc_volume(self, img, x, y, yaw):
-        """NCC volume (pitch, yaw, along shift, lateral shift). One 'seen' mask (cells seen at every pitch) for all
-        candidates, so the map window statistics are per yaw only; FFTs of the camera paint per pitch and of the map
-        per yaw are shared (scipy.fft)"""
+    def camera_paint(self, img, x, y, yaw, group=None):
+        """camera paint for every pitch candidate: (paint, seen mask) of the cameras in group (default: all)"""
+        parts = self.camera_paint_parts(img, x, y, yaw)
+        g = range(len(self.cams)) if group is None else group
+        return [(sum(pp[i][0] for i in g), np.logical_or.reduce([pp[i][1] for i in g])) for pp in parts]
+
+    def ncc_volume(self, img, x, y, yaw, groups=None):
+        """NCC volume (pitch, yaw, along shift, lateral shift) of all cameras together, or (groups = lists of camera
+        indices) one volume per group - e.g. [[0], [1, 2]]: front and side cameras as separate measurements"""
+        parts = self.camera_paint_parts(img, x, y, yaw)
+        single = groups is None
+        if single:
+            groups = [list(range(len(self.cams)))]
+        vols = []
+        for g in groups:
+            cams = [(sum(pp[i][0] for i in g), np.logical_or.reduce([pp[i][1] for i in g])) for pp in parts]
+            vols.append(self._volume(cams, x, y, yaw))
+        return vols[0] if single else vols
+
+    def _volume(self, cams, x, y, yaw):
+        """masked zero-mean NCC of the per-pitch camera paints (cams: [(paint, seen)] per pitch) with the map paint. One
+        'seen' mask (cells seen at every pitch) for all candidates, so the map window statistics are per yaw only;
+        FFTs of the camera paint per pitch and of the map per yaw are shared (scipy.fft)"""
         from scipy import fft as sfft
-        cams = self.camera_paint(img, x, y, yaw)
         seen = np.logical_and.reduce([sn for _, sn in cams])
         n = int(seen.sum())
         P, Y = len(self.pitches), len(self.yaws)
