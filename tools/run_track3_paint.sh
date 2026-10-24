@@ -7,7 +7,8 @@
 # 3. tools/paint_map.py: road surface + paint rasters of map.pcd (corridor of 30 m around the prior: for frame k only
 #    the map within ~25 m of the prior's pose at k is used, so the crop changes nothing)
 # 4. tools/paint_measure.py: per frame k, image k matched to the map paint around the prior's pose at k
-# 5. tools/paint_fuse.py: causal Kalman filter on the prior's error (frames <= k)
+# 5. tools/paint_fuse.py: causal Kalman filter on the prior's error (frames <= k); PASSES=N repeats 4-5 with the
+#    search windows centred on the previous pass (Z3a errors beyond the +-2 / +-1.5 m windows in the turn / at the end)
 # Parameters: camera pitch 1.0 / yaw -1.5 deg (calibrated on Track01 + Track02 at their reference poses), kappa 20,
 # kappa scaled by motion (0.3 m), sd floor 0.3 / 0.15 m, lateral lever -0.10 m (Track02 calibration).
 # Public scores 24/10: lever -0.25 -> 0.56 (t3_PA1), -0.10 -> 0.49 (t3_PA2), floor 0.5/0.25 -> 0.55 (t3_PA3); Z3a 0.80.
@@ -30,6 +31,15 @@ if [ ! -f $C/img/f_gray.json ]; then
     > $C/img/f_gray.json
 fi
 [ -f $C/paint_map.npz ] || run python3 tools/paint_map.py 3 "$PRIOR" /w/$C/paint_map.npz
-run python3 tools/paint_measure.py 3 "$PRIOR" /w/$C/paint/meas_prior.npz --cache /w/$CR --procs 10
-run python3 tools/paint_fuse.py "$PRIOR" /w/$C/paint/meas_prior.npz "$OUT" --kappa 20 --kappa-motion 0.3 \
-  --sd-floor 0.3,0.15 --lever-along 0 --lever-lat -0.10 --diag "${OUT%.csv}_diag.csv"
+# passes 2..: the search windows of frame k centred on the previous pass's pose at k (causal: that pose uses frames
+# <= k); the filter state still is the error of the prior (Z3a). Pass 1 = t3_PA2 (public 0.49).
+FUSE="--kappa 20 --kappa-motion 0.3 --sd-floor 0.3,0.15 --lever-along 0 --lever-lat -0.10 ${FUSE_EXTRA:-}"
+PASSES=${PASSES:-1}
+CEN="$PRIOR"
+for i in $(seq 1 $PASSES); do
+  if [ $i -lt $PASSES ]; then P_OUT=src/localization/result/track3/paint_pass$i.csv; else P_OUT="$OUT"; fi
+  run python3 tools/paint_measure.py 3 "$CEN" /w/$C/paint/meas_pass$i.npz --cache /w/$CR --procs 10
+  run python3 tools/paint_fuse.py "$PRIOR" /w/$C/paint/meas_pass$i.npz "$P_OUT" --center "$CEN" $FUSE \
+    --diag "${P_OUT%.csv}_diag.csv"
+  CEN="$P_OUT"
+done

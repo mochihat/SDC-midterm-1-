@@ -41,18 +41,56 @@ def main():
                    help="m: kappa x min(1, prior step / this) - frames of one view (standing) are one measurement, "
                         "not hundreds (0 = off)")
     p.add_argument("--sd-floor", default="0,0", help="m: along, lateral sd floor of the posterior")
+    p.add_argument("--kappa-time", type=float, default=0.0,
+                   help="s: with --kappa-motion, a frame weighs at least frame time / this (standing: a static view "
+                        "still pulls the pose to it, slowly; 0 = off)")
+    p.add_argument("--time-contrast", type=float, default=0.2,
+                   help="--kappa-time applies only when the contrast is at least this")
+    p.add_argument("--center", help="poses the volumes were computed around (default: the prior; a causal earlier pass "
+                                    "re-centres the search windows on a better estimate of frame k)")
+    p.add_argument("--online", type=int, default=0,
+                   help="TRACK: compute each frame's volume here, around the filter's prediction prior + e (MEAS is "
+                        "then ignored; matcher settings as tools/paint_measure.py defaults / --m-* options)")
+    p.add_argument("--data", default="/w/data")
+    p.add_argument("--cache", default="/w/cache")
+    p.add_argument("--m-pitch", type=float, default=1.0)
+    p.add_argument("--m-camyaw", type=float, default=-1.5)
+    p.add_argument("--m-sa", type=float, default=2.0)
+    p.add_argument("--m-sl", type=float, default=1.5)
+    p.add_argument("--m-yaws", default="-1.5,1.5,0.25")
+    p.add_argument("--m-pitches", default="-0.5,0.5,0.25")
+    p.add_argument("--m-along", default="5,18")
+    p.add_argument("--m-lat", default="-7,7")
     p.add_argument("--ref", help="VALIDATION ONLY (Track01/02): reference CSV, prints errors")
     p.add_argument("--diag")
     a = p.parse_args()
     prior = np.loadtxt(a.prior, delimiter=",", skiprows=1)
-    z = np.load(a.meas)
-    vol, yaws, res, na, nl = z["vol"], np.radians(z["yaws"]), float(z["res"]), int(z["na"]), int(z["nl"])
-    if len(vol) != len(prior):
-        raise SystemExit(f"{len(prior)} prior rows, {len(vol)} measurement frames")
+    pm = fi = None
+    if a.online:
+        import os
+        import sys
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from paint_bev import Camera, FrameImages, MapPaint, PaintMatcher, load_mask
+        from paint_measure import rng
+        mp = MapPaint.load(os.path.join(a.cache, f"Track{a.online}", "paint_map.npz"))
+        paint = np.load(os.path.join(a.cache, f"Track{a.online}", "paint_th.npy"))
+        fi = FrameImages(a.cache, a.online)
+        cam = Camera(a.online, data=a.data, row0=fi.row0, rows=fi.rows, mask=load_mask(a.cache, a.online),
+                     pitch=a.m_pitch, yaw=a.m_camyaw)
+        pm = PaintMatcher(mp, paint, cam, along=tuple(float(v) for v in a.m_along.split(",")),
+                          lat=tuple(float(v) for v in a.m_lat.split(",")), s_along=a.m_sa, s_lat=a.m_sl,
+                          yaws=rng(a.m_yaws), pitches=rng(a.m_pitches))
+        vol, yaws, res, na, nl = None, np.radians(pm.yaws), pm.res, pm.na, pm.nl
+    else:
+        z = np.load(a.meas)
+        vol, yaws, res, na, nl = z["vol"], np.radians(z["yaws"]), float(z["res"]), int(z["na"]), int(z["nl"])
+        if len(vol) != len(prior):
+            raise SystemExit(f"{len(prior)} prior rows, {len(vol)} measurement frames")
     da = (np.arange(2 * na + 1) - na) * res
     dl = (np.arange(2 * nl + 1) - nl) * res
     DA, DL = np.meshgrid(da, dl, indexing="ij")
     iy0 = int(np.argmin(np.abs(yaws)))
+    center = np.loadtxt(a.center, delimiter=",", skiprows=1) if a.center else prior.copy()
     sd0 = [float(v) for v in a.p0.split(",")]
     e = np.zeros(3)
     P = None
@@ -77,13 +115,26 @@ def main():
         if a.kappa_motion > 0:
             st = np.hypot(*(prior[k, 1:3] - prior[k - 1, 1:3])) if k else 0.0
             kap = a.kappa * min(1.0, st / a.kappa_motion)
-        v = vol[k].astype(np.float64)
+            kap_t = a.kappa * (1 / 27.8) / a.kappa_time if a.kappa_time > 0 else 0.0
+        if pm is not None:
+            # online: the search window around the filter's prediction (causal: e holds frames < k)
+            center[k, 1:4] = (x + e[0], y + e[1], wrap(yaw + (e[2] if a.yaw_mode == "paint" else 0.0)))
+            img = fi.get(k)
+            v = (pm.ncc_volume(img, *center[k, 1:4]).max(axis=0) if img is not None
+                 else np.full((len(yaws), 2 * na + 1, 2 * nl + 1), -1.0))
+        else:
+            v = vol[k].astype(np.float64)
         if v.max() > -0.5:
             contrast = float(v.max() - np.median(v))
+        if a.kappa_motion > 0 and a.kappa_time > 0 and contrast >= a.time_contrast:
+            kap = max(kap, kap_t)
         if contrast >= a.min_contrast and kap > 0:
             if a.yaw_mode == "fixed":
                 # 2-D posterior on the along / lateral grid at the prior yaw (+ the current yaw error estimate = 0)
-                g = np.stack([DA.ravel() * c - DL.ravel() * s, DA.ravel() * s + DL.ravel() * c], axis=1)
+                xc, yc, ywc = center[k, 1:4]
+                cc_, sc_ = np.cos(ywc), np.sin(ywc)
+                g = np.stack([xc - x + DA.ravel() * cc_ - DL.ravel() * sc_, yc - y + DA.ravel() * sc_ + DL.ravel() * cc_],
+                             axis=1)
                 Pi = np.linalg.inv(P[:2, :2])
                 d = g - e[:2]
                 lp = kap * v[iy0].ravel() - 0.5 * np.einsum("ni,ij,nj->n", d, Pi, d)
@@ -96,10 +147,11 @@ def main():
             else:
                 gs, ls = [], []
                 Pi = np.linalg.inv(P)
+                xc, yc, ywc = center[k, 1:4]
                 for iy_, dyw in enumerate(yaws):
-                    cy, sy = np.cos(yaw + dyw), np.sin(yaw + dyw)
-                    g = np.stack([DA.ravel() * cy - DL.ravel() * sy, DA.ravel() * sy + DL.ravel() * cy,
-                                  np.full(DA.size, dyw)], axis=1)
+                    cy, sy = np.cos(ywc + dyw), np.sin(ywc + dyw)
+                    g = np.stack([xc - x + DA.ravel() * cy - DL.ravel() * sy, yc - y + DA.ravel() * sy + DL.ravel() * cy,
+                                  np.full(DA.size, wrap(ywc - yaw) + dyw)], axis=1)
                     gs.append(g)
                     ls.append(kap * v[iy_].ravel())
                 g = np.concatenate(gs)
