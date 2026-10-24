@@ -221,6 +221,8 @@ class Hypothesis:
         self.dist = 0.0
         self.pull = 0.0      # accumulated map-yaw correction (diagnostics)
         self.offset = yaw_off
+        self.n_yaw = 0       # accepted map-yaw updates (--yaw-rls)
+        self.d_yaw = 0.0     # m travelled over the accepted map-yaw updates (--yaw-rls-dist)
 
 
 def main():
@@ -328,6 +330,10 @@ def main():
                    help="m, GICP noise along the heading (0 = --sigma-match): LoGeR GICP slides along the road")
     p.add_argument("--mht-output", default="best", choices=["best", "mean"],
                    help="before the hypotheses are pruned: the best one, or the posterior mean (prior --hyp-prior)")
+    p.add_argument("--yaw-rls", type=float, default=0.0,
+                   help="prior count N0: the map-yaw gain is at least 1 / (n + N0) after n accepted matches (0 = off)")
+    p.add_argument("--yaw-rls-dist", type=float, default=0.0,
+                   help="m, prior distance D0: the map-yaw gain is at least ds / (D + D0), D = m travelled (0 = off)")
     p.add_argument("--hyp-prior", type=float, default=15.0, help="deg, sigma of the start-yaw error prior")
     a = p.parse_args()
 
@@ -590,7 +596,19 @@ def main():
                 if dt and not turning and not (standing and a.hold_yaw_standing):
                     start_phase = len(hyps) > 1 or ft[k] - ft[0] < a.tau_yaw_start_time
                     tau = a.tau_yaw_start if (a.tau_yaw_start > 0 and start_phase) else a.tau_yaw
-                    corr = (1 - np.exp(-dt / tau)) * wrap(gy - hy.yaw)
+                    gain = 1 - np.exp(-dt / tau)
+                    if a.yaw_rls > 0:
+                        # running mean of (map yaw - gyro yaw) while few matches are in: the offset of a start
+                        # hypothesis is learnt in ~1 s instead of decaying with tau (Track01: -2..-3 deg for 200 frames)
+                        gain = max(gain, 1.0 / (hy.n_yaw + a.yaw_rls))
+                    hy.n_yaw += 1
+                    if a.yaw_rls_dist > 0:
+                        # the same running mean, weighted by the distance travelled: the map-yaw errors come with the
+                        # scene, so frames of one view (standing / creeping) count once (Track02 start, 13 s standing)
+                        ds = float(np.hypot(*(hy.x[2:] * dt)))
+                        hy.d_yaw += ds
+                        gain = max(gain, ds / (hy.d_yaw + a.yaw_rls_dist))
+                    corr = gain * wrap(gy - hy.yaw)
                     hy.yaw = wrap(hy.yaw + corr)
                     hy.pull += corr
                 hy.T[:3, :3] = T[:3, :3]
