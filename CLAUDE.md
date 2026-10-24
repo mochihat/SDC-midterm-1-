@@ -3,17 +3,24 @@
 File này dành cho bất kỳ phiên Claude nào (hoặc người) tiếp nhận dự án: đọc xong là biết đang ở đâu, luật là gì,
 làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việt). Cách chạy: `docs/HUONG-DAN-CHAY.md`.
 
-## 0. Bàn giao nhanh (24/10/2026 02:45) – phiên mới đọc mục này trước
+## 0. Bàn giao nhanh (24/10/2026 21:45) – phiên mới đọc mục này trước
 
-- Bảng điểm: Track01 **hạng 1** 0.36 (`lb_t1_r5`, dò), Track02 **hạng 1** 0.11 (`lb_t2_r3`, dò), Track03 hạng 3 0.77 (`t3_full_N`,
-  MHT không nhân quả – KHÔNG dùng làm bài cuối). Clean: Track01 0.51 (`clean_mapyaw_1`), Track02 0.24 (`reg/t2v/t2v_tsm10`),
-  Track03 public 0.80 (`t3_X3f` / `t3_Z3a`); bài cuối Track03 đề xuất **`t3_Z3a`** (`tools/run_track3.sh`), người dùng tự chọn trên Kaggle.
-- Toàn bộ quá trình (trung thực, có sai lầm / mẹo): `docs/report/bao_cao_trung_thuc.pdf`; chi tiết mới nhất: `docs/nhat-ky/12-track3-csm-23-10.md` §8–12.
-- Quy tắc làm việc với người dùng: **mỗi đợt nộp Kaggle phải được người dùng duyệt rõ ràng ("cho phép nộp" + danh sách file)**;
-  người dùng dặn 24/10: 8 giờ sáng (reset lượt) **đừng nộp vội**; hàng đợi bot `~/kaggle-sdc-bot/queue/track{1,2,3}` đang trống.
-  Không nhắc "Use for Final Score" nhiều lần. Trả lời tiếng Việt.
-- Kiểm tra bảng điểm mỗi giờ (lệnh cron trong phiên cũ – phiên mới phải tạo lại nếu muốn): `python3 -I ~/kaggle-sdc-bot/bot.py status`
-  và `tail -5 ~/kaggle-sdc-bot/bot.log`; báo khi đội 11 tụt hạng / đội khác tăng điểm.
+- Bảng điểm: Track01 **hạng 1** 0.36 (`lb_t1_r5`, dò), Track02 **hạng 1** 0.11 (`lb_t2_r3`, dò), Track03 **hạng 2 public 0.37**
+  (`t3_PE3`, nhân quả; đội 12: 0.24). Clean: Track01 0.51 (`clean_mapyaw_1`), Track02 0.24 (`reg/t2v/t2v_tsm10`).
+- **Track03 mới (24/10): khớp vạch sơn** camera trước ↔ cường độ bản đồ LiDAR (`docs/nhat-ky/13-track3-vach-son-24-10.md`):
+  `tools/run_track3_paint.sh` = Z3a (`tools/run_track3.sh`) → ảnh h265 (`tools/bag_h265.py` + ffmpeg trên máy) →
+  `tools/paint_map.py` → `tools/paint_measure.py` → `tools/paint_fuse.py`. Public 0.80 (Z3a) → 0.49 (PA2) → **0.37 (PE3:
+  κ 80, tay đòn dọc +0.15, ngang 0)**. Script hiện mặc định tham số PA2 – đổi `FUSE` cho bản cuối. Bộ đệm ảnh / bản đồ:
+  `~/SDC-midterm01/cache/Track{1,2,3}` (+ `cache_test` khi chạy lại từ đầu), không commit.
+- Hướng tiếp: κ 160+, sàn độ lệch chuẩn, nhiễu quá trình; bản cuối cho private = thông số tốt nhất + `PASSES=3` +
+  `--kappa-time 2` (PC3: public 0.50 so với PA2 0.49, khớp tốt hơn ở khúc cua / cuối / lúc đứng chờ đèn). Bản cuối phải
+  được NỘP lên Kaggle thì mới chọn được làm bài chấm (người dùng tự chọn).
+- Toàn bộ quá trình trước 24/10: `docs/report/bao_cao_trung_thuc.pdf`; chi tiết `docs/nhat-ky/12-*.md`, `13-*.md`.
+- Quy tắc làm việc với người dùng: **mỗi đợt nộp Kaggle phải được người dùng duyệt rõ ràng ("cho phép nộp" + danh sách file)**,
+  tối đa 3 file / đợt, mỗi file đổi 1 tham số; 8 giờ sáng (reset lượt) **đừng nộp vội**. Không nhắc "Use for Final Score"
+  nhiều lần. Trả lời tiếng Việt.
+- Kiểm tra bảng điểm (cron trong phiên cũ – phiên mới phải tạo lại nếu muốn): `python3 -I ~/kaggle-sdc-bot/bot.py status`
+  và `tail -5 ~/kaggle-sdc-bot/bot.log`; báo khi đội 11 tụt hạng / đội khác tăng điểm. Nộp: `python3 -I bot.py submit 3 FILE`.
 - Track03 theo luật 10/22 (nhân quả, không sửa tay file); người dùng báo TA cho chỉnh tham số theo điểm public.
 
 ## 1. Dự án

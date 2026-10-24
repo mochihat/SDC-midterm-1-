@@ -60,3 +60,23 @@ tham chiếu (NCC ≥ 0.3): Track02 dọc ≈ 0 (độ phân tán 0.2 m), ngang 
 → **0.80 → 0.49** (đội 8: 0.65; đội 12: 0.24). Hiệu chỉnh của PA2 so với Z3a: phần public 0.5–1.1 m RMS; lúc đứng yên ở
 đèn đỏ (frame 950–2150, 45 % frame private) dời +0.6 m dọc (vạch dừng + vạch sang đường + ô chờ xe máy: NCC 0.58).
 Phần private không đo được trên bảng điểm; phép đo vạch sơn ở đó còn rõ hơn phần public.
+
+## 4. Tối 24/10 (21:29–21:44) – chỉnh tham số theo điểm public (người dùng duyệt từng đợt; mỗi bản đổi 1 tham số)
+
+| File | So với | Thay đổi | Public |
+|---|---|---|---|
+| `t3_PC3` | PA2 | 3 lượt đo (cửa sổ tìm quanh lượt trước) + `--kappa-time 2` (đứng yên vẫn kéo dần về phép đo tĩnh) | 0.50 |
+| **`t3_PB2`** | PA2 | tay đòn ngang 0 (PA2 −0.10, PA1 −0.25) | **0.47** |
+| `t3_PB3` | PA2 | yaw theo vạch sơn (`--yaw-mode paint`) | 0.54 → yaw Z3a tốt hơn |
+| `t3_PD1` | PB2 | tay đòn dọc +0.15 | 0.44 |
+| `t3_PD2` | PB2 | tay đòn dọc −0.15 | 0.55 |
+| **`t3_PD3`** | PB2 | κ 40 | **0.43** |
+| `t3_PE1` | PB2 | κ 40 + tay đòn dọc +0.15 (gộp hai thay đổi đã thắng) | 0.39 |
+| `t3_PE2` | PE1 | tay đòn dọc +0.30 | 0.42 |
+| **`t3_PE3`** | PE1 | κ 80 | **0.37** |
+
+Tay đòn (vị trí theo vạch sơn − điểm tham chiếu, hệ xe): dọc tối ưu ≈ +0.15 m, ngang ≈ 0…+0.05 m (Track02 đo −0.10,
+Track01 −0.3 – Track03 lệch khác; một hiệu chỉnh hằng 0.1–0.2 m không đo được trên Track01/02). κ càng lớn càng tốt
+(20 / 40 / 80 → 0.44 / 0.39 / 0.37). Bảng xếp hạng Track03 public: **hạng 2** (đội 12: 0.24; đội 8: 0.65).
+Phần private: không đo được; ảnh chồng (camera / bản đồ) ở khúc cua, cuối track và lúc đứng chờ đèn cho thấy bản 3 lượt
+khớp tốt hơn bản 1 lượt (bản cửa sổ tìm theo dự đoán của bộ lọc – `--online` – bị lạc ở khúc cua → không dùng).
