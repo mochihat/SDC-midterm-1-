@@ -130,6 +130,9 @@ của `gicp_refine.py`. Sau đó: Kalman kết hợp GICP + IMU thay cho làm m�
 ## 8. Tài liệu khác
 
 - Báo cáo (tiếng Anh, bản nháp "như nộp thật"): https://claude.ai/artifact/Kwr2eFuztKcaopy3q2pvc6 – cần sắp lại theo 4 mục TA yêu cầu.
-- Slide (13 trang, cần rút còn 6–8 trang cho 4–6 phút): https://claude.ai/artifact/HtWevyxNDjiZXwFW6LJnqt
+- **Slide thuyết trình 29/10 (bản chính, 25/10 tối):** `docs/report/presentation_midterm01.pptx` (8 trang, tạo bằng
+  `python3 docs/report/make_presentation.py` trên máy; hình vạch sơn `make_paint_figure.py` + `tools/paint_figdata.py`),
+  lời nói tiếng Anh trong Notes + bản dịch Việt `docs/report/loi_noi_thuyet_trinh.md`. Nếu hướng 3D ngày 26/10 đổi điểm
+  Track03, sửa slide 5, 7, 8. (Bản artifact 13 trang cũ: https://claude.ai/artifact/HtWevyxNDjiZXwFW6LJnqt)
 - Báo cáo PDF tiếng Việt cho người dùng tự đọc: `docs/report/bao_cao_tong_hop.pdf` (cũ, trước 21/10).
 - Nhật ký: `docs/nhat-ky/README.md` (mục lục), `08-gicp-va-scale.md` (GICP, yaw, dò điểm, §12 luật TA, §13 hướng mới).
