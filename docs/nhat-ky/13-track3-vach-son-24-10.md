@@ -80,3 +80,11 @@ Track01 −0.3 – Track03 lệch khác; một hiệu chỉnh hằng 0.1–0.2 m
 (20 / 40 / 80 → 0.44 / 0.39 / 0.37). Bảng xếp hạng Track03 public: **hạng 2** (đội 12: 0.24; đội 8: 0.65).
 Phần private: không đo được; ảnh chồng (camera / bản đồ) ở khúc cua, cuối track và lúc đứng chờ đèn cho thấy bản 3 lượt
 khớp tốt hơn bản 1 lượt (bản cửa sổ tìm theo dự đoán của bộ lọc – `--online` – bị lạc ở khúc cua → không dùng).
+
+## 5. 25/10 – yaw lúc đứng chờ đèn (44 % frame private) có cần sửa không?
+
+Hai kiểm tra độc lập, đều không dùng bảng điểm: (a) hướng chạy (course over ground, mốc 5 m, chỉ đoạn thẳng) của quỹ đạo đã
+hiệu chỉnh vạch sơn (`t3_PG3`) so với yaw xuất ra: frame 700–945 −0.14° (sd 0.35), 870–945 +0.15° (trên Track02 tham
+chiếu, cùng phép đo: −0.3…+0.24°); (b) khớp vạch sơn tĩnh với lưới yaw 0.1° tại frame 1100 / 1600 / 2100: +0.1° (vùng
+phẳng −0.4…+0.5°). → yaw đứng yên 159.68° đúng trong ~±0.2°; con số 159.15° của nhật ký 12 §8.3 (tính từ vị trí LoGeR) bị
+thay thế. Không sửa yaw.
