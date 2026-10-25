@@ -3,10 +3,10 @@
 File này dành cho bất kỳ phiên Claude nào (hoặc người) tiếp nhận dự án: đọc xong là biết đang ở đâu, luật là gì,
 làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việt). Cách chạy: `docs/HUONG-DAN-CHAY.md`.
 
-## 0. Bàn giao nhanh (25/10/2026 19:40) – phiên mới đọc mục này trước
+## 0. Bàn giao nhanh (25/10/2026 20:50) – phiên mới đọc mục này trước
 
-- Bảng điểm: Track01 **hạng 1** 0.36 (`lb_t1_r5`, dò), Track02 **hạng 1** 0.11 (`lb_t2_r3`, dò), Track03 **hạng 2 public 0.37**
-  (`t3_PE3`, nhân quả; đội 12: 0.24). Clean: Track01 0.51 (`clean_mapyaw_1`), Track02 0.24 (`reg/t2v/t2v_tsm10`).
+- Bảng điểm: Track01 **hạng 1** 0.36 (`lb_t1_r5`, dò), Track02 **hạng 1** 0.11 (`lb_t2_r3`, dò), Track03 **hạng 2 public 0.28**
+  (`t3_Q4`, nhân quả; đội 12: 0.24). Clean: Track01 0.51 (`clean_mapyaw_1`), Track02 0.24 (`reg/t2v/t2v_tsm10`).
 - **Track03 mới (24/10): khớp vạch sơn** camera trước ↔ cường độ bản đồ LiDAR (`docs/nhat-ky/13-track3-vach-son-24-10.md`):
   `tools/run_track3_paint.sh` = Z3a (`tools/run_track3.sh`) → ảnh h265 (`tools/bag_h265.py` + ffmpeg trên máy) →
   `tools/paint_map.py` → `tools/paint_measure.py` → `tools/paint_fuse.py`. Public 0.80 (Z3a) → 0.49 (PA2) → **0.37 (PE3:
@@ -17,7 +17,9 @@ làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việ
   được NỘP lên Kaggle thì mới chọn được làm bài chấm (người dùng tự chọn).
 - **25/10:** PF2 (+ camera trước-trái/phải, khối NCC riêng, κ_side 40) = public **0.33** (hạng 2). Phần private: vị trí DỌC
   rung theo Z3a (0.5 m ở 409–950) → `paint_fuse.py --motion imu` (đi theo tốc độ IMU × tỉ lệ khi ≥ 4 m/s và gần thẳng,
-  `--kappa-imu`); ứng viên `t3_Q1/Q2/Q3` (κ_imu 20/10/5) chờ duyệt nộp – nhật ký 13 §7.
+  `--kappa-imu`): `t3_Q1/Q2/Q3` (κ_imu 20/10/5) = **0.28**. Đoạn cuối trượt dọc −1.57 m → trễ IMU (`--imu-vstay 0.5
+  --imu-stay-sd 0.08`) = **`t3_Q4` 0.28 = bản cuối đề xuất** (đã nộp). Tay đòn: dọc +0.25 → 0.32, ngang +0.10 → 0.29 (giữ
+  +0.15 / 0); tinh chỉnh `t3_Q7` (dọc +0.10) / `t3_Q8` (ngang +0.05) chưa nộp, lợi ≤ 0.01 – nhật ký 13 §7.9–7.12.
 - Toàn bộ quá trình trước 24/10: `docs/report/bao_cao_trung_thuc.pdf`; chi tiết `docs/nhat-ky/12-*.md`, `13-*.md`.
 - Quy tắc làm việc với người dùng: **mỗi đợt nộp Kaggle phải được người dùng duyệt rõ ràng ("cho phép nộp" + danh sách file)**,
   tối đa 3 file / đợt, mỗi file đổi 1 tham số; 8 giờ sáng (reset lượt) **đừng nộp vội**. Không nhắc "Use for Final Score"

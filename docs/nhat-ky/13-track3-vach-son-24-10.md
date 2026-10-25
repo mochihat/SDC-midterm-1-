@@ -181,3 +181,17 @@ ngưỡng 0.06 / 0.08 / 0.1 cho cùng kết quả.
 **7.11 Ứng viên đợt 2:** `t3_Q4` (bản cuối đề xuất; public = Q2), `t3_Q5` = Q4 + tay đòn dọc +0.25 (đang +0.15),
 `t3_Q6` = Q4 + tay đòn ngang +0.10 (đang 0; PA1 −0.25 0.56 → PA2 −0.10 0.49 → PB2 0 0.47: chưa thử phía +). Tay đòn áp
 dụng cả lúc đứng chờ đèn (44 % private) → chỉnh theo public có ích cho private.
+
+**7.12 Kết quả đợt 2 (người dùng duyệt, 25/10 20:44):**
+
+| File | So với Q4 | Public |
+|---|---|---|
+| **`t3_Q4`** | – (Q2 + trễ IMU ở đoạn cuối) | **0.28** (= Q2, như dự đoán: phần public trùng từng frame) |
+| `t3_Q5` | tay đòn dọc +0.25 (đang +0.15) | 0.32 |
+| `t3_Q6` | tay đòn ngang +0.10 (đang 0) | 0.29 |
+
+Tay đòn là một dời hằng trong hệ xe (Q5 / Q6 lệch Q4 đúng 0.100 m ở MỌI frame, yaw trùng) → điểm đổi theo
+RMSE² = σ² + (b + δ)², với b là sai lệch trung bình còn lại. Giả sử phần yaw ≈ 0.06 (vị trí ≈ 0.22): Q5 +0.03…+0.05 →
+b_dọc ≈ 0…+0.1 → tay đòn dọc tối ưu ≈ +0.05…+0.15; Q6 +0.00…+0.02 → tay đòn ngang tối ưu ≈ 0…+0.05. Lợi ích còn lại
+≤ ~0.01 (dưới mức Kaggle cắt 2 chữ số). Ứng viên tinh chỉnh (chưa nộp): `t3_Q7` = Q4 + dọc +0.10, `t3_Q8` = Q4 + ngang
++0.05 (`t3_Q9` = ngang −0.05: dự đoán xấu hơn, không đề xuất). **Bản cuối đề xuất hiện tại: `t3_Q4`.**
