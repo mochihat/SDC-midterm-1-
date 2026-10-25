@@ -103,3 +103,64 @@ thay thế. Không sửa yaw.
 (≤ 0.06 m) và cuối track (≤ 0.22 m) → ứng viên bài cuối (chưa nộp).
 Tái lập: `CACHE_ROOT=… PASSES=1 SIDE=1 FUSE="--kappa 80 --kappa-motion 0.3 --sd-floor 0.3,0.15 --lever-along 0.15
 --lever-lat 0.0 --kappa-side 40" bash tools/run_track3_paint.sh` = PF2 (trùng từng byte); thêm `FUSE_EXTRA="--kappa-time 2"` = PH1.
+
+## 7. 25/10 tối – phần private: vị trí DỌC rung theo prior → chuyển động theo tốc độ IMU (`--motion imu`)
+
+Người dùng: "còn tối ưu được track 3 không … để private được điểm cao". Không có nhãn cho phần private → chỉ dùng
+các kiểm tra không cần bảng điểm.
+
+**7.1 Các bản đã nộp khác nhau ở đâu (so với PF2, RMS vị trí):** đứng yên 950–2150 chỉ 0.01–0.10 m; nhưng lúc xe chạy
+(409–950, 2150–2800) tới 0.3–0.9 m (PF1 κ160: 0.88 m ở 409–700). Ảnh NCC theo dọc / ngang: **ngang** có một gờ sáng rõ
+(vạch làn) – mọi bản trùng nhau; **dọc** gần như phẳng (vạch song song hướng đi) → vị trí dọc chỉ được chốt ở vạch đứt,
+vạch dừng, vạch sang đường; giữa các chỗ đó nó trôi theo prior.
+
+**7.2 Độ trễ camera (bác bỏ):** thời điểm chụp (header) sớm hơn thời điểm frame (tên file raw_ply = thời điểm ghi bag)
+trung bình 8.0 ms (sd 0.8) → 0.08 m ở 10 m/s, gần như hằng. Track01/02 (tham chiếu): lệch dọc ở 10–14 m/s +0.07 / +0.13 m
+→ tay đòn dọc +0.15 của Track03 là lệch hình học, áp dụng được cả lúc đứng yên. Không đổi.
+
+**7.3 Rung dọc:** tốc độ theo vị trí của Z3a / PF2 nhảy ±3 m/s giữa các frame (PF2: 0.11–1.05 m mỗi frame ở ~10 m/s),
+tốc độ IMU (SpeedFilter của Z3a, cột `v_imu` trong `t3_Z3a_diag.csv`, nhân quả) thì mượt. Phần rung < 3 s của vị trí dọc so
+với quãng đường tích phân IMU (xe thật không rung như vậy → đó là sai số): PF2 0.28 m (public), **0.51 m (409–950)**, 0.33 m
+(khúc cua). Nhưng `v_imu` sai tỉ lệ (dựa vào odometry LoGeR): quãng đường bản đồ / quãng đường IMU theo cửa sổ 100 frame
+= 0.82…1.07 lúc chạy thẳng, 1.25…1.47 lúc bò chậm vào cua.
+
+**7.4 `tools/paint_fuse.py --motion imu`:** trạng thái (e, s): dự đoán e += s·v_imu·dt·u(yaw) − (bước của prior), s = tỉ lệ
+tốc độ (bước ngẫu nhiên `--q-scale`), prior là phép đo yếu e = 0 (`--z-sd`, nhân theo quãng đường như κ – khi đứng yên
+prior lặp lại cùng một sai số: bản đầu không nhân → vị trí đứng chờ bị kéo về Z3a, NCC 0.54 → 0.28, đã sửa), cập nhật vạch
+sơn như cũ, s đi theo qua hiệp phương sai với e (khớp mômen). Chỉ dùng tốc độ IMU khi nó tốt: `--imu-vmin 4` m/s và tốc độ
+quay của prior ≤ `--imu-wmax 3` °/s (bò chậm 2–3 m/s vào cua: tỉ lệ sai 25–37 % → bản không cổng lệch ~1 m ở 2400–2480);
+còn lại = bước của prior như PF2. `--kappa-imu K`: κ trên các frame IMU (κ 80 + sàn 0.3 m thì phép đo từng frame vẫn áp đảo
+→ còn rung); κ 80 giữ nguyên lúc chậm / đứng (bản κ 40 + sàn 0.1 ở mọi frame làm hỏng vị trí đứng chờ: NCC 0.54 → 0.45).
+Kiểm tra: `--imu-vmin 1e9` → trùng từng byte PE3 / PF2.
+
+**7.5 Thước đo không dùng bảng điểm – NCC camera BÊN tại pose đầu ra của bản chỉ dùng camera TRƯỚC** (camera bên nhìn
+vùng đường khác, bộ lọc không tối ưu theo nó). Trên 17 bản đã nộp: tương quan với điểm public −0.94 (tất cả) / −0.77
+(bản < 0.7) – phân biệt được chênh lớn, không phân biệt được < ~0.05 điểm. Không nhạy với sai số dọc ở đoạn vạch song
+song. Phần public (0–409), bản chỉ camera trước:
+
+| | PE3 (đã nộp 0.37) | κ_imu 40 | 20 | 10 | 5 | 2.5 |
+|---|---|---|---|---|---|---|
+| NCC camera bên 0–409 | 0.122 | 0.125 | 0.128 | **0.132** | **0.134** | 0.129 |
+| rung dọc 409–950 (m) | 0.47 | 0.26 | 0.23 | 0.19 | 0.18 | 0.19 |
+
+(tốt nhất trong 17 bản đã nộp: 0.127). Đứng yên / khúc cua / cuối track: như PE3 (cổng tắt IMU ở đó).
+
+**7.6 Yaw khúc cua (24 % frame private):** hướng chạy (COG) − yaw = +5…+7° lúc quay 16–20 °/s. Hai giả thuyết: yaw Z3a
+trễ ~0.33 s (sẽ mất ~0.23 điểm private) hoặc điểm tham chiếu đáp án nằm trước trục sau ~1.8 m (góc trượt ω·l/v – khớp
+l = 1.6–2.1 m ở 4 thời điểm). Khối NCC có chiều yaw (±1.5°): ở 2450–2550 yaw tốt nhất của camera trước / bên quanh 0
+(−0.75…+0.5°, không dồn về mép) → yaw Z3a đúng, COG lệch do góc trượt. Không sửa yaw.
+
+**7.7 Vị trí đứng chờ:** đỉnh NCC tĩnh (trung bình 1100 frame): camera trước dọc +0.595 / ngang −0.412; camera bên
++0.481 / −0.411; PF2 +0.660 / −0.402 → ngang trùng 1 cm, dọc lệch 6.5 cm (hai loại camera lệch nhau 11 cm). Không đổi.
+
+**7.8 Ứng viên (chờ người dùng duyệt nộp)** – đều = PF2 + `--motion imu --imu-vmin 4 --imu-wmax 3`, chỉ khác κ_imu:
+
+| File | κ_imu | khác PF2: public / private (RMS) | rung dọc 409–950 (PF2 0.51) |
+|---|---|---|---|
+| `t3_Q1` | 20 | 0.13 / 0.24 m | 0.33 |
+| `t3_Q2` | 10 | 0.18 / 0.29 m | 0.24 |
+| `t3_Q3` | 5 | 0.23 / 0.37 m | 0.17 |
+
+Đứng yên và yaw: trùng PF2 từng byte. Tái lập: `CACHE_ROOT=cache_test PASSES=1 SIDE=1 FUSE="<PF2>"
+FUSE_EXTRA="--motion imu --imu-vmin 4 --imu-wmax 3 --kappa-imu 10" bash midterm01/tools/run_track3_paint.sh` = `t3_Q2`
+(chạy lại từ ảnh / bản đồ, trùng từng byte).

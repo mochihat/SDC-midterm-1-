@@ -12,6 +12,8 @@
 # Parameters: camera pitch 1.0 / yaw -1.5 deg (calibrated on Track01 + Track02 at their reference poses), kappa 20,
 # kappa scaled by motion (0.3 m), sd floor 0.3 / 0.15 m, lateral lever -0.10 m (Track02 calibration).
 # Public scores 24/10: lever -0.25 -> 0.56 (t3_PA1), -0.10 -> 0.49 (t3_PA2), floor 0.5/0.25 -> 0.55 (t3_PA3); Z3a 0.80.
+# 25/10: FUSE_EXTRA="--motion imu --imu-vmin 4 --imu-wmax 3 --kappa-imu K" = the pose moves with the IMU speed (scale
+# state) where that speed is good (--times: the front camera's capture times, used by --motion imu only).
 set -e
 cd "$(dirname "$0")/../.."                      # ~/SDC-midterm01
 OUT=${1:-src/localization/result/track3/t3_PA2.csv}
@@ -58,6 +60,6 @@ for i in $(seq 1 $PASSES); do
     SIDE_OPT="--meas-side /w/$C/paint/meas_side_pass$i.npz"
   fi
   run python3 tools/paint_fuse.py "$PRIOR" /w/$C/paint/meas_pass$i.npz "$P_OUT" --center "$CEN" $FUSE $SIDE_OPT \
-    --diag "${P_OUT%.csv}_diag.csv"
+    --times /w/$C/img/f.h265.ts --diag "${P_OUT%.csv}_diag.csv"
   CEN="$P_OUT"
 done
