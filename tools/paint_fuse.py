@@ -81,9 +81,14 @@ def main():
                                                        "IMU-predicted frames (else --q-along / --q-lat)")
     p.add_argument("--kappa-imu", type=float, default=0.0, help="--motion imu: kappa on the IMU-predicted frames (0 = "
                                                                   "--kappa)")
+    p.add_argument("--kappa-imu-vmin", type=float, default=0.0, help="--kappa-imu only at IMU speeds >= this (m/s)")
     p.add_argument("--imu-lat-full", action="store_true", help="--motion imu with --kappa-imu: the lateral of the "
                                                                     "IMU-predicted frames still with --kappa")
     p.add_argument("--imu-vmin", type=float, default=0.0, help="--motion imu: m/s, IMU speed below this -> prior step")
+    p.add_argument("--imu-vstay", type=float, default=0.0, help="--motion imu: m/s, once moving with the IMU speed, "
+                                                                 "keep it down to this speed (0 = --imu-vmin)")
+    p.add_argument("--imu-stay-sd", type=float, default=1e9, help="--motion imu: --imu-vstay only if the scale sd was "
+                                                                   "<= this on the last frame at >= --imu-vmin")
     p.add_argument("--imu-wmax", type=float, default=1e9, help="--motion imu: deg/s, prior yaw rate above -> prior step")
     p.add_argument("--q-turn", type=float, default=0.0, help="--motion imu: along / lateral m per rad of prior yaw change")
     p.add_argument("--z-sd", default="3,1.5", help="--motion imu: the prior as a measurement of the pose, sd per "
@@ -140,6 +145,7 @@ def main():
         zsa, zsl = (float(v) for v in a.z_sd.split(","))
         qi_a, qi_l = (float(v) for v in a.q_imu.split(","))
         n_imu = 0
+        moved_imu = stay_ok = False
         C3 = None                                        # covariance of (e_x, e_y, s)
     out = np.empty_like(prior)
     diag = []
@@ -162,7 +168,13 @@ def main():
             dpsi = wrap(prior[k, 3] - prior[k - 1, 3])
             k0 = max(k - 10, 0)
             w_ = abs(np.degrees(wrap(prior[k, 3] - prior[k0, 3]))) / max(th[k] - th[k0], 1e-6)
-            moved_imu = sp[k] >= a.imu_vmin and w_ <= a.imu_wmax
+            # hysteresis: enter at >= --imu-vmin (the scale is learnt there), stay down to --imu-vstay (slowing to a stop)
+            # if the scale was known (sd <= --imu-stay-sd) on the last fast frame - not after a restart, say
+            if w_ <= a.imu_wmax and sp[k] >= a.imu_vmin:
+                moved_imu = True
+                stay_ok = np.sqrt(C3[2, 2]) <= a.imu_stay_sd
+            else:
+                moved_imu = moved_imu and stay_ok and a.imu_vstay > 0 and w_ <= a.imu_wmax and sp[k] >= a.imu_vstay
             if moved_imu:
                 psi = prior[k - 1, 3] + 0.5 * dpsi
                 m = 0.5 * (sp[k] + sp[k - 1]) * (th[k] - th[k - 1]) * np.array([np.cos(psi), np.sin(psi)])
@@ -199,8 +211,9 @@ def main():
             P[:2, :2] += R @ np.diag([qa ** 2, ql ** 2]) @ R.T
             P[2, 2] += np.radians(a.q_yaw) ** 2
         used, contrast = 0, 0.0
-        kap = a.kappa_imu if (imu and k and moved_imu and a.kappa_imu > 0) else a.kappa
-        kap_lat = a.kappa if (imu and k and moved_imu and a.kappa_imu > 0 and a.imu_lat_full) else 0.0
+        low_k = imu and k and moved_imu and a.kappa_imu > 0 and sp[k] >= a.kappa_imu_vmin
+        kap = a.kappa_imu if low_k else a.kappa
+        kap_lat = a.kappa if (low_k and a.imu_lat_full) else 0.0
         if a.kappa_motion > 0:
             st = np.hypot(*(prior[k, 1:3] - prior[k - 1, 1:3])) if k else 0.0
             kap = kap * min(1.0, st / a.kappa_motion)
@@ -303,14 +316,14 @@ def main():
         lev = np.array([a.lever_along * co - a.lever_lat * so, a.lever_along * so + a.lever_lat * co])
         out[k] = (prior[k, 0], x + e[0] - lev[0], y + e[1] - lev[1], yo)
         diag.append((k, used, contrast, e[0] * c + e[1] * s, -e[0] * s + e[1] * c, np.degrees(e[2]),
-                     np.sqrt(P[0, 0] + P[1, 1])) + ((sc,) if imu else ()))
+                     np.sqrt(P[0, 0] + P[1, 1])) + ((sc, np.sqrt(C3[2, 2]), float(moved_imu)) if imu else ()))
     with open(a.out, "w") as f:
         f.write("idx,x,y,yaw\n")
         for r in out:
             f.write(f"{int(r[0])},{r[1]:.6f},{r[2]:.6f},{r[3]:.6f}\n")
     if a.diag:
         np.savetxt(a.diag, np.array(diag), delimiter=",", fmt="%.4f",
-                   header="k,used,contrast,e_along,e_lat,e_yaw_deg,sd_pos" + (",scale" if imu else ""), comments="")
+                   header="k,used,contrast,e_along,e_lat,e_yaw_deg,sd_pos" + (",scale,scale_sd,imu" if imu else ""), comments="")
     dg = np.array(diag)
     print(f"wrote {a.out}: {dg[:, 1].mean():.0%} of the frames updated, mean |e| {np.hypot(dg[:, 3], dg[:, 4]).mean():.2f} m"
           + (f", {n_imu} frames moved with the IMU speed" if imu else ""))

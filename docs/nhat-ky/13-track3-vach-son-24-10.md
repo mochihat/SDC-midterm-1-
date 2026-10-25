@@ -164,3 +164,20 @@ l = 1.6–2.1 m ở 4 thời điểm). Khối NCC có chiều yaw (±1.5°): ở
 Đứng yên và yaw: trùng PF2 từng byte. Tái lập: `CACHE_ROOT=cache_test PASSES=1 SIDE=1 FUSE="<PF2>"
 FUSE_EXTRA="--motion imu --imu-vmin 4 --imu-wmax 3 --kappa-imu 10" bash midterm01/tools/run_track3_paint.sh` = `t3_Q2`
 (chạy lại từ ảnh / bản đồ, trùng từng byte).
+
+**7.9 Kết quả nộp (người dùng duyệt, 25/10 19:38):** `t3_Q1` / `t3_Q2` / `t3_Q3` (κ_imu 20 / 10 / 5) = **0.28 / 0.28 / 0.28**
+(PF2 0.33) → giảm rung dọc là thật; hạng 2 (đội 12: 0.24). Kaggle cắt 2 chữ số → không phân biệt được κ_imu 5–20.
+
+**7.10 Đoạn cuối (2850–3142, ~9 % frame private): trượt dọc lúc giảm tốc.** Đường NCC dọc ở đoạn đứng yên cuối PHẲNG
+(camera trước 0.17–0.23, camera bên 0.28–0.39 trên ±2 m) → không có vạch chốt dọc. PF2 / Q2 trượt lùi từ +0.1 (frame 2900,
+mọi bản trùng) xuống −1.57 m so với Z3a lúc xe giảm tốc 3 → 0 m/s (κ 80 cộng dồn một độ dốc NCC rất nhẹ: camera trước
+dốc về −, camera bên dốc về + → không đáng tin). Quãng đường 2900 → 3020: IMU × tỉ lệ đã học (0.905, sd 0.05) 3.27 m,
+Z3a 4.25 m, PF2 2.57 m → IMU dự đoán −0.87 m, Z3a 0. Sửa: trễ (hysteresis) – đã chạy theo IMU (vào ở ≥ 4 m/s) thì ở lại
+tới 0.5 m/s (`--imu-vstay 0.5`) nếu độ lệch chuẩn tỉ lệ lúc còn nhanh ≤ 0.08 (`--imu-stay-sd`; sau lúc đứng chờ 43 s nó là
+0.19 → đoạn khởi động lại / bò vào cua giữ như Q2, ở đó cả hai camera ủng hộ Q2: NCC 0.36 / 0.25 so với 0.28 / 0.15 nếu
+chạy theo IMU). Kết quả `t3_Q4`: trùng Q2 ở mọi nơi trừ đoạn cuối (vị trí đứng yên cuối −0.72 m thay vì −1.57 so với Z3a);
+ngưỡng 0.06 / 0.08 / 0.1 cho cùng kết quả.
+
+**7.11 Ứng viên đợt 2:** `t3_Q4` (bản cuối đề xuất; public = Q2), `t3_Q5` = Q4 + tay đòn dọc +0.25 (đang +0.15),
+`t3_Q6` = Q4 + tay đòn ngang +0.10 (đang 0; PA1 −0.25 0.56 → PA2 −0.10 0.49 → PB2 0 0.47: chưa thử phía +). Tay đòn áp
+dụng cả lúc đứng chờ đèn (44 % private) → chỉnh theo public có ích cho private.
