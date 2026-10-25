@@ -30,6 +30,17 @@ if [ ! -f $C/img/f_gray.json ]; then
   echo "{\"file\": \"f_gray_r420.raw\", \"row0\": 420, \"rows\": 380, \"width\": 1440, \"first_frame\": $FIRST}" \
     > $C/img/f_gray.json
 fi
+if [ "${SIDE:-0}" = 1 ]; then
+  for cam in fl fr; do
+    [ -f $C/img/${cam}_gray.json ] && continue
+    run python3 tools/bag_h265.py 3 /w/$C/img/$cam.h265 --camera $cam
+    F=$(cat $C/img/$cam.h265.first)
+    ffmpeg -v error -y -i $C/img/$cam.h265 -vf "crop=1440:508:0:420,scale=720:254,format=gray" -f rawvideo \
+      $C/img/${cam}_gray_h_r420.raw
+    echo "{\"file\": \"${cam}_gray_h_r420.raw\", \"row0\": 420, \"rows\": 508, \"width\": 1440, \"first_frame\": $F, \"scale\": 0.5}" \
+      > $C/img/${cam}_gray.json
+  done
+fi
 [ -f $C/paint_map.npz ] || run python3 tools/paint_map.py 3 "$PRIOR" /w/$C/paint_map.npz
 # passes 2..: the search windows of frame k centred on the previous pass's pose at k (causal: that pose uses frames
 # <= k); the filter state still is the error of the prior (Z3a). Pass 1 = t3_PA2 (public 0.49).
@@ -39,7 +50,14 @@ CEN="$PRIOR"
 for i in $(seq 1 $PASSES); do
   if [ $i -lt $PASSES ]; then P_OUT=src/localization/result/track3/paint_pass$i.csv; else P_OUT="$OUT"; fi
   run python3 tools/paint_measure.py 3 "$CEN" /w/$C/paint/meas_pass$i.npz --cache /w/$CR --procs 10
-  run python3 tools/paint_fuse.py "$PRIOR" /w/$C/paint/meas_pass$i.npz "$P_OUT" --center "$CEN" $FUSE \
+  SIDE_OPT=""
+  if [ "${SIDE:-0}" = 1 ]; then
+    # front-left / front-right cameras as a second NCC volume on the same search grid and centres
+    run python3 tools/paint_measure.py 3 "$CEN" /w/$C/paint/meas_side_pass$i.npz --cache /w/$CR --procs 10 \
+      --side --separate --along=-4,18 --lat=-9,9 --norm 30
+    SIDE_OPT="--meas-side /w/$C/paint/meas_side_pass$i.npz"
+  fi
+  run python3 tools/paint_fuse.py "$PRIOR" /w/$C/paint/meas_pass$i.npz "$P_OUT" --center "$CEN" $FUSE $SIDE_OPT \
     --diag "${P_OUT%.csv}_diag.csv"
   CEN="$P_OUT"
 done
