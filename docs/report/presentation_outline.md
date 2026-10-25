@@ -16,7 +16,8 @@ log của bot (`~/kaggle-sdc-bot/bot.log`, 261 lần nộp có điểm) và các
 1. **Track03**: bài cuối (`t3_Q4`) là output trực tiếp của pipeline **nhân quả** (hàng k chỉ dùng dữ liệu ≤ k), không hậu xử lý,
    không sửa tay; chạy lại được bằng `tools/run_track3_paint.sh`. Tham số được chỉnh theo điểm public – người dùng báo TA cho phép
    ("chỉ cấm sửa trực tiếp file kết quả") [nk 12 §9]. Lưu ý: tham số mặc định trong `run_track3_paint.sh` hiện vẫn là của `t3_PA2`;
-   muốn ra đúng `t3_Q4` phải truyền `SIDE=1 PASSES=1 FUSE=… FUSE_EXTRA=…` (Phụ lục C) → `[CẦN ĐIỀN: đặt cấu hình Q4 làm mặc định và chạy lại kiểm chứng trước khi nộp E3]`.
+   muốn ra đúng `t3_Q4` phải truyền `SIDE=1 PASSES=1 FUSE=… FUSE_EXTRA=…` (Phụ lục C). Đã kiểm chứng 25/10 23:40: đo lại toàn bộ
+   (camera trước + bên) rồi lọc bằng đúng các cờ đó → **trùng từng byte với `t3_Q4.csv`**. Nên đặt cấu hình Q4 làm mặc định của script trước khi nộp E3 `[CẦN ĐIỀN]`.
 2. **Track01/02**: KHÔNG thể khẳng định "causal, không post-processing". Pipeline sạch dùng **Kalman + RTS smoother (làm mượt hai
    chiều)** và làm mượt Gauss có tâm (dùng cả frame tương lai); bài tốt nhất (0.36 / 0.11) là **file dò bảng điểm** (leaderboard probing).
    Theo người dùng, TA xác nhận trên lớp 23/10 rằng Track01/02 chấm theo public toàn bộ nên được dò [CLAUDE.md §2; nk 11 "Luật"], trong khi
@@ -922,7 +923,8 @@ khoảng 0,3–0,4, nhưng đó là suy luận, không phải phép đo.
 - One script: `tools/run_track3_paint.sh` = tracker (`run_track3.sh`) → h265 decode (`bag_h265.py` + ffmpeg) → paint map → measurement
   → fusion; reproduces earlier files byte for byte from an empty cache [nk 13 §2, §6]
 - Output files are never edited by hand; every submitted CSV is pipeline output [nk 11]
-- `[CẦN ĐIỀN: đặt cấu hình Q4 làm mặc định của run_track3_paint.sh và chạy lại kiểm chứng trùng từng byte]` (flags: Appendix C)
+- Verified 25/10: measurement re-run + fusion with the Q4 flags → **byte-identical to `t3_Q4.csv`** (Appendix C)
+- `[CẦN ĐIỀN: đặt cấu hình Q4 làm mặc định của run_track3_paint.sh]`
 
 **Figure:** the Track03 half of the Mermaid diagram (slide 2.1).
 
@@ -1106,7 +1108,7 @@ cloud LoGeR.
 1. Họ tên thành viên, group_id chính thức (slide 1.1, 6.5).
 2. Nguồn con số "public Track03 = 13 %" (slide 1.4).
 3. Văn bản xác nhận của TA về Track01/02 (chấm public, được dò, không bắt buộc nhân quả) và file chọn "Use for Final Score" cho cả 3 track (slide 5.3, 6.1).
-4. Cấu hình Q4 làm mặc định trong `run_track3_paint.sh` + chạy lại kiểm chứng (slide 5.7, phụ lục C).
+4. Cấu hình Q4 làm mặc định trong `run_track3_paint.sh` (slide 5.7, phụ lục C) – kiểm chứng trùng từng byte đã làm 25/10.
 5. Script một lệnh dựng lại `clean_mapyaw_1` và `t2v_tsm10` (hiện `run_clean_pipeline.sh` dựng bản ngày 22/10; các bước sau là lệnh rời trong nk 12 §7, §10, §12).
 6. Điểm private Track03 (sau 29/10) (slide 5.6, 6.1).
 7. Câu trả lời của TA về cấu hình baseline 1.79 (slide 6.8).
@@ -1124,8 +1126,10 @@ cd ~/SDC-midterm01
 SIDE=1 PASSES=1 \
 FUSE="--kappa 80 --kappa-motion 0.3 --sd-floor 0.3,0.15 --lever-along 0.15 --lever-lat 0.0 --kappa-side 40" \
 FUSE_EXTRA="--motion imu --imu-vmin 4 --imu-wmax 3 --kappa-imu 10 --imu-vstay 0.5 --imu-stay-sd 0.08" \
-bash midterm01/tools/run_track3_paint.sh src/localization/result/track3/t3_Q4_rerun.csv
+bash midterm01/tools/run_track3_paint.sh src/localization/result/track3/t3_Q4_rerun.csv   # thư mục đầu ra phải tồn tại
 cmp midterm01/src/localization/result/track3/t3_Q4_rerun.csv midterm01/src/localization/result/track3/t3_Q4.csv
 ```
 Đã kiểm chứng trùng từng byte qua script này: PF2 (25/10) và bản κ_imu 10 = `t3_Q2` (25/10) [nk 13 §6; CLAUDE.md].
-Riêng Q4 qua script: `[CẦN ĐIỀN: chạy lệnh trên và ghi kết quả cmp]`.
+**Q4 (25/10 23:40):** chạy script với `CACHE_ROOT=cache_test` và các cờ trên – bước đo camera trước (77 s) và camera bên (424 s) chạy lại
+từ ảnh đã giải mã; bước lọc cuối (cùng lệnh `paint_fuse.py` của script) cho `t3_Q4_rerun.csv` **trùng từng byte** với `t3_Q4.csv`.
+Prior `t3_Z3a.csv` không chạy lại trong lần này (script bỏ qua khi file đã có); bộ bám đã được kiểm chứng tất định riêng [nk 12 §3, §11].
