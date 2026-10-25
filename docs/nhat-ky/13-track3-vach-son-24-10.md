@@ -195,3 +195,7 @@ RMSE² = σ² + (b + δ)², với b là sai lệch trung bình còn lại. Giả
 b_dọc ≈ 0…+0.1 → tay đòn dọc tối ưu ≈ +0.05…+0.15; Q6 +0.00…+0.02 → tay đòn ngang tối ưu ≈ 0…+0.05. Lợi ích còn lại
 ≤ ~0.01 (dưới mức Kaggle cắt 2 chữ số). Ứng viên tinh chỉnh (chưa nộp): `t3_Q7` = Q4 + dọc +0.10, `t3_Q8` = Q4 + ngang
 +0.05 (`t3_Q9` = ngang −0.05: dự đoán xấu hơn, không đề xuất). **Bản cuối đề xuất hiện tại: `t3_Q4`.**
+
+**7.13 Tinh chỉnh tay đòn (người dùng duyệt, 25/10 20:55):** `t3_Q7` (dọc +0.10) = 0.28, `t3_Q8` (ngang +0.05) = 0.28 →
+không phân biệt được với Q4 sau khi Kaggle cắt 2 chữ số (đúng dự đoán ≤ 0.01). Giữ tay đòn +0.15 / 0 → **bản cuối đề xuất
+vẫn là `t3_Q4`**. Đã dùng 13 / 15 lượt Track03 ngày 25/10.

@@ -19,7 +19,7 @@ làm gì tiếp. Chi tiết từng thí nghiệm: `docs/nhat-ky/` (tiếng Việ
   rung theo Z3a (0.5 m ở 409–950) → `paint_fuse.py --motion imu` (đi theo tốc độ IMU × tỉ lệ khi ≥ 4 m/s và gần thẳng,
   `--kappa-imu`): `t3_Q1/Q2/Q3` (κ_imu 20/10/5) = **0.28**. Đoạn cuối trượt dọc −1.57 m → trễ IMU (`--imu-vstay 0.5
   --imu-stay-sd 0.08`) = **`t3_Q4` 0.28 = bản cuối đề xuất** (đã nộp). Tay đòn: dọc +0.25 → 0.32, ngang +0.10 → 0.29 (giữ
-  +0.15 / 0); tinh chỉnh `t3_Q7` (dọc +0.10) / `t3_Q8` (ngang +0.05) chưa nộp, lợi ≤ 0.01 – nhật ký 13 §7.9–7.12.
+  +0.15 / 0); tinh chỉnh `t3_Q7` (dọc +0.10) / `t3_Q8` (ngang +0.05) đều 0.28 (không phân biệt được) – nhật ký 13 §7.9–7.13.
 - Toàn bộ quá trình trước 24/10: `docs/report/bao_cao_trung_thuc.pdf`; chi tiết `docs/nhat-ky/12-*.md`, `13-*.md`.
 - Quy tắc làm việc với người dùng: **mỗi đợt nộp Kaggle phải được người dùng duyệt rõ ràng ("cho phép nộp" + danh sách file)**,
   tối đa 3 file / đợt, mỗi file đổi 1 tham số; 8 giờ sáng (reset lượt) **đừng nộp vội**. Không nhắc "Use for Final Score"
