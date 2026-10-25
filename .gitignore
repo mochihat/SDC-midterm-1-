@@ -6,3 +6,6 @@ install_*/
 log_*/
 __pycache__/
 src/localization/result/
+
+# presentation figure arrays (camera image + map raster = competition data)
+docs/report/fig/paint_figdata.npz
