@@ -199,3 +199,19 @@ b_dọc ≈ 0…+0.1 → tay đòn dọc tối ưu ≈ +0.05…+0.15; Q6 +0.00�
 **7.13 Tinh chỉnh tay đòn (người dùng duyệt, 25/10 20:55):** `t3_Q7` (dọc +0.10) = 0.28, `t3_Q8` (ngang +0.05) = 0.28 →
 không phân biệt được với Q4 sau khi Kaggle cắt 2 chữ số (đúng dự đoán ≤ 0.01). Giữ tay đòn +0.15 / 0 → **bản cuối đề xuất
 vẫn là `t3_Q4`**. Đã dùng 13 / 15 lượt Track03 ngày 25/10.
+
+**7.14 Còn gì để giảm sai số? (25/10 tối, không dùng bảng điểm)**
+- Yaw: hướng NCC theo trục yaw ở vị trí Q4 (camera trước / bên, từng đoạn 100–600 frame) dao động ±0.5° giữa các cách đo
+  và giữa hai nửa đoạn → không đủ tin để sửa yaw Z3a (đúng như PB3). Hướng chạy − yaw trên đoạn thẳng: public −0.13…+0.22°,
+  private +0.01…+0.14°, sau khúc cua (2500–2850) +0.5…+0.6° (≈ 0.01 điểm private nếu là lỗi yaw).
+- Camera trước ↔ camera bên: đỉnh NCC chênh dọc +0.06…+0.11 m, ngang +0.01…+0.05 m ở mọi đoạn → không có lỗi hiệu
+  chuẩn giữa các camera để sửa.
+- Rung còn lại của Q4 (lệch khỏi trung bình trượt 0.75 s): dọc 0.11 m public, 0.08 m 409–950; yaw 0.04° → nhiễu đã
+  lọc gần hết; sai số còn lại là lệch chậm mà vạch sơn không thấy.
+- Đầu track: camera trước không có ảnh ở frame 0–13 (h265 bắt đầu giữa GOP), camera bên từ frame 4; xe đang cua nhẹ
+  ~4°/s nên chế độ IMU (ngưỡng 3°/s) chỉ bật từ frame 21, trong khi bước của Z3a ở frame 1–9 chập chờn (5–17 m/s).
+  `--imu-wmax 5` (= `t3_R1`, chưa nộp): frame 6–81 đi theo tốc độ IMU, vị trí dọc frame 14–18 bớt kéo theo các ảnh
+  trước đầu tiên (−0.67…−0.48 thay vì −0.44…−0.34 so với Z3a; IMU và camera trước ở frame 20–40 cùng chỉ ≈ −0.85);
+  public lệch Q4 0.037 m RMS, private 0.011 m. Thước đo camera bên không phân biệt được → lợi dự kiến ≤ 0.01.
+- Kết luận: các nút chỉnh còn lại đều ≤ 0.01; muốn giảm thêm ~0.05 (bằng đội 12) cần nguồn thông tin mới cho vị trí dọc
+  (vd. cấu trúc 3D của bản đồ – cột, mép lề, tường – chiếu vào ảnh camera).
