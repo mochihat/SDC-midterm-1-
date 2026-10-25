@@ -88,3 +88,18 @@ hiệu chỉnh vạch sơn (`t3_PG3`) so với yaw xuất ra: frame 700–945 �
 chiếu, cùng phép đo: −0.3…+0.24°); (b) khớp vạch sơn tĩnh với lưới yaw 0.1° tại frame 1100 / 1600 / 2100: +0.1° (vùng
 phẳng −0.4…+0.5°). → yaw đứng yên 159.68° đúng trong ~±0.2°; con số 159.15° của nhật ký 12 §8.3 (tính từ vị trí LoGeR) bị
 thay thế. Không sửa yaw.
+
+## 6. 25/10 – camera bên, κ 160, nhiều lượt (người dùng duyệt)
+
+| File | So với | Thay đổi | Public |
+|---|---|---|---|
+| **`t3_PF2`** | PE3 | camera trước-trái / trước-phải là khối NCC riêng (`--side --separate`, `--kappa-side 40`) | **0.33** |
+| `t3_PF1` | PE3 | κ 160 | 0.38 |
+| `t3_PF3` | PE3 | `--kappa-side 80` | 0.47 |
+| `t3_PG4` | PF2 | 3 lượt đo (cả camera bên) + `--kappa-time 2` | 0.47 → các lượt có camera bên trôi, bỏ |
+| `t3_PG3` | PE3 | 3 lượt đo (chỉ camera trước) + `--kappa-time 2` | 0.38 (PE3 0.37) |
+
+`t3_PH1` = PF2 + `--kappa-time 2` (1 lượt): phần public trùng PF2 từng frame (0–408: chênh 0.000 m), chỉ khác lúc đứng
+(≤ 0.06 m) và cuối track (≤ 0.22 m) → ứng viên bài cuối (chưa nộp).
+Tái lập: `CACHE_ROOT=… PASSES=1 SIDE=1 FUSE="--kappa 80 --kappa-motion 0.3 --sd-floor 0.3,0.15 --lever-along 0.15
+--lever-lat 0.0 --kappa-side 40" bash tools/run_track3_paint.sh` = PF2 (trùng từng byte); thêm `FUSE_EXTRA="--kappa-time 2"` = PH1.
