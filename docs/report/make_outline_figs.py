@@ -28,7 +28,90 @@ OUT = os.path.join(REPO, "docs", "report", "fig", "outline")
 RES = os.path.join(REPO, "src", "localization", "result")
 T3 = os.path.join(RES, "track3")
 DATA = os.path.join(HOME, "SDC-midterm01", "data")
+VI = os.environ.get("VI") == "1"          # VI=1: nhãn tiếng Việt -> docs/report/fig/outline_vi/
+if VI:
+    OUT = OUT + "_vi"
 os.makedirs(OUT, exist_ok=True)
+TR = [  # (English, Tiếng Việt), longest first is not needed: applied in this order to every text drawn
+    ("Probe files (deliberately perturbed) are left out. Classes as in docs/nhat-ky/09: pipeline = algorithm only; hybrid = "
+     "algorithm run on a file with a score-fitted part; leaderboard = probes / score-weighted combinations.",
+     "Bỏ các file dò (cố ý làm lệch). Phân loại theo docs/nhat-ky/09: pipeline = chỉ thuật toán; lai = thuật toán chạy trên "
+     "file có phần chọn theo điểm; leaderboard = dò / tổ hợp theo điểm."),
+    ("Track01 position RMSE (m), from position-only Kaggle submissions (yaw fixed -> error = score - 0.314)",
+     "RMSE vị trí Track01 (m), từ các lượt nộp chỉ đổi vị trí (yaw giữ nguyên → lỗi = điểm − 0.314)"),
+    ("Track01: which scan-matching change helped the position", "Track01: thay đổi khớp quét nào giúp vị trí"),
+    ("first tracker version: start not causal (MHT rewrote frames 0-80; fixed 23/10)",
+     "bộ bám bản đầu: phần khởi đầu chưa nhân quả (MHT ghi lại frame 0–80; đã sửa 23/10)"),
+    ("Lane lines fix the lateral position; between markings the along position jittered",
+     "Vạch làn chốt vị trí ngang; giữa các vạch cắt ngang, vị trí dọc bị rung"),
+    ("End of Track03: no paint pins the along position while the car stops",
+     "Cuối Track03: không có vạch chốt vị trí dọc khi xe dừng"),
+    ("Track03: what the private part (frames 409-3141) contains", "Track03: phần private (frame 409–3141) gồm những gì"),
+    ("Track03: the first tracker drifts off the road", "Track03: bộ bám đầu tiên trôi ra khỏi đường"),
+    ("gap: ~30 m from frame ~800, ~50 m at the end", "chênh lệch: ~30 m từ frame ~800, ~50 m ở cuối"),
+    ("Track03: public score after each layer", "Track03: điểm public sau từng tầng"),
+    ("public score over time (lower is better)", "điểm public theo thời gian (càng thấp càng tốt)"),
+    ("final trajectory on the LiDAR map (map points, 1 m density)", "quỹ đạo cuối trên bản đồ LiDAR (mật độ điểm bản đồ, ô 1 m)"),
+    ("public scores (pipeline output only, no probing)", "điểm public (chỉ output của pipeline, không dò)"),
+    ("triangles: above 1.55", "tam giác: trên 1.55"), ("Track03: all ", "Track03: cả "),
+    ("submission number, in time order", "lần nộp thứ, theo thời gian"),
+    ("public score (first ~13 % of frames)", "điểm public (~13 % frame đầu)"),
+    ("private baseline 1.40 (rules)", "baseline private 1.40 (luật)"),
+    ("best causal so far", "tốt nhất (nhân quả) tới lúc đó"), ("causal pipeline", "pipeline nhân quả"),
+    ("A2h 0.96: causal MHT,\ngyro fix, CSM", "A2h 0.96: MHT nhân quả,\nsửa gyro, CSM"),
+    ("N 0.77 (start\nnot causal)", "N 0.77 (khởi đầu\nchưa nhân quả)"), ("L2b 0.84:\nCSM lever", "L2b 0.84:\ntay đòn CSM"),
+    ("X3f 0.80:\nIMU mounting", "X3f 0.80:\nhướng lắp IMU"), ("Z3a 0.80:\nrestart fix", "Z3a 0.80:\nsửa lúc chạy lại"),
+    ("PA2 0.49:\nroad paint", "PA2 0.49:\nvạch sơn"), ("PE3 0.37:\nkappa, lever", "PE3 0.37:\nkappa, tay đòn"),
+    ("PF2 0.33:\nside cams", "PF2 0.33:\ncamera bên"), ("Q1 0.28:\nIMU motion", "Q1 0.28:\nchuyển động IMU"),
+    ("Q4 0.28:\nend fix (final)", "Q4 0.28:\nsửa đoạn cuối (bài cuối)"),
+    ("before the fix: up to", "trước khi sửa: chậm tới"), ("m behind Z3a", "m so với Z3a"),
+    ("X3f minus Z3a, along the road (m)", "X3f − Z3a theo phương dọc (m)"),
+    ("restart after the 43 s red light", "lúc chạy lại sau 43 s đèn đỏ"), ("speed (m/s), 9-frame mean", "tốc độ (m/s), TB 9 frame"),
+    ("Z3a (after: odometry gate + ZUPT needs |a| small)", "Z3a (sau: cổng odometry + ZUPT cần |a| nhỏ)"),
+    ("X3f (before)", "X3f (trước)"), ("IMU speed filter", "bộ lọc tốc độ IMU"),
+    ("along offset from the tracker Z3a (m)", "lệch dọc so với bộ bám Z3a (m)"), ("speed (m/s, dashed)", "tốc độ (m/s, nét đứt)"),
+    ("PF2 (paint only)", "PF2 (chỉ vạch sơn)"), ("Q4 (IMU motion kept while braking)", "Q4 (giữ chuyển động IMU khi phanh)"),
+    ("time (s), Track03 frames 450-730", "thời gian (s), Track03 frame 450–730"),
+    ("speed implied by the output (m/s)", "tốc độ suy ra từ kết quả (m/s)"), ("paint only (PF2)", "chỉ vạch sơn (PF2)"),
+    ("paint + IMU motion (Q4)", "vạch sơn + chuyển động IMU (Q4)"), ("IMU speed x learnt scale", "tốc độ IMU × hệ số tỉ lệ học được"),
+    ("public ~13 %", "public ~13 %"), ("red light: 44 % of private", "đèn đỏ: 44 % private"),
+    ("restart + 88 deg left turn", "chạy lại + rẽ trái 88°"), ("final stop", "dừng cuối"), ("IMU speed (m/s)", "tốc độ IMU (m/s)"),
+    ("first causal\n(A2h)", "nhân quả đầu tiên\n(A2h)"), ("tracker fixes\n(X3f / Z3a)", "sửa bộ bám\n(X3f / Z3a)"),
+    ("+ paint,\nfront cam (PA2)", "+ vạch sơn,\ncamera trước (PA2)"), ("kappa 80 +\nlever (PE3)", "kappa 80 +\ntay đòn (PE3)"),
+    ("+ side cams\n(PF2)", "+ camera bên\n(PF2)"), ("+ IMU motion\n(Q1-Q4)", "+ chuyển động IMU\n(Q1–Q4)"),
+    ("public score", "điểm public"), ("distance between the two tracks (m)", "khoảng cách giữa hai quỹ đạo (m)"),
+    ("public part", "phần public"),
+    ("t3_full_N (odometry + GICP, no CSM)", "t3_full_N (odometry + GICP, chưa có CSM)"),
+    ("t3_A2h (+ gyro fix, ZUPT, CSM +-15 m)", "t3_A2h (+ sửa gyro, ZUPT, CSM ±15 m)"),
+    ("tau (s): smoothing of (course - gyro yaw)", "τ (s): làm mượt (hướng chạy − yaw gyro)"),
+    ("yaw RMSE (deg), from Kaggle", "RMSE yaw (°), từ Kaggle"), ("yaw = gyro + course over ground", "yaw = gyro + hướng chạy"),
+    ("gyro z, no slip", "gyro trục z, không hiệu chỉnh trượt"), ("gravity-projected + slip", "chiếu trọng lực + hiệu chỉnh trượt"),
+    ("before: score-weighted yaw 1.559 deg", "trước: yaw tổ hợp theo điểm 1.559°"),
+    ("Track01 pipeline (no probing)", "Pipeline Track01 (không dò)"), ("Track02 pipeline (no probing)", "Pipeline Track02 (không dò)"),
+    ("TA baseline", "baseline TA"), ("Kalman + yaw b", "Kalman + lệch yaw b"),
+    ("+ GICP 2 passes\n+ gyro yaw", "+ GICP 2 lượt\n+ yaw gyro"), ("range 20 m", "tầm 20 m"),
+    ("+ no GICP\nin turns", "+ bỏ GICP\nkhi cua"), ("+ map CSM", "+ CSM bản đồ"), ("+ map yaw", "+ yaw bản đồ"),
+    ("heading yaw", "yaw = hướng chạy"), ("+ gyro yaw", "+ yaw gyro"),
+    ("GNSS + Kalman (prior)", "GNSS + Kalman (prior)"), ("NDT 3 cams, scale", "NDT 3 camera, tỉ lệ"),
+    ("GICP, ground-height scale (1/4 frames)", "GICP, tỉ lệ theo mặt đường (1/4 frame)"),
+    ("GICP, ground scale, every frame", "GICP, tỉ lệ mặt đường, mọi frame"), ("GICP, scale 0.8", "GICP, tỉ lệ 0.8"),
+    ("NDT -> GICP, scale 0.8", "NDT → GICP, tỉ lệ 0.8"), ("3-DoF planar ICP", "ICP phẳng 3 bậc tự do"),
+    ("GICP pass", "GICP lượt"), ("+ hood mask + SOR", "+ mặt nạ capo + lọc điểm lạc"), ("GICP 2 passes + de-mean", "GICP 2 lượt + trừ lệch TB"),
+    ("pipeline clean_mapyaw_1", "pipeline clean_mapyaw_1"), ("probed lb_t", "bản dò lb_t"), ("causal t3_Q4", "nhân quả t3_Q4"),
+    ("x (m, map frame)", "x (m, hệ bản đồ)"), ("start", "điểm đầu"),
+    ("hybrid (best", "lai (tốt nhất"), ("pipeline (best", "pipeline (tốt nhất"), ("leaderboard (best", "dò leaderboard (tốt nhất"),
+    ("frame", "frame"),
+]
+if VI:
+    import matplotlib.text as _mt
+    _orig = _mt.Text.set_text
+
+    def _set_text(self, s):
+        s = "" if s is None else str(s)
+        for en, vi in TR:
+            s = s.replace(en.replace("\\n", "\n"), vi.replace("\\n", "\n"))
+        _orig(self, s)
+    _mt.Text.set_text = _set_text
 
 # reference categorical palette of the dataviz method (fixed order), text in ink, recessive grid
 BLUE, ORANGE, AQUA, YELLOW, VIOLET = "#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#6250d6"

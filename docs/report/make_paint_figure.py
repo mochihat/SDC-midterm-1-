@@ -35,6 +35,20 @@ def overlay(cam, mp, seen):
     return rgb[::-1, ::-1]          # along up, the car's left on the left
 
 
+if os.environ.get("VI") == "1":
+    import matplotlib.text as _mt
+    _o = _mt.Text.set_text
+    _TR = [("Front camera (one of three)", "Camera trước (một trong ba camera)"), ("Before: LiDAR-map tracker", "Trước: bộ bám bản đồ LiDAR"),
+           ("m off)", "m lệch)"), ("After: road-paint matching", "Sau: khớp vạch sơn"),
+           ("paint in the LiDAR map", "vạch sơn trong bản đồ LiDAR"), ("paint seen by the cameras", "vạch sơn camera thấy"),
+           ("both (aligned)", "cả hai (trùng khít)")]
+
+    def _st(self, s):
+        s = "" if s is None else str(s)
+        for e_, v_ in _TR:
+            s = s.replace(e_, v_)
+        _o(self, s)
+    _mt.Text.set_text = _st
 fig = plt.figure(figsize=(6.6, 5.4), dpi=220)
 gs = fig.add_gridspec(2, 2, height_ratios=[1.0, 2.55], hspace=0.16, wspace=0.06)
 ax0 = fig.add_subplot(gs[0, :])
@@ -57,6 +71,6 @@ fig.legend(handles=[Patch(color=MAPC, label="paint in the LiDAR map"), Patch(col
                     Patch(facecolor="white", edgecolor=MUTED, label="both (aligned)")],
            loc="lower center", ncol=3, fontsize=8, frameon=False, bbox_to_anchor=(0.5, 0.0))
 fig.subplots_adjust(left=0.01, right=0.99, top=0.95, bottom=0.07)
-out = os.path.join(D, "fig", "paint_matching.png")
+out = os.path.join(D, "fig", "paint_matching_vi.png" if os.environ.get("VI") == "1" else "paint_matching.png")
 fig.savefig(out, facecolor="white")
 print("wrote", out)

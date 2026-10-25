@@ -293,7 +293,7 @@ khớp thô bằng lưới tương quan CSM trong cửa sổ ±15 m rồi mới 
 - **ZUPT**: standstill if acc std (0.5 s) < 0.1 m/s² **and** |mean a_x − b| < 0.3 m/s²; online gyro bias from standstill frames [nk 12 §2, §11]
 - **Gyro on gravity**: IMU tilted ~6°, yaw rate = gyro · fixed gravity direction (`--gyro-up`) [nk 12 §8.2, §9.2]
 - **When matching fails**: rejected by the gate → prediction only; no GICP update while standing (`--hold-position-standing`, `--hold-yaw-standing`);
-  start: 11 yaw hypotheses ±30°, each frame outputs the **current** best (causal) [nk 12 §1, §3b, §8.2]
+  start: 9 yaw hypotheses −24…+24° (first version 11, ±30°) [code: track_localize.py --hyp-yaw], each frame outputs the **current** best (causal) [nk 12 §1, §3b, §8.2]
 - **Paint filter** (Track03): error state (e_x, e_y, s); κ·NCC posterior on the grid; κ × min(1, step/0.3 m); IMU along motion where v ≥ 4 m/s and
   |ω| ≤ 3°/s [nk 13 §2, §7]
 
@@ -305,7 +305,7 @@ bằng maximum likelihood trên chính dữ liệu GNSS chứ không theo điể
 này được chấp nhận ở Track01/02 theo lời TA, nhưng không dùng ở Track03. Track03 hoàn toàn nhân quả: bộ lọc Kalman vị trí với cổng 3σ,
 một bộ lọc tốc độ từ IMU, phát hiện đứng yên (ZUPT) và ước lượng lại bias gyro lúc đứng yên, gyro chiếu theo phương trọng lực vì IMU lắp
 nghiêng 6 độ. Khi khớp thất bại hoặc bị cổng loại, bộ lọc chỉ dự đoán; khi xe đứng yên thì không cập nhật GICP vì các frame cùng một khung
-cảnh có chung sai số. Lúc khởi đầu chạy 11 giả thuyết yaw song song, và mỗi frame chỉ xuất giả thuyết tốt nhất tại chính frame đó.
+cảnh có chung sai số. Lúc khởi đầu chạy 9 giả thuyết yaw song song (từ −24 đến +24 độ; ở Track03 giả thuyết +18 độ thắng), và mỗi frame chỉ xuất giả thuyết tốt nhất tại chính frame đó.
 
 ---
 
@@ -465,7 +465,7 @@ Các vấn đề nhỏ về môi trường (4.1–4.2) có thể gộp thành m�
 ## Slide 4.7 – Image-only NDT drifts (no motion model, wrong start yaw)
 - **Symptom:** pure scan matching from `init_guess` (×9, 4 m, ≤ 40 m, 150 frames): T1 error grows 1.5 → 9.1 m; T2 3.6 → 8.9 m with yaw +29…+40° [nk 03 §6].
 - **Cause:** (1) no motion model – each frame starts at the previous pose while the car moved ~0.36 m; (2) T2 init yaw off ~15°.
-- **Fix:** became the Track03 design: odometry + IMU speed filter for prediction, **multi-hypothesis start** (11 yaw hypotheses ±30°) [nk 11].
+- **Fix:** became the Track03 design: odometry + IMU speed filter for prediction, **multi-hypothesis start** (first 11 yaw hypotheses ±30° [nk 11], now 9, −24…+24°).
 - **Before / after:** image-only drift 9 m in 150 frames → Track03 tracker accepts 96–99 % of frames [nk 12 §3b].
 - **Speaker notes (VI):** Em thử chạy NDT chỉ bằng ảnh như yêu cầu gốc của đề, 150 frame đầu: sai số tăng đều tới 9 m. Hai lý do: không có mô
   hình chuyển động – frame nào cũng bắt đầu từ vị trí cũ trong khi xe đã đi tiếp – và hướng ban đầu của Track02 lệch 15 độ mà NDT không tự sửa

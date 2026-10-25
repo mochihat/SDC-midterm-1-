@@ -9,3 +9,4 @@ src/localization/result/
 
 # presentation figure arrays (camera image + map raster = competition data)
 docs/report/fig/paint_figdata.npz
+docs/report/fig/explain_data/
