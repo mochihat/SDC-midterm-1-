@@ -324,7 +324,7 @@ x0, y0 = T0[0, 3], T0[1, 3]
 sel = (np.abs(m3[:, 0] - x0) < 70) & (np.abs(m3[:, 1] - y0) < 60)
 fig, ax = plt.subplots(figsize=(10, 7))
 ax.scatter(m3[sel, 0], m3[sel, 1], s=0.2, c="#a9a9a5", linewidths=0)
-for off in range(-24, 25, 6):
+for off in range(-30, 31, 6):
     a_ = yaw0 + np.radians(off)
     ax.plot([x0, x0 + 30 * np.cos(a_)], [y0, y0 + 30 * np.sin(a_)], color=AQUA if off == 18 else (INK if off == 0 else ORANGE),
             lw=3 if off == 18 else 1.4)
@@ -336,7 +336,7 @@ ax.set_xlim(x0 - 70, x0 + 20)
 ax.set_ylim(y0 - 45, y0 + 45)
 ax.legend(fontsize=9, loc="lower right")
 ax.set_title(f"Track03 lúc khởi đầu: init_guess chỉ hướng {np.degrees(yaw0):.1f}° (đen), nhưng xe thật đi theo giả thuyết +18° (xanh)\n"
-             "9 giả thuyết (−24…+24°) chạy song song; mỗi frame chỉ xuất giả thuyết tốt nhất tại chính frame đó", loc="left", fontsize=10)
+             "11 giả thuyết (−30…+30°) chạy song song; mỗi frame chỉ xuất giả thuyết tốt nhất tại chính frame đó", loc="left", fontsize=10)
 save(fig, "x12_t3_mht.png")
 
 # =========================================================== 13. bản đồ ở các cỡ voxel
