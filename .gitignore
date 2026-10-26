@@ -10,3 +10,11 @@ src/localization/result/
 # presentation figure arrays (camera image + map raster = competition data)
 docs/report/fig/paint_figdata.npz
 docs/report/fig/explain_data/
+docs/report/sim/sim_data.js
+docs/report/sim/sim_imgs.npz
+hoc/ws/build/
+hoc/ws/install/
+hoc/ws/log/
+hoc/*.txt
+docs/report/fig/check3d/*.npz
+docs/report/fig/check3d/*.npy

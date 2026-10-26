@@ -215,3 +215,17 @@ vẫn là `t3_Q4`**. Đã dùng 13 / 15 lượt Track03 ngày 25/10.
   public lệch Q4 0.037 m RMS, private 0.011 m. Thước đo camera bên không phân biệt được → lợi dự kiến ≤ 0.01.
 - Kết luận: các nút chỉnh còn lại đều ≤ 0.01; muốn giảm thêm ~0.05 (bằng đội 12) cần nguồn thông tin mới cho vị trí dọc
   (vd. cấu trúc 3D của bản đồ – cột, mép lề, tường – chiếu vào ảnh camera).
+
+## 8. 26/10 – Thử cấu trúc 3D của bản đồ để chốt vị trí dọc (bác bỏ)
+
+Ý tưởng: vật cao trong bản đồ (0.4–3 m trên mặt đường: cột, cây, tường, xe đỗ) chiếu vào ảnh camera trước; dời chúng theo
+phương dọc (−3…+3 m) và chọn độ dời làm độ mạnh cạnh của ảnh tại các điểm chiếu lớn nhất (`tools/check3d_track3.py`,
+`check3d_shift.py`, `check3d_scan.py`, `check3d_validate.py`).
+- Track03 frame 1100: 1318 điểm vật cao trong khung ảnh, trải 5–17 m (hình `docs/report/fig/check3d/check3d_1100.png`);
+  đỉnh ở +0.6 m, đường cong gợn (7.3–9.5), độ nổi ~10 %.
+- Track03 60 frame đèn đỏ (960–2150): đỉnh ổn định +0.60 m (sd 0.28) – nhất quán nhưng chưa biết có đúng.
+- **Kiểm chứng trên Track01** (pose = GNSS nội suy, thước = `lb_t1_r5`, chỉ để kiểm tra phép đo): 120 frame, tương quan
+  giữa δ đo được và sai số dọc thật **−0.08**, |δ − thật| trung vị **2.93 m** (sai số GNSS chỉ 0.68 m), lệch TB +2.46 m;
+  chọn frame có đỉnh rõ cũng không khá hơn. → thước đo "cạnh ảnh tại điểm chiếu" bị chi phối bởi vị trí điểm rơi trong
+  ảnh (càng xa càng gần đường chân trời nhiều cạnh), không phải bởi việc khớp; đỉnh +0.6 m ở Track03 cũng là lệch kiểu này.
+  **Bỏ hướng này** (không đủ thời gian làm thước đo tốt hơn trước 29/10). Bài cuối Track03 vẫn là `t3_Q4`.
